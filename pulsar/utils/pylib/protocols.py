@@ -13,46 +13,12 @@ LOGGER = logging.getLogger('pulsar.protocols')
 
 CLOSE_TIMEOUT = 3
 
+dummyRequest = object()
+
 
 class ProtocolConsumer(EventHandler):
-    """The consumer of data for a server or client :class:`.Connection`.
-
-    It is responsible for receiving incoming data from an end point via the
-    :meth:`Connection.data_received` method, decoding (parsing) and,
-    possibly, writing back to the client or server via
-    the :attr:`transport` attribute.
-
-    .. note::
-
-        For server consumers, :meth:`data_received` is the only method
-        to implement.
-        For client consumers, :meth:`start_request` should also be implemented.
-
-    A :class:`ProtocolConsumer` is a subclass of :class:`.EventHandler` and it
-    has two default :ref:`one time events <one-time-event>`:
-
-    * ``pre_request`` fired when the request is received (for servers) or
-      just before is sent (for clients).
-      This occurs just before the :meth:`start_request` method.
-    * ``post_request`` fired when the request is done. The
-      :attr:`on_finished` attribute is a shortcut for the ``post_request``
-      :class:`.OneTime` event and therefore can be used to wait for
-      the request to have received a full response (clients).
-
-    In addition, it has two :ref:`many times events <many-times-event>`:
-
-    * ``data_received`` fired when new data is received from the transport but
-      not yet processed (before the :meth:`data_received` method is invoked)
-    * ``data_processed`` fired just after data has been consumed (after the
-      :meth:`data_received` method)
-
-    .. note::
-
-        A useful example on how to use the ``data_received`` event is
-        the :ref:`wsgi proxy server <tutorials-proxy-server>`.
-    """
     request = None
-    ONE_TIME_EVENTS = ('pre_request', 'post_request')
+    ONE_TIME_EVENTS = ('post_request',)
 
     def __init__(self, connection):
         self.connection = connection
@@ -60,29 +26,17 @@ class ProtocolConsumer(EventHandler):
         self._loop = connection._loop
         connection._current_consumer = self
 
-    @property
-    def transport(self):
-        """The :class:`Transport` of this consumer
-        """
-        return self.connection.transport
-
-    @property
-    def address(self):
-        return self.connection.address
-
     def finished(self, exc=None):
         """Event fired once a full response to a request is received. It is
         the ``post_request`` one time event.
         """
         self.event('post_request').fire(exc=exc)
 
-    def data_received(self, data):
+    def create_request(self):
+        return dummyRequest
+
+    def feed_data(self, data):
         """Called when some data is received.
-
-        **This method must be implemented by subclasses** for both server and
-        client consumers.
-
-        The argument is a bytes object.
         """
 
     def start_request(self):
@@ -100,7 +54,7 @@ class ProtocolConsumer(EventHandler):
 
             self.transport.write(self.request.encode())
         """
-        raise NotImplementedError
+        pass
 
     def start(self, request=None):
         """Starts processing the request for this protocol consumer.
@@ -113,20 +67,16 @@ class ProtocolConsumer(EventHandler):
         For server side consumer, this method simply fires the ``pre_request``
         event.
         """
-        conn = self._connection
-        conn._processed += 1
-        if conn._producer:
-            p = getattr(conn._producer, '_requests_processed', 0)
-            conn._producer._requests_processed = p + 1
+        self.connection.processed += 1
+        self.producer.requests_processed += 1
         self.event('post_request').bind(self._finished)
-        self._request = request
+        self.request = request or self.create_request()
         try:
-            self.event('pre_request').fire()
+            self.fire_event('pre_request', data=None, exc=None)
         except AbortEvent:
-            self.logger.debug('Abort request %s', request)
+            self.producer.logger.debug('Abort request %s', request)
         else:
-            if self._request is not None:
-                self.start_request()
+            self.start_request()
 
     def abort_request(self):
         """Abort the request.
@@ -135,30 +85,9 @@ class ProtocolConsumer(EventHandler):
         """
         raise AbortEvent
 
-    def write(self, data):
-        """Delegate writing to the underlying :class:`.Connection`
-
-        Return an empty tuple or a :class:`~asyncio.Future`
-        """
-        c = self._connection
-        if c:
-            return c.write(data)
-        else:
-            raise RuntimeError('No connection')
-
-    def _data_received(self, data):
-        # Called by Connection, it updates the counters and invoke
-        # the high level data_received method which must be implemented
-        # by subclasses
-        if not hasattr(self, '_request'):
-            self.start()
-        result = self.data_received(data)
-        self.event('data_processed').fire(data=data)
-        return result
-
     def _finished(self, _, exc=None):
-        c = self._connection
-        if c and c._current_consumer is self:
+        c = self.connection
+        if c._current_consumer is self:
             c._current_consumer = None
 
 

@@ -119,78 +119,86 @@ class HttpServerResponse(ProtocolConsumer):
         response = None
         done = False
         #
-        while not done:
-            done = True
-            try:
-                with timeout(keep_alive, loop=self._loop):
-                    if exc_info is None:
-                        if (not environ.get('HTTP_HOST') and
-                                environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
-                            raise BadRequest
-                        response = wsgi_callable(environ, wsgi.start_response)
-                        try:
-                            response = await response
-                        except TypeError:
-                            pass
-                    else:
-                        response = handle_wsgi_error(environ, exc_info)
-                        try:
-                            response = await response
-                        except TypeError:
-                            pass
-                    #
-                    if exc_info:
-                        wsgi.start_response(response.status,
-                                            response.get_headers(), exc_info)
-                    #
-                    # Do the actual writing
-                    loop = self._loop
-                    # start = loop.time()
-                    for chunk in response:
-                        try:
-                            chunk = await chunk
-                        except TypeError:
-                            pass
-                        try:
-                            await wsgi.write(chunk)
-                        except TypeError:
-                            pass
-                        # time_in_loop = loop.time() - start
-                        # if time_in_loop > MAX_TIME_IN_LOOP:
-                        #     get_logger(environ).debug(
-                        #         'Released the event loop after %.3f seconds',
-                        #         time_in_loop)
-                        #     await sleep(0.1, loop=self._loop)
-                        #     start = loop.time()
-                    #
-                    # make sure we write headers and last chunk if needed
-                    wsgi.write(b'', True)
+        try:
+            while not done:
+                done = True
+                try:
+                    with timeout(keep_alive, loop=self._loop):
+                        if exc_info is None:
+                            if (not environ.get('HTTP_HOST') and
+                                    environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
+                                raise BadRequest
+                            response = wsgi_callable(environ,
+                                                     wsgi.start_response)
+                            try:
+                                response = await response
+                            except TypeError:
+                                pass
+                        else:
+                            response = handle_wsgi_error(environ, exc_info)
+                            try:
+                                response = await response
+                            except TypeError:
+                                pass
+                        #
+                        if exc_info:
+                            wsgi.start_response(
+                                response.status,
+                                response.get_headers(),
+                                exc_info
+                            )
+                        #
+                        # Do the actual writing
+                        loop = self._loop
+                        # start = loop.time()
+                        for chunk in response:
+                            try:
+                                chunk = await chunk
+                            except TypeError:
+                                pass
+                            try:
+                                await wsgi.write(chunk)
+                            except TypeError:
+                                pass
+                            # time_in_loop = loop.time() - start
+                            # if time_in_loop > MAX_TIME_IN_LOOP:
+                            #     get_logger(environ).debug(
+                            #         'Released loop after %.3f seconds',
+                            #         time_in_loop)
+                            #     await sleep(0.1, loop=self._loop)
+                            #     start = loop.time()
+                        #
+                        # make sure we write headers and last chunk if needed
+                        wsgi.write(b'', True)
 
-            # client disconnected, end this connection
-            except (IOError, AbortWsgi, RuntimeError):
-                self.event('post_request').fire()
-            except Exception:
-                if wsgi_request(environ).cache.get('handle_wsgi_error'):
-                    wsgi.keep_alive = False
-                    self._write_headers()
-                    self.connection.close()
+                # client disconnected, end this connection
+                except (IOError, AbortWsgi, RuntimeError):
                     self.event('post_request').fire()
+                except Exception:
+                    if wsgi_request(environ).cache.get('handle_wsgi_error'):
+                        wsgi.keep_alive = False
+                        self._write_headers()
+                        self.connection.close()
+                        self.event('post_request').fire()
+                    else:
+                        done = False
+                        exc_info = sys.exc_info()
                 else:
-                    done = False
-                    exc_info = sys.exc_info()
-            else:
-                if loop.get_debug():
-                    logger = get_logger(environ)
-                    log_wsgi_info(logger.info, environ, wsgi.status)
+                    if loop.get_debug():
+                        logger = get_logger(environ)
+                        log_wsgi_info(logger.info, environ, wsgi.status)
+                        if not wsgi.keep_alive:
+                            logger.debug(
+                                'No keep alive, closing connection %s',
+                                self.connection
+                            )
+                    self.event('post_request').fire()
                     if not wsgi.keep_alive:
-                        logger.debug('No keep alive, closing connection %s',
-                                     self.connection)
-                self.event('post_request').fire()
-                if not wsgi.keep_alive:
-                    self.connection.close()
-            finally:
-                close_object(response)
-                self = None
+                        self.connection.close()
+                finally:
+                    close_object(response)
+        finally:
+            self = None
 
     def _write_headers(self):
         wsgi = self.request

@@ -133,7 +133,6 @@ cdef class WsgiResponse:
 
         assert not self.__wsgi_started__
         self.__wsgi_started__ = True
-        self.headers = None
         self.environ = None
 
         if status == 204 or status == 304 or 100 <= status < 200:

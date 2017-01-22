@@ -37,12 +37,15 @@ class WebSocketProtocol(ProtocolConsumer):
     '''
     close_reason = None
 
-    def __init__(self, handshake, handler, parser, loop=None):
-        super().__init__(loop)
-        self.bind_event('post_request', self._shut_down)
-        self.handshake = handshake
-        self.handler = handler
-        self.parser = parser
+    @classmethod
+    def create(cls, handshake, handler, parser, connection):
+        ws = cls(connection)
+        ws.event('post_request').bind(ws._shut_down)
+        ws.handshake = handshake
+        ws.handler = handler
+        ws.parser = parser
+        maybe_async(handler.on_open(ws), loop=ws._loop)
+        return ws
 
     @property
     def cfg(self):
@@ -50,18 +53,14 @@ class WebSocketProtocol(ProtocolConsumer):
         '''
         return self.handshake.cfg
 
-    def connection_made(self, connection):
-        connection.timeout = 0
-        maybe_async(self.handler.on_open(self), self._loop)
-
-    def data_received(self, data):
+    def feed_data(self, data):
         frame = self.parser.decode(data)
         while frame:
             if frame.is_close:
                 try:
                     self.close_reason = parse_close(frame.body)
                 finally:
-                    self._connection.close()
+                    self.connection.close()
                 break
             if frame.is_message:
                 self._on(self.handler.on_message, frame)
@@ -86,7 +85,7 @@ class WebSocketProtocol(ProtocolConsumer):
          '''
         if encode:
             message = self.parser.encode(message, opcode=opcode, **kw)
-        result = super().write(message)
+        result = self.connection.write(message)
         if opcode == 0x8:
             self.finished()
         return result
@@ -109,7 +108,7 @@ class WebSocketProtocol(ProtocolConsumer):
     def _on(self, handler, frame):
         maybe_async(handler(self, frame.body), loop=self._loop)
 
-    def _shut_down(self, result, exc=None):
+    def _shut_down(self, _, exc=None):
         maybe_async(self.handler.on_close(self))
 
 
@@ -128,7 +127,7 @@ class WebSocket(wsgi.Router):
 
         A factory of websocket frame parsers
     """
-    protocol_class = WebSocketProtocol
+    protocol_factory = WebSocketProtocol.create
     parser_factory = frame_parser
 
     def __init__(self, route, handle, parser_factory=None, **kwargs):
@@ -145,10 +144,10 @@ class WebSocket(wsgi.Router):
         response.status_code = 101
         response.content = b''
         response.headers.update(headers)
-        connection = request.get('pulsar.connection')
+        connection = request.cache.connection
         if not connection:
             raise HttpException(status=404)
-        factory = partial(self.protocol_class, request, self.handle, parser)
+        factory = partial(self.protocol_factory, request, self.handle, parser)
         connection.upgrade(factory)
         return request.response
 

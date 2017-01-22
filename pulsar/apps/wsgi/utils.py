@@ -171,6 +171,7 @@ def handle_wsgi_error(environ, exc):
         exc_info = True
     request = wsgi_request(environ)
     request.cache.handle_wsgi_error = True
+    request.cache.pop('response', None)
     response = request.response
     logger = get_logger(environ)
     #
@@ -178,7 +179,7 @@ def handle_wsgi_error(environ, exc):
         response.status_code = exc.code or 500
     else:
         response.status_code = getattr(exc, 'status', 500)
-        response.headers.update(getattr(exc, 'headers', None) or ())
+    response.headers.update(getattr(exc, 'headers', None) or ())
     status = response.status_code
     if status >= 500:
         logger.critical('%s - @ %s.\n%s', exc, request.first_line,

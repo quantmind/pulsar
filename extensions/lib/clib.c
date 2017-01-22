@@ -683,9 +683,6 @@ struct __pyx_opt_args_4clib_16ProtocolConsumer__finished;
 struct __pyx_opt_args_4clib_16ProtocolConsumer_pop;
 struct __pyx_opt_args_4clib_12WsgiProtocol_start_response;
 struct __pyx_opt_args_4clib_12WsgiProtocol_write;
-struct __pyx_opt_args_4clib_12WsgiProtocol_write_list;
-struct __pyx_opt_args_4clib_12WsgiProtocol_write_plus;
-struct __pyx_opt_args_4clib_http_chunks_l;
 struct __pyx_opt_args_4clib_http_chunks;
 struct __pyx_opt_args_4clib_has_empty_content;
 struct __pyx_opt_args_4clib_reraise;
@@ -833,15 +830,15 @@ struct __pyx_opt_args_4clib_16ProtocolConsumer_start {
  *         pass
  * 
  *     cpdef void _finished(self, object _, object exc=None):             # <<<<<<<<<<<<<<
- *         self.connection._current_consumer = None
- * 
+ *         if self.connection._current_consumer is self:
+ *             self.connection._current_consumer = None
  */
 struct __pyx_opt_args_4clib_16ProtocolConsumer__finished {
   int __pyx_n;
   PyObject *exc;
 };
 
-/* "extensions/lib/protocols.pyx":179
+/* "extensions/lib/protocols.pyx":180
  *         return getattr(self, attr, None)
  * 
  *     cpdef object pop(self, str attr, object default=None):             # <<<<<<<<<<<<<<
@@ -853,7 +850,7 @@ struct __pyx_opt_args_4clib_16ProtocolConsumer_pop {
   PyObject *__pyx_default;
 };
 
-/* "extensions/lib/wsgi.pyx":155
+/* "extensions/lib/wsgi.pyx":156
  *         self.protocol.body_reader.feed_eof()
  * 
  *     cpdef start_response(self, str status, object response_headers, object exc_info=None):             # <<<<<<<<<<<<<<
@@ -865,7 +862,7 @@ struct __pyx_opt_args_4clib_12WsgiProtocol_start_response {
   PyObject *exc_info;
 };
 
-/* "extensions/lib/wsgi.pyx":187
+/* "extensions/lib/wsgi.pyx":188
  *         return self.write
  * 
  *     cpdef object write(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
@@ -877,46 +874,10 @@ struct __pyx_opt_args_4clib_12WsgiProtocol_write {
   PyObject *force;
 };
 
-/* "extensions/lib/wsgi.pyx":217
- *             return self.connection.write(buffer)
- * 
- *     cpdef object write_list(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
- *         cdef list chunks = None
- *         cdef dict env = self.environ
- */
-struct __pyx_opt_args_4clib_12WsgiProtocol_write_list {
-  int __pyx_n;
-  PyObject *force;
-};
-
-/* "extensions/lib/wsgi.pyx":247
- *             return self.connection.write(b''.join(chunks))
- * 
- *     cpdef object write_plus(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
- *         cdef bytes chunks = b''
- *         cdef dict env = self.environ
- */
-struct __pyx_opt_args_4clib_12WsgiProtocol_write_plus {
-  int __pyx_n;
-  PyObject *force;
-};
-
-/* "extensions/lib/wsgi.pyx":319
+/* "extensions/lib/wsgi.pyx":261
  * 
  * 
- * cdef void http_chunks_l(list chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
- *     cdef bytes chunk
- *     while len(data) >= MAX_CHUNK_SIZE:
- */
-struct __pyx_opt_args_4clib_http_chunks_l {
-  int __pyx_n;
-  PyObject *finish;
-};
-
-/* "extensions/lib/wsgi.pyx":342
- * 
- * 
- * cdef bytes http_chunks(bytes chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
+ * cdef void http_chunks(bytearray chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
  *     cdef bytes chunk
  *     while len(data) >= MAX_CHUNK_SIZE:
  */
@@ -925,7 +886,7 @@ struct __pyx_opt_args_4clib_http_chunks {
   PyObject *finish;
 };
 
-/* "extensions/lib/wsgi.pyx":366
+/* "extensions/lib/wsgi.pyx":284
  * 
  * 
  * cpdef has_empty_content(int status, str method=None):             # <<<<<<<<<<<<<<
@@ -937,7 +898,7 @@ struct __pyx_opt_args_4clib_has_empty_content {
   PyObject *method;
 };
 
-/* "extensions/lib/wsgi.pyx":373
+/* "extensions/lib/wsgi.pyx":291
  * 
  * 
  * cdef void reraise(object tp, object value, object tb=None):             # <<<<<<<<<<<<<<
@@ -951,10 +912,10 @@ struct __pyx_opt_args_4clib_reraise {
 
 /* "extensions/lib/wsgiresponse.pyx":172
  * 
- * 
- * cpdef set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',             # <<<<<<<<<<<<<<
- *                   domain=None, secure=False, httponly=False):
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
+ * cpdef set_cookie(
+ *         object cookies, str key, value='', max_age=None,             # <<<<<<<<<<<<<<
+ *         expires=None, path='/',
+ *         domain=None, secure=False, httponly=False):
  */
 struct __pyx_opt_args_4clib_set_cookie {
   int __pyx_n;
@@ -1554,8 +1515,6 @@ struct __pyx_vtabstruct_4clib_WsgiProtocol {
   PyObject *(*on_message_complete)(struct __pyx_obj_4clib_WsgiProtocol *, int __pyx_skip_dispatch);
   PyObject *(*start_response)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_start_response *__pyx_optional_args);
   PyObject *(*write)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write *__pyx_optional_args);
-  PyObject *(*write_list)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write_list *__pyx_optional_args);
-  PyObject *(*write_plus)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write_plus *__pyx_optional_args);
   PyObject *(*get_headers)(struct __pyx_obj_4clib_WsgiProtocol *);
 };
 static struct __pyx_vtabstruct_4clib_WsgiProtocol *__pyx_vtabptr_4clib_WsgiProtocol;
@@ -2317,8 +2276,6 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
 static PyObject *__pyx_f_4clib_12WsgiProtocol_on_message_complete(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
 static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_status, PyObject *__pyx_v_response_headers, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_start_response *__pyx_optional_args); /* proto*/
 static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write *__pyx_optional_args); /* proto*/
-static PyObject *__pyx_f_4clib_12WsgiProtocol_write_list(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write_list *__pyx_optional_args); /* proto*/
-static PyObject *__pyx_f_4clib_12WsgiProtocol_write_plus(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write_plus *__pyx_optional_args); /* proto*/
 static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self); /* proto*/
 static PyObject *__pyx_f_4clib_12WsgiResponse_set_content(struct __pyx_obj_4clib_WsgiResponse *__pyx_v_self, PyObject *__pyx_v_content, int __pyx_skip_dispatch); /* proto*/
 static PyObject *__pyx_f_4clib_12WsgiResponse_start(struct __pyx_obj_4clib_WsgiResponse *__pyx_v_self, PyObject *__pyx_v_start_response, int __pyx_skip_dispatch); /* proto*/
@@ -2399,10 +2356,8 @@ static PyObject *__pyx_v_4clib_dummyRequest = 0;
 static double __pyx_v_4clib_TIME_INTERVAL;
 static PyObject *__pyx_v_4clib_nocache = 0;
 static PyObject *__pyx_v_4clib_EMPTY = 0;
-static void __pyx_f_4clib_chunk_encoding_l(PyObject *, PyObject *); /*proto*/
-static void __pyx_f_4clib_http_chunks_l(PyObject *, PyObject *, struct __pyx_opt_args_4clib_http_chunks_l *__pyx_optional_args); /*proto*/
-static PyObject *__pyx_f_4clib_chunk_encoding(PyObject *, PyObject *); /*proto*/
-static PyObject *__pyx_f_4clib_http_chunks(PyObject *, PyObject *, struct __pyx_opt_args_4clib_http_chunks *__pyx_optional_args); /*proto*/
+static void __pyx_f_4clib_chunk_encoding(PyObject *, PyObject *); /*proto*/
+static void __pyx_f_4clib_http_chunks(PyObject *, PyObject *, struct __pyx_opt_args_4clib_http_chunks *__pyx_optional_args); /*proto*/
 static PyObject *__pyx_f_4clib_fast_http_date(int, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_4clib_http_date(int, int __pyx_skip_dispatch); /*proto*/
 static PyObject *__pyx_f_4clib_has_empty_content(int, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_has_empty_content *__pyx_optional_args); /*proto*/
@@ -2443,11 +2398,11 @@ static const char __pyx_k__33[] = "_";
 static const char __pyx_k__37[] = "-";
 static const char __pyx_k__39[] = ",";
 static const char __pyx_k__42[] = ":";
-static const char __pyx_k__55[] = "/";
-static const char __pyx_k__56[] = ";";
-static const char __pyx_k__85[] = "$";
-static const char __pyx_k__86[] = "*";
-static const char __pyx_k__87[] = "+";
+static const char __pyx_k__52[] = "/";
+static const char __pyx_k__53[] = ";";
+static const char __pyx_k__82[] = "$";
+static const char __pyx_k__83[] = "*";
+static const char __pyx_k__84[] = "+";
 static const char __pyx_k_add[] = "add";
 static const char __pyx_k_cfg[] = "cfg";
 static const char __pyx_k_d_2[] = "*%d\r\n";
@@ -2651,8 +2606,6 @@ static const char __pyx_k_set_result[] = "set_result";
 static const char __pyx_k_setsockopt[] = "setsockopt";
 static const char __pyx_k_sslcontext[] = "sslcontext";
 static const char __pyx_k_text_plain[] = "text/plain";
-static const char __pyx_k_write_list[] = "write_list";
-static const char __pyx_k_write_plus[] = "write_plus";
 static const char __pyx_k_CIMultiDict[] = "CIMultiDict";
 static const char __pyx_k_FileWrapper[] = "FileWrapper";
 static const char __pyx_k_REMOTE_ADDR[] = "REMOTE_ADDR";
@@ -2685,6 +2638,7 @@ static const char __pyx_k_SimpleCookie[] = "SimpleCookie";
 static const char __pyx_k_content_type[] = "content_type";
 static const char __pyx_k_continuation[] = "continuation";
 static const char __pyx_k_http_cookies[] = "http.cookies";
+static const char __pyx_k_keep_alive_2[] = "keep-alive";
 static const char __pyx_k_multi_encode[] = "multi_encode";
 static const char __pyx_k_pack_command[] = "_pack_command";
 static const char __pyx_k_post_request[] = "post_request";
@@ -2871,11 +2825,11 @@ static PyObject *__pyx_kp_s__37;
 static PyObject *__pyx_kp_s__39;
 static PyObject *__pyx_kp_b__42;
 static PyObject *__pyx_kp_s__42;
-static PyObject *__pyx_kp_s__55;
-static PyObject *__pyx_kp_s__56;
-static PyObject *__pyx_kp_b__85;
-static PyObject *__pyx_kp_b__86;
-static PyObject *__pyx_kp_b__87;
+static PyObject *__pyx_kp_s__52;
+static PyObject *__pyx_kp_s__53;
+static PyObject *__pyx_kp_b__82;
+static PyObject *__pyx_kp_b__83;
+static PyObject *__pyx_kp_b__84;
 static PyObject *__pyx_n_s_a;
 static PyObject *__pyx_n_s_add;
 static PyObject *__pyx_n_s_add_header;
@@ -2981,6 +2935,7 @@ static PyObject *__pyx_n_s_items;
 static PyObject *__pyx_n_s_itertools;
 static PyObject *__pyx_n_s_join;
 static PyObject *__pyx_n_s_keep_alive;
+static PyObject *__pyx_kp_s_keep_alive_2;
 static PyObject *__pyx_n_s_key;
 static PyObject *__pyx_n_s_kind;
 static PyObject *__pyx_n_s_len;
@@ -3124,8 +3079,6 @@ static PyObject *__pyx_n_s_warning;
 static PyObject *__pyx_n_s_with_traceback;
 static PyObject *__pyx_n_s_wrap;
 static PyObject *__pyx_n_s_write;
-static PyObject *__pyx_n_s_write_list;
-static PyObject *__pyx_n_s_write_plus;
 static PyObject *__pyx_n_s_wsgi_cached;
 static PyObject *__pyx_n_s_wsgi_cached_locals;
 static PyObject *__pyx_kp_s_wsgi_errors;
@@ -3249,8 +3202,6 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_8on_body(struct __pyx_obj_4clib_W
 static PyObject *__pyx_pf_4clib_12WsgiProtocol_10on_message_complete(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_4clib_12WsgiProtocol_12start_response(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_status, PyObject *__pyx_v_response_headers, PyObject *__pyx_v_exc_info); /* proto */
 static PyObject *__pyx_pf_4clib_12WsgiProtocol_14write(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, PyObject *__pyx_v_force); /* proto */
-static PyObject *__pyx_pf_4clib_12WsgiProtocol_16write_list(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, PyObject *__pyx_v_force); /* proto */
-static PyObject *__pyx_pf_4clib_12WsgiProtocol_18write_plus(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, PyObject *__pyx_v_force); /* proto */
 static PyObject *__pyx_pf_4clib_12WsgiProtocol_7environ___get__(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_4clib_12WsgiProtocol_7headers___get__(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_4clib_12WsgiProtocol_12headers_sent___get__(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self); /* proto */
@@ -3384,13 +3335,13 @@ static PyObject *__pyx_tuple__45;
 static PyObject *__pyx_tuple__46;
 static PyObject *__pyx_tuple__47;
 static PyObject *__pyx_tuple__48;
-static PyObject *__pyx_tuple__49;
 static PyObject *__pyx_tuple__50;
 static PyObject *__pyx_tuple__51;
-static PyObject *__pyx_tuple__53;
 static PyObject *__pyx_tuple__54;
+static PyObject *__pyx_tuple__55;
 static PyObject *__pyx_tuple__57;
 static PyObject *__pyx_tuple__58;
+static PyObject *__pyx_tuple__59;
 static PyObject *__pyx_tuple__60;
 static PyObject *__pyx_tuple__61;
 static PyObject *__pyx_tuple__62;
@@ -3413,15 +3364,12 @@ static PyObject *__pyx_tuple__78;
 static PyObject *__pyx_tuple__79;
 static PyObject *__pyx_tuple__80;
 static PyObject *__pyx_tuple__81;
-static PyObject *__pyx_tuple__82;
-static PyObject *__pyx_tuple__83;
-static PyObject *__pyx_tuple__84;
-static PyObject *__pyx_tuple__88;
-static PyObject *__pyx_tuple__89;
-static PyObject *__pyx_tuple__90;
-static PyObject *__pyx_codeobj__52;
-static PyObject *__pyx_codeobj__59;
-static PyObject *__pyx_codeobj__91;
+static PyObject *__pyx_tuple__85;
+static PyObject *__pyx_tuple__86;
+static PyObject *__pyx_tuple__87;
+static PyObject *__pyx_codeobj__49;
+static PyObject *__pyx_codeobj__56;
+static PyObject *__pyx_codeobj__88;
 
 /* "extensions/lib/rparser.pyx":23
  *     cdef Task _current
@@ -21617,8 +21565,8 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_8feed_data(struct __pyx_obj_4
  *         pass
  * 
  *     cpdef void _finished(self, object _, object exc=None):             # <<<<<<<<<<<<<<
- *         self.connection._current_consumer = None
- * 
+ *         if self.connection._current_consumer is self:
+ *             self.connection._current_consumer = None
  */
 
 static PyObject *__pyx_pw_4clib_16ProtocolConsumer_11_finished(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
@@ -21631,6 +21579,8 @@ static void __pyx_f_4clib_16ProtocolConsumer__finished(struct __pyx_obj_4clib_Pr
   PyObject *__pyx_t_4 = NULL;
   int __pyx_t_5;
   PyObject *__pyx_t_6 = NULL;
+  int __pyx_t_7;
+  int __pyx_t_8;
   __Pyx_RefNannySetupContext("_finished", 0);
   if (__pyx_optional_args) {
     if (__pyx_optional_args->__pyx_n > 0) {
@@ -21700,22 +21650,42 @@ static void __pyx_f_4clib_16ProtocolConsumer__finished(struct __pyx_obj_4clib_Pr
   /* "extensions/lib/protocols.pyx":174
  * 
  *     cpdef void _finished(self, object _, object exc=None):
- *         self.connection._current_consumer = None             # <<<<<<<<<<<<<<
+ *         if self.connection._current_consumer is self:             # <<<<<<<<<<<<<<
+ *             self.connection._current_consumer = None
+ * 
+ */
+  __pyx_t_7 = (__pyx_v_self->connection->_current_consumer == __pyx_v_self);
+  __pyx_t_8 = (__pyx_t_7 != 0);
+  if (__pyx_t_8) {
+
+    /* "extensions/lib/protocols.pyx":175
+ *     cpdef void _finished(self, object _, object exc=None):
+ *         if self.connection._current_consumer is self:
+ *             self.connection._current_consumer = None             # <<<<<<<<<<<<<<
  * 
  *     cpdef object get(self, str attr):
  */
-  __Pyx_INCREF(Py_None);
-  __Pyx_GIVEREF(Py_None);
-  __Pyx_GOTREF(__pyx_v_self->connection->_current_consumer);
-  __Pyx_DECREF(((PyObject *)__pyx_v_self->connection->_current_consumer));
-  __pyx_v_self->connection->_current_consumer = ((struct __pyx_obj_4clib_ProtocolConsumer *)Py_None);
+    __Pyx_INCREF(Py_None);
+    __Pyx_GIVEREF(Py_None);
+    __Pyx_GOTREF(__pyx_v_self->connection->_current_consumer);
+    __Pyx_DECREF(((PyObject *)__pyx_v_self->connection->_current_consumer));
+    __pyx_v_self->connection->_current_consumer = ((struct __pyx_obj_4clib_ProtocolConsumer *)Py_None);
+
+    /* "extensions/lib/protocols.pyx":174
+ * 
+ *     cpdef void _finished(self, object _, object exc=None):
+ *         if self.connection._current_consumer is self:             # <<<<<<<<<<<<<<
+ *             self.connection._current_consumer = None
+ * 
+ */
+  }
 
   /* "extensions/lib/protocols.pyx":173
  *         pass
  * 
  *     cpdef void _finished(self, object _, object exc=None):             # <<<<<<<<<<<<<<
- *         self.connection._current_consumer = None
- * 
+ *         if self.connection._current_consumer is self:
+ *             self.connection._current_consumer = None
  */
 
   /* function exit code */
@@ -21819,8 +21789,8 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_10_finished(struct __pyx_obj_
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":176
- *         self.connection._current_consumer = None
+/* "extensions/lib/protocols.pyx":177
+ *             self.connection._current_consumer = None
  * 
  *     cpdef object get(self, str attr):             # <<<<<<<<<<<<<<
  *         return getattr(self, attr, None)
@@ -21841,7 +21811,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_get); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 176, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_get); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_13get)) {
       __Pyx_XDECREF(__pyx_r);
@@ -21857,13 +21827,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_attr); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_attr); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_attr};
-          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
@@ -21871,19 +21841,19 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_attr};
-          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
         #endif
         {
-          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 176, __pyx_L1_error)
+          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 177, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_INCREF(__pyx_v_attr);
           __Pyx_GIVEREF(__pyx_v_attr);
           PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_attr);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 176, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         }
@@ -21897,7 +21867,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":177
+  /* "extensions/lib/protocols.pyx":178
  * 
  *     cpdef object get(self, str attr):
  *         return getattr(self, attr, None)             # <<<<<<<<<<<<<<
@@ -21905,14 +21875,14 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
  *     cpdef object pop(self, str attr, object default=None):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_v_attr, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_v_attr, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 178, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "extensions/lib/protocols.pyx":176
- *         self.connection._current_consumer = None
+  /* "extensions/lib/protocols.pyx":177
+ *             self.connection._current_consumer = None
  * 
  *     cpdef object get(self, str attr):             # <<<<<<<<<<<<<<
  *         return getattr(self, attr, None)
@@ -21940,7 +21910,7 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_13get(PyObject *__pyx_v_self,
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("get (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 176, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 177, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_16ProtocolConsumer_12get(((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_self), ((PyObject*)__pyx_v_attr));
 
   /* function exit code */
@@ -21958,7 +21928,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_12get(struct __pyx_obj_4clib_
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("get", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_get(__pyx_v_self, __pyx_v_attr, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 176, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_get(__pyx_v_self, __pyx_v_attr, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -21975,7 +21945,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_12get(struct __pyx_obj_4clib_
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":179
+/* "extensions/lib/protocols.pyx":180
  *         return getattr(self, attr, None)
  * 
  *     cpdef object pop(self, str attr, object default=None):             # <<<<<<<<<<<<<<
@@ -22009,7 +21979,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_pop); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 179, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_pop); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_15pop)) {
       __Pyx_XDECREF(__pyx_r);
@@ -22029,7 +21999,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_attr, __pyx_v_default};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 179, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -22037,13 +22007,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_attr, __pyx_v_default};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 179, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 179, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 180, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         if (__pyx_t_4) {
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -22054,7 +22024,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
         __Pyx_INCREF(__pyx_v_default);
         __Pyx_GIVEREF(__pyx_v_default);
         PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_default);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 179, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -22067,19 +22037,19 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":180
+  /* "extensions/lib/protocols.pyx":181
  * 
  *     cpdef object pop(self, str attr, object default=None):
  *         cdef object value = getattr(self, attr, default)             # <<<<<<<<<<<<<<
  *         try:
  *             delattr(self, attr)
  */
-  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_v_attr, __pyx_v_default); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_v_attr, __pyx_v_default); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 181, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_value = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/protocols.pyx":181
+  /* "extensions/lib/protocols.pyx":182
  *     cpdef object pop(self, str attr, object default=None):
  *         cdef object value = getattr(self, attr, default)
  *         try:             # <<<<<<<<<<<<<<
@@ -22095,16 +22065,16 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     __Pyx_XGOTREF(__pyx_t_9);
     /*try:*/ {
 
-      /* "extensions/lib/protocols.pyx":182
+      /* "extensions/lib/protocols.pyx":183
  *         cdef object value = getattr(self, attr, default)
  *         try:
  *             delattr(self, attr)             # <<<<<<<<<<<<<<
  *         except AttributeError:
  *             pass
  */
-      __pyx_t_10 = PyObject_DelAttr(((PyObject *)__pyx_v_self), __pyx_v_attr); if (unlikely(__pyx_t_10 == -1)) __PYX_ERR(0, 182, __pyx_L3_error)
+      __pyx_t_10 = PyObject_DelAttr(((PyObject *)__pyx_v_self), __pyx_v_attr); if (unlikely(__pyx_t_10 == -1)) __PYX_ERR(0, 183, __pyx_L3_error)
 
-      /* "extensions/lib/protocols.pyx":181
+      /* "extensions/lib/protocols.pyx":182
  *     cpdef object pop(self, str attr, object default=None):
  *         cdef object value = getattr(self, attr, default)
  *         try:             # <<<<<<<<<<<<<<
@@ -22124,7 +22094,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "extensions/lib/protocols.pyx":183
+    /* "extensions/lib/protocols.pyx":184
  *         try:
  *             delattr(self, attr)
  *         except AttributeError:             # <<<<<<<<<<<<<<
@@ -22139,7 +22109,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "extensions/lib/protocols.pyx":181
+    /* "extensions/lib/protocols.pyx":182
  *     cpdef object pop(self, str attr, object default=None):
  *         cdef object value = getattr(self, attr, default)
  *         try:             # <<<<<<<<<<<<<<
@@ -22161,7 +22131,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     __pyx_L10_try_end:;
   }
 
-  /* "extensions/lib/protocols.pyx":185
+  /* "extensions/lib/protocols.pyx":186
  *         except AttributeError:
  *             pass
  *         return value             # <<<<<<<<<<<<<<
@@ -22171,7 +22141,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
   __pyx_r = __pyx_v_value;
   goto __pyx_L0;
 
-  /* "extensions/lib/protocols.pyx":179
+  /* "extensions/lib/protocols.pyx":180
  *         return getattr(self, attr, None)
  * 
  *     cpdef object pop(self, str attr, object default=None):             # <<<<<<<<<<<<<<
@@ -22228,7 +22198,7 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_15pop(PyObject *__pyx_v_self,
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "pop") < 0)) __PYX_ERR(0, 179, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "pop") < 0)) __PYX_ERR(0, 180, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -22243,13 +22213,13 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_15pop(PyObject *__pyx_v_self,
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("pop", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 179, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("pop", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 180, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.ProtocolConsumer.pop", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 179, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 180, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_16ProtocolConsumer_14pop(((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_self), __pyx_v_attr, __pyx_v_default);
 
   /* function exit code */
@@ -22270,7 +22240,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_14pop(struct __pyx_obj_4clib_
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.__pyx_default = __pyx_v_default;
-  __pyx_t_1 = __pyx_vtabptr_4clib_ProtocolConsumer->pop(__pyx_v_self, __pyx_v_attr, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 179, __pyx_L1_error)
+  __pyx_t_1 = __pyx_vtabptr_4clib_ProtocolConsumer->pop(__pyx_v_self, __pyx_v_attr, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -24312,7 +24282,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
  * 
  *         if header in HOP_HEADERS:             # <<<<<<<<<<<<<<
  *             if header == CONNECTION:
- *                 if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0' or header_value == 'close':
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'
  */
   __pyx_t_9 = (__Pyx_PySequence_ContainsTF(__pyx_v_header, __pyx_v_4clib_HOP_HEADERS, Py_EQ)); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(5, 103, __pyx_L1_error)
   __pyx_t_8 = (__pyx_t_9 != 0);
@@ -24322,8 +24292,8 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
  * 
  *         if header in HOP_HEADERS:
  *             if header == CONNECTION:             # <<<<<<<<<<<<<<
- *                 if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0' or header_value == 'close':
- *                     self.headers[header] = header_value
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'
+ *                         or header_value != 'keep-alive'):
  */
     __pyx_t_2 = PyObject_RichCompare(__pyx_v_header, __pyx_v_4clib_CONNECTION, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 104, __pyx_L1_error)
     __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 104, __pyx_L1_error)
@@ -24333,9 +24303,9 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
       /* "extensions/lib/wsgi.pyx":105
  *         if header in HOP_HEADERS:
  *             if header == CONNECTION:
- *                 if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0' or header_value == 'close':             # <<<<<<<<<<<<<<
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'             # <<<<<<<<<<<<<<
+ *                         or header_value != 'keep-alive'):
  *                     self.headers[header] = header_value
- *             else:
  */
       if (unlikely(__pyx_v_self->environ == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
@@ -24350,27 +24320,43 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
         __pyx_t_8 = __pyx_t_9;
         goto __pyx_L7_bool_binop_done;
       }
-      __pyx_t_9 = (__Pyx_PyString_Equals(__pyx_v_header_value, __pyx_n_s_close, Py_EQ)); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(5, 105, __pyx_L1_error)
+
+      /* "extensions/lib/wsgi.pyx":106
+ *             if header == CONNECTION:
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'
+ *                         or header_value != 'keep-alive'):             # <<<<<<<<<<<<<<
+ *                     self.headers[header] = header_value
+ *             else:
+ */
+      __pyx_t_9 = (__Pyx_PyString_Equals(__pyx_v_header_value, __pyx_kp_s_keep_alive_2, Py_NE)); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(5, 106, __pyx_L1_error)
       __pyx_t_10 = (__pyx_t_9 != 0);
       __pyx_t_8 = __pyx_t_10;
       __pyx_L7_bool_binop_done:;
+
+      /* "extensions/lib/wsgi.pyx":105
+ *         if header in HOP_HEADERS:
+ *             if header == CONNECTION:
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'             # <<<<<<<<<<<<<<
+ *                         or header_value != 'keep-alive'):
+ *                     self.headers[header] = header_value
+ */
       if (__pyx_t_8) {
 
-        /* "extensions/lib/wsgi.pyx":106
- *             if header == CONNECTION:
- *                 if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0' or header_value == 'close':
+        /* "extensions/lib/wsgi.pyx":107
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'
+ *                         or header_value != 'keep-alive'):
  *                     self.headers[header] = header_value             # <<<<<<<<<<<<<<
  *             else:
  *                 self.headers[header] = header_value
  */
-        if (unlikely(PyObject_SetItem(__pyx_v_self->headers, __pyx_v_header, __pyx_v_header_value) < 0)) __PYX_ERR(5, 106, __pyx_L1_error)
+        if (unlikely(PyObject_SetItem(__pyx_v_self->headers, __pyx_v_header, __pyx_v_header_value) < 0)) __PYX_ERR(5, 107, __pyx_L1_error)
 
         /* "extensions/lib/wsgi.pyx":105
  *         if header in HOP_HEADERS:
  *             if header == CONNECTION:
- *                 if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0' or header_value == 'close':             # <<<<<<<<<<<<<<
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'             # <<<<<<<<<<<<<<
+ *                         or header_value != 'keep-alive'):
  *                     self.headers[header] = header_value
- *             else:
  */
       }
 
@@ -24378,13 +24364,13 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
  * 
  *         if header in HOP_HEADERS:
  *             if header == CONNECTION:             # <<<<<<<<<<<<<<
- *                 if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0' or header_value == 'close':
- *                     self.headers[header] = header_value
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'
+ *                         or header_value != 'keep-alive'):
  */
       goto __pyx_L5;
     }
 
-    /* "extensions/lib/wsgi.pyx":108
+    /* "extensions/lib/wsgi.pyx":109
  *                     self.headers[header] = header_value
  *             else:
  *                 self.headers[header] = header_value             # <<<<<<<<<<<<<<
@@ -24392,7 +24378,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
  *             hnd = getattr(self.header_wsgi, header, None)
  */
     /*else*/ {
-      if (unlikely(PyObject_SetItem(__pyx_v_self->headers, __pyx_v_header, __pyx_v_header_value) < 0)) __PYX_ERR(5, 108, __pyx_L1_error)
+      if (unlikely(PyObject_SetItem(__pyx_v_self->headers, __pyx_v_header, __pyx_v_header_value) < 0)) __PYX_ERR(5, 109, __pyx_L1_error)
     }
     __pyx_L5:;
 
@@ -24401,12 +24387,12 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
  * 
  *         if header in HOP_HEADERS:             # <<<<<<<<<<<<<<
  *             if header == CONNECTION:
- *                 if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0' or header_value == 'close':
+ *                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'
  */
     goto __pyx_L4;
   }
 
-  /* "extensions/lib/wsgi.pyx":110
+  /* "extensions/lib/wsgi.pyx":111
  *                 self.headers[header] = header_value
  *         else:
  *             hnd = getattr(self.header_wsgi, header, None)             # <<<<<<<<<<<<<<
@@ -24416,20 +24402,20 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
   /*else*/ {
     __pyx_t_2 = __pyx_v_self->header_wsgi;
     __Pyx_INCREF(__pyx_t_2);
-    __pyx_t_1 = __Pyx_GetAttr3(__pyx_t_2, __pyx_v_header, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 110, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetAttr3(__pyx_t_2, __pyx_v_header, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 111, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_v_hnd = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "extensions/lib/wsgi.pyx":111
+    /* "extensions/lib/wsgi.pyx":112
  *         else:
  *             hnd = getattr(self.header_wsgi, header, None)
  *             if hnd and hnd(self.environ, header_value):             # <<<<<<<<<<<<<<
  *                 return
  *         self.environ['HTTP_%s' % header.upper().replace('-', '_')] = header_value
  */
-    __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_v_hnd); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(5, 111, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_v_hnd); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(5, 112, __pyx_L1_error)
     if (__pyx_t_10) {
     } else {
       __pyx_t_8 = __pyx_t_10;
@@ -24451,7 +24437,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_self->environ, __pyx_v_header_value};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 111, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 112, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -24459,13 +24445,13 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_self->environ, __pyx_v_header_value};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 111, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 112, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_7 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(5, 111, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(5, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       if (__pyx_t_3) {
         __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_3); __pyx_t_3 = NULL;
@@ -24476,18 +24462,18 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
       __Pyx_INCREF(__pyx_v_header_value);
       __Pyx_GIVEREF(__pyx_v_header_value);
       PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_5, __pyx_v_header_value);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 111, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(5, 111, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(5, 112, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_8 = __pyx_t_10;
     __pyx_L10_bool_binop_done:;
     if (__pyx_t_8) {
 
-      /* "extensions/lib/wsgi.pyx":112
+      /* "extensions/lib/wsgi.pyx":113
  *             hnd = getattr(self.header_wsgi, header, None)
  *             if hnd and hnd(self.environ, header_value):
  *                 return             # <<<<<<<<<<<<<<
@@ -24496,7 +24482,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
  */
       goto __pyx_L0;
 
-      /* "extensions/lib/wsgi.pyx":111
+      /* "extensions/lib/wsgi.pyx":112
  *         else:
  *             hnd = getattr(self.header_wsgi, header, None)
  *             if hnd and hnd(self.environ, header_value):             # <<<<<<<<<<<<<<
@@ -24507,7 +24493,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
   }
   __pyx_L4:;
 
-  /* "extensions/lib/wsgi.pyx":113
+  /* "extensions/lib/wsgi.pyx":114
  *             if hnd and hnd(self.environ, header_value):
  *                 return
  *         self.environ['HTTP_%s' % header.upper().replace('-', '_')] = header_value             # <<<<<<<<<<<<<<
@@ -24516,9 +24502,9 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
  */
   if (unlikely(__pyx_v_self->environ == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(5, 113, __pyx_L1_error)
+    __PYX_ERR(5, 114, __pyx_L1_error)
   }
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_header, __pyx_n_s_upper); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 113, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_header, __pyx_n_s_upper); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 114, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_7 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -24531,23 +24517,23 @@ static void __pyx_f_4clib_12WsgiProtocol_on_header(struct __pyx_obj_4clib_WsgiPr
     }
   }
   if (__pyx_t_7) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 113, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 114, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 113, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 114, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_replace); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 113, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_replace); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 114, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__38, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 113, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__38, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 114, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_HTTP__s, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 113, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_HTTP__s, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 114, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_t_2, __pyx_v_header_value) < 0)) __PYX_ERR(5, 113, __pyx_L1_error)
+  if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_t_2, __pyx_v_header_value) < 0)) __PYX_ERR(5, 114, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "extensions/lib/wsgi.pyx":95
@@ -24662,7 +24648,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_4on_header(struct __pyx_obj_4clib
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":115
+/* "extensions/lib/wsgi.pyx":116
  *         self.environ['HTTP_%s' % header.upper().replace('-', '_')] = header_value
  * 
  *     cpdef void on_headers_complete(self):             # <<<<<<<<<<<<<<
@@ -24692,7 +24678,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_on_headers_complete); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 115, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_on_headers_complete); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 116, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_7on_headers_complete)) {
       __Pyx_INCREF(__pyx_t_1);
@@ -24707,10 +24693,10 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
         }
       }
       if (__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 115, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 116, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       } else {
-        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 115, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 116, __pyx_L1_error)
       }
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -24721,14 +24707,14 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/wsgi.pyx":116
+  /* "extensions/lib/wsgi.pyx":117
  * 
  *     cpdef void on_headers_complete(self):
  *         cdef str forward = self.headers.get(X_FORWARDED_FOR)             # <<<<<<<<<<<<<<
  *         cdef object client_address = self.client_address
  *         cdef str path_info
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->headers, __pyx_n_s_get); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 116, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->headers, __pyx_n_s_get); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 117, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -24741,13 +24727,13 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_X_FORWARDED_FOR); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 116, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_X_FORWARDED_FOR); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 117, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_4clib_X_FORWARDED_FOR};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 116, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 117, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -24755,29 +24741,29 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_4clib_X_FORWARDED_FOR};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 116, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 117, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 116, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 117, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_INCREF(__pyx_v_4clib_X_FORWARDED_FOR);
       __Pyx_GIVEREF(__pyx_v_4clib_X_FORWARDED_FOR);
       PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_4clib_X_FORWARDED_FOR);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 116, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 117, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(5, 116, __pyx_L1_error)
+  if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(5, 117, __pyx_L1_error)
   __pyx_v_forward = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":117
+  /* "extensions/lib/wsgi.pyx":118
  *     cpdef void on_headers_complete(self):
  *         cdef str forward = self.headers.get(X_FORWARDED_FOR)
  *         cdef object client_address = self.client_address             # <<<<<<<<<<<<<<
@@ -24789,7 +24775,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
   __pyx_v_client_address = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":121
+  /* "extensions/lib/wsgi.pyx":122
  *         cdef str script_name
  * 
  *         if self.environ['wsgi.url_scheme'] == 'https':             # <<<<<<<<<<<<<<
@@ -24798,15 +24784,15 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
   if (unlikely(__pyx_v_self->environ == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(5, 121, __pyx_L1_error)
+    __PYX_ERR(5, 122, __pyx_L1_error)
   }
-  __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_self->environ, __pyx_kp_s_wsgi_url_scheme); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 121, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_GetItem(__pyx_v_self->environ, __pyx_kp_s_wsgi_url_scheme); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 122, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = (__Pyx_PyString_Equals(__pyx_t_1, __pyx_n_s_https, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 121, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PyString_Equals(__pyx_t_1, __pyx_n_s_https, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 122, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_5) {
 
-    /* "extensions/lib/wsgi.pyx":122
+    /* "extensions/lib/wsgi.pyx":123
  * 
  *         if self.environ['wsgi.url_scheme'] == 'https':
  *             self.environ['HTTPS'] = 'on'             # <<<<<<<<<<<<<<
@@ -24815,11 +24801,11 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
     if (unlikely(__pyx_v_self->environ == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 122, __pyx_L1_error)
+      __PYX_ERR(5, 123, __pyx_L1_error)
     }
-    if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_n_s_HTTPS, __pyx_n_s_on) < 0)) __PYX_ERR(5, 122, __pyx_L1_error)
+    if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_n_s_HTTPS, __pyx_n_s_on) < 0)) __PYX_ERR(5, 123, __pyx_L1_error)
 
-    /* "extensions/lib/wsgi.pyx":121
+    /* "extensions/lib/wsgi.pyx":122
  *         cdef str script_name
  * 
  *         if self.environ['wsgi.url_scheme'] == 'https':             # <<<<<<<<<<<<<<
@@ -24828,50 +24814,50 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":123
+  /* "extensions/lib/wsgi.pyx":124
  *         if self.environ['wsgi.url_scheme'] == 'https':
  *             self.environ['HTTPS'] = 'on'
  *         if forward:             # <<<<<<<<<<<<<<
  *             # we only took the last one
  *             # http://en.wikipedia.org/wiki/X-Forwarded-For
  */
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_forward); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 123, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_forward); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 124, __pyx_L1_error)
   if (__pyx_t_5) {
 
-    /* "extensions/lib/wsgi.pyx":126
+    /* "extensions/lib/wsgi.pyx":127
  *             # we only took the last one
  *             # http://en.wikipedia.org/wiki/X-Forwarded-For
  *             if forward.find(",") >= 0:             # <<<<<<<<<<<<<<
  *                 forward = forward.rsplit(",", 1)[1].strip()
  *             client_address = forward.split(":")
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_forward, __pyx_n_s_find); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 126, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_forward, __pyx_n_s_find); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 127, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__40, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 126, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__40, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 127, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PyObject_RichCompare(__pyx_t_2, __pyx_int_0, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 126, __pyx_L1_error)
+    __pyx_t_1 = PyObject_RichCompare(__pyx_t_2, __pyx_int_0, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 127, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 126, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 127, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (__pyx_t_5) {
 
-      /* "extensions/lib/wsgi.pyx":127
+      /* "extensions/lib/wsgi.pyx":128
  *             # http://en.wikipedia.org/wiki/X-Forwarded-For
  *             if forward.find(",") >= 0:
  *                 forward = forward.rsplit(",", 1)[1].strip()             # <<<<<<<<<<<<<<
  *             client_address = forward.split(":")
  *             if len(client_address) < 2:
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_forward, __pyx_n_s_rsplit); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 127, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_forward, __pyx_n_s_rsplit); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 128, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__41, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 127, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__41, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 128, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_4, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 127, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_4, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 128, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_strip); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 127, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_strip); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 128, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_2 = NULL;
@@ -24885,18 +24871,18 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
         }
       }
       if (__pyx_t_2) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 127, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 128, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       } else {
-        __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 127, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 128, __pyx_L1_error)
       }
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(5, 127, __pyx_L1_error)
+      if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(5, 128, __pyx_L1_error)
       __Pyx_DECREF_SET(__pyx_v_forward, ((PyObject*)__pyx_t_1));
       __pyx_t_1 = 0;
 
-      /* "extensions/lib/wsgi.pyx":126
+      /* "extensions/lib/wsgi.pyx":127
  *             # we only took the last one
  *             # http://en.wikipedia.org/wiki/X-Forwarded-For
  *             if forward.find(",") >= 0:             # <<<<<<<<<<<<<<
@@ -24905,42 +24891,42 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
     }
 
-    /* "extensions/lib/wsgi.pyx":128
+    /* "extensions/lib/wsgi.pyx":129
  *             if forward.find(",") >= 0:
  *                 forward = forward.rsplit(",", 1)[1].strip()
  *             client_address = forward.split(":")             # <<<<<<<<<<<<<<
  *             if len(client_address) < 2:
  *                 client_address.append('80')
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_forward, __pyx_n_s_split); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 128, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_forward, __pyx_n_s_split); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 129, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__43, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 128, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__43, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 129, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF_SET(__pyx_v_client_address, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "extensions/lib/wsgi.pyx":129
+    /* "extensions/lib/wsgi.pyx":130
  *                 forward = forward.rsplit(",", 1)[1].strip()
  *             client_address = forward.split(":")
  *             if len(client_address) < 2:             # <<<<<<<<<<<<<<
  *                 client_address.append('80')
  *         self.environ['REMOTE_ADDR'] = client_address[0]
  */
-    __pyx_t_6 = PyObject_Length(__pyx_v_client_address); if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(5, 129, __pyx_L1_error)
+    __pyx_t_6 = PyObject_Length(__pyx_v_client_address); if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(5, 130, __pyx_L1_error)
     __pyx_t_5 = ((__pyx_t_6 < 2) != 0);
     if (__pyx_t_5) {
 
-      /* "extensions/lib/wsgi.pyx":130
+      /* "extensions/lib/wsgi.pyx":131
  *             client_address = forward.split(":")
  *             if len(client_address) < 2:
  *                 client_address.append('80')             # <<<<<<<<<<<<<<
  *         self.environ['REMOTE_ADDR'] = client_address[0]
  *         self.environ['REMOTE_PORT'] = str(client_address[1])
  */
-      __pyx_t_7 = __Pyx_PyObject_Append(__pyx_v_client_address, __pyx_kp_s_80); if (unlikely(__pyx_t_7 == -1)) __PYX_ERR(5, 130, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_Append(__pyx_v_client_address, __pyx_kp_s_80); if (unlikely(__pyx_t_7 == -1)) __PYX_ERR(5, 131, __pyx_L1_error)
 
-      /* "extensions/lib/wsgi.pyx":129
+      /* "extensions/lib/wsgi.pyx":130
  *                 forward = forward.rsplit(",", 1)[1].strip()
  *             client_address = forward.split(":")
  *             if len(client_address) < 2:             # <<<<<<<<<<<<<<
@@ -24949,7 +24935,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
     }
 
-    /* "extensions/lib/wsgi.pyx":123
+    /* "extensions/lib/wsgi.pyx":124
  *         if self.environ['wsgi.url_scheme'] == 'https':
  *             self.environ['HTTPS'] = 'on'
  *         if forward:             # <<<<<<<<<<<<<<
@@ -24958,70 +24944,70 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":131
+  /* "extensions/lib/wsgi.pyx":132
  *             if len(client_address) < 2:
  *                 client_address.append('80')
  *         self.environ['REMOTE_ADDR'] = client_address[0]             # <<<<<<<<<<<<<<
  *         self.environ['REMOTE_PORT'] = str(client_address[1])
  * 
  */
-  __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_client_address, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 131, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_client_address, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 132, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (unlikely(__pyx_v_self->environ == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(5, 131, __pyx_L1_error)
+    __PYX_ERR(5, 132, __pyx_L1_error)
   }
-  if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_n_s_REMOTE_ADDR, __pyx_t_4) < 0)) __PYX_ERR(5, 131, __pyx_L1_error)
+  if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_n_s_REMOTE_ADDR, __pyx_t_4) < 0)) __PYX_ERR(5, 132, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "extensions/lib/wsgi.pyx":132
+  /* "extensions/lib/wsgi.pyx":133
  *                 client_address.append('80')
  *         self.environ['REMOTE_ADDR'] = client_address[0]
  *         self.environ['REMOTE_PORT'] = str(client_address[1])             # <<<<<<<<<<<<<<
  * 
  *         if self.parsed_url.path is not None:
  */
-  __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_client_address, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 132, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_client_address, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 133, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 132, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 133, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4);
   __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 132, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 133, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (unlikely(__pyx_v_self->environ == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(5, 132, __pyx_L1_error)
+    __PYX_ERR(5, 133, __pyx_L1_error)
   }
-  if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_n_s_REMOTE_PORT, __pyx_t_4) < 0)) __PYX_ERR(5, 132, __pyx_L1_error)
+  if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_n_s_REMOTE_PORT, __pyx_t_4) < 0)) __PYX_ERR(5, 133, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "extensions/lib/wsgi.pyx":134
+  /* "extensions/lib/wsgi.pyx":135
  *         self.environ['REMOTE_PORT'] = str(client_address[1])
  * 
  *         if self.parsed_url.path is not None:             # <<<<<<<<<<<<<<
  *             path_info = self.parsed_url.path.decode(CHARSET)
  *             script_name = self.environ['SCRIPT_NAME']
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->parsed_url, __pyx_n_s_path); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 134, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->parsed_url, __pyx_n_s_path); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 135, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = (__pyx_t_4 != Py_None);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_8 = (__pyx_t_5 != 0);
   if (__pyx_t_8) {
 
-    /* "extensions/lib/wsgi.pyx":135
+    /* "extensions/lib/wsgi.pyx":136
  * 
  *         if self.parsed_url.path is not None:
  *             path_info = self.parsed_url.path.decode(CHARSET)             # <<<<<<<<<<<<<<
  *             script_name = self.environ['SCRIPT_NAME']
  *             if script_name:
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->parsed_url, __pyx_n_s_path); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 135, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->parsed_url, __pyx_n_s_path); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 136, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_decode); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 135, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_decode); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 136, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_1 = NULL;
@@ -25035,13 +25021,13 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
       }
     }
     if (!__pyx_t_1) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 135, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 136, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_2)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_4clib_CHARSET};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 135, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 136, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else
@@ -25049,29 +25035,29 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_4clib_CHARSET};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 135, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 136, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else
       #endif
       {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 135, __pyx_L1_error)
+        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 136, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
         __Pyx_INCREF(__pyx_v_4clib_CHARSET);
         __Pyx_GIVEREF(__pyx_v_4clib_CHARSET);
         PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_4clib_CHARSET);
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 135, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 136, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       }
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (!(likely(PyString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(5, 135, __pyx_L1_error)
+    if (!(likely(PyString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(5, 136, __pyx_L1_error)
     __pyx_v_path_info = ((PyObject*)__pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "extensions/lib/wsgi.pyx":136
+    /* "extensions/lib/wsgi.pyx":137
  *         if self.parsed_url.path is not None:
  *             path_info = self.parsed_url.path.decode(CHARSET)
  *             script_name = self.environ['SCRIPT_NAME']             # <<<<<<<<<<<<<<
@@ -25080,32 +25066,32 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
     if (unlikely(__pyx_v_self->environ == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 136, __pyx_L1_error)
+      __PYX_ERR(5, 137, __pyx_L1_error)
     }
-    __pyx_t_4 = __Pyx_PyDict_GetItem(__pyx_v_self->environ, __pyx_n_s_SCRIPT_NAME); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 136, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyDict_GetItem(__pyx_v_self->environ, __pyx_n_s_SCRIPT_NAME); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 137, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    if (!(likely(PyString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(5, 136, __pyx_L1_error)
+    if (!(likely(PyString_CheckExact(__pyx_t_4))||((__pyx_t_4) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_4)->tp_name), 0))) __PYX_ERR(5, 137, __pyx_L1_error)
     __pyx_v_script_name = ((PyObject*)__pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "extensions/lib/wsgi.pyx":137
+    /* "extensions/lib/wsgi.pyx":138
  *             path_info = self.parsed_url.path.decode(CHARSET)
  *             script_name = self.environ['SCRIPT_NAME']
  *             if script_name:             # <<<<<<<<<<<<<<
  *                 path_info = path_info.split(script_name, 1)[1]
  *             self.environ['PATH_INFO'] = unquote(path_info)
  */
-    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_script_name); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 137, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_script_name); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 138, __pyx_L1_error)
     if (__pyx_t_8) {
 
-      /* "extensions/lib/wsgi.pyx":138
+      /* "extensions/lib/wsgi.pyx":139
  *             script_name = self.environ['SCRIPT_NAME']
  *             if script_name:
  *                 path_info = path_info.split(script_name, 1)[1]             # <<<<<<<<<<<<<<
  *             self.environ['PATH_INFO'] = unquote(path_info)
  * 
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_path_info, __pyx_n_s_split); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 138, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_path_info, __pyx_n_s_split); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_t_3 = NULL;
       __pyx_t_9 = 0;
@@ -25122,7 +25108,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_2)) {
         PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_script_name, __pyx_int_1};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 138, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 139, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else
@@ -25130,13 +25116,13 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
         PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_script_name, __pyx_int_1};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 138, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 139, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else
       #endif
       {
-        __pyx_t_1 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 138, __pyx_L1_error)
+        __pyx_t_1 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 139, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         if (__pyx_t_3) {
           __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3); __pyx_t_3 = NULL;
@@ -25147,19 +25133,19 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
         __Pyx_INCREF(__pyx_int_1);
         __Pyx_GIVEREF(__pyx_int_1);
         PyTuple_SET_ITEM(__pyx_t_1, 1+__pyx_t_9, __pyx_int_1);
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 138, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 139, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       }
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_4, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 138, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_GetItemInt(__pyx_t_4, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (!(likely(PyString_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(5, 138, __pyx_L1_error)
+      if (!(likely(PyString_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(5, 139, __pyx_L1_error)
       __Pyx_DECREF_SET(__pyx_v_path_info, ((PyObject*)__pyx_t_2));
       __pyx_t_2 = 0;
 
-      /* "extensions/lib/wsgi.pyx":137
+      /* "extensions/lib/wsgi.pyx":138
  *             path_info = self.parsed_url.path.decode(CHARSET)
  *             script_name = self.environ['SCRIPT_NAME']
  *             if script_name:             # <<<<<<<<<<<<<<
@@ -25168,14 +25154,14 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
     }
 
-    /* "extensions/lib/wsgi.pyx":139
+    /* "extensions/lib/wsgi.pyx":140
  *             if script_name:
  *                 path_info = path_info.split(script_name, 1)[1]
  *             self.environ['PATH_INFO'] = unquote(path_info)             # <<<<<<<<<<<<<<
  * 
  *         self.protocol._loop.create_task(self.protocol._response())
  */
-    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_unquote); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 139, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_unquote); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 140, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_1 = NULL;
     if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_4))) {
@@ -25188,13 +25174,13 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
       }
     }
     if (!__pyx_t_1) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_path_info); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 139, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_path_info); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 140, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_4)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_path_info};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 139, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 140, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -25202,19 +25188,19 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_v_path_info};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 139, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 140, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 139, __pyx_L1_error)
+        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 140, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
         __Pyx_INCREF(__pyx_v_path_info);
         __Pyx_GIVEREF(__pyx_v_path_info);
         PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_path_info);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 139, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 140, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       }
@@ -25222,12 +25208,12 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     if (unlikely(__pyx_v_self->environ == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 139, __pyx_L1_error)
+      __PYX_ERR(5, 140, __pyx_L1_error)
     }
-    if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_n_s_PATH_INFO, __pyx_t_2) < 0)) __PYX_ERR(5, 139, __pyx_L1_error)
+    if (unlikely(PyDict_SetItem(__pyx_v_self->environ, __pyx_n_s_PATH_INFO, __pyx_t_2) < 0)) __PYX_ERR(5, 140, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "extensions/lib/wsgi.pyx":134
+    /* "extensions/lib/wsgi.pyx":135
  *         self.environ['REMOTE_PORT'] = str(client_address[1])
  * 
  *         if self.parsed_url.path is not None:             # <<<<<<<<<<<<<<
@@ -25236,19 +25222,19 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":141
+  /* "extensions/lib/wsgi.pyx":142
  *             self.environ['PATH_INFO'] = unquote(path_info)
  * 
  *         self.protocol._loop.create_task(self.protocol._response())             # <<<<<<<<<<<<<<
  * 
  *     cpdef on_body(self, bytes body):
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->protocol, __pyx_n_s_loop_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 141, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->protocol, __pyx_n_s_loop_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 142, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_create_task); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 141, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_create_task); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 142, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->protocol, __pyx_n_s_response); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 141, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->protocol, __pyx_n_s_response); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 142, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_10 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -25261,10 +25247,10 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
     }
   }
   if (__pyx_t_10) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 141, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 142, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   } else {
-    __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 141, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 142, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -25279,14 +25265,14 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
     }
   }
   if (!__pyx_t_1) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 141, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 142, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_2);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_t_4};
-      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 141, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 142, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -25295,20 +25281,20 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_t_4};
-      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 141, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 142, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     } else
     #endif
     {
-      __pyx_t_10 = PyTuple_New(1+1); if (unlikely(!__pyx_t_10)) __PYX_ERR(5, 141, __pyx_L1_error)
+      __pyx_t_10 = PyTuple_New(1+1); if (unlikely(!__pyx_t_10)) __PYX_ERR(5, 142, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_10);
       __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_1); __pyx_t_1 = NULL;
       __Pyx_GIVEREF(__pyx_t_4);
       PyTuple_SET_ITEM(__pyx_t_10, 0+1, __pyx_t_4);
       __pyx_t_4 = 0;
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_10, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 141, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_10, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 142, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     }
@@ -25316,7 +25302,7 @@ static void __pyx_f_4clib_12WsgiProtocol_on_headers_complete(struct __pyx_obj_4c
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "extensions/lib/wsgi.pyx":115
+  /* "extensions/lib/wsgi.pyx":116
  *         self.environ['HTTP_%s' % header.upper().replace('-', '_')] = header_value
  * 
  *     cpdef void on_headers_complete(self):             # <<<<<<<<<<<<<<
@@ -25360,7 +25346,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_6on_headers_complete(struct __pyx
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("on_headers_complete", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_void_to_None(__pyx_f_4clib_12WsgiProtocol_on_headers_complete(__pyx_v_self, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 115, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_void_to_None(__pyx_f_4clib_12WsgiProtocol_on_headers_complete(__pyx_v_self, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 116, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -25377,7 +25363,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_6on_headers_complete(struct __pyx
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":143
+/* "extensions/lib/wsgi.pyx":144
  *         self.protocol._loop.create_task(self.protocol._response())
  * 
  *     cpdef on_body(self, bytes body):             # <<<<<<<<<<<<<<
@@ -25402,7 +25388,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_on_body); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 143, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_on_body); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 144, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_9on_body)) {
       __Pyx_XDECREF(__pyx_r);
@@ -25418,13 +25404,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_body); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 143, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_body); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 144, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_body};
-          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 143, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 144, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
@@ -25432,19 +25418,19 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_body};
-          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 143, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 144, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
         #endif
         {
-          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 143, __pyx_L1_error)
+          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 144, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_INCREF(__pyx_v_body);
           __Pyx_GIVEREF(__pyx_v_body);
           PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_body);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 143, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 144, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         }
@@ -25458,7 +25444,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/wsgi.pyx":144
+  /* "extensions/lib/wsgi.pyx":145
  * 
  *     cpdef on_body(self, bytes body):
  *         cdef object proto = self.protocol             # <<<<<<<<<<<<<<
@@ -25470,66 +25456,66 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
   __pyx_v_proto = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":145
+  /* "extensions/lib/wsgi.pyx":146
  *     cpdef on_body(self, bytes body):
  *         cdef object proto = self.protocol
  *         if not proto.body_reader.reader:             # <<<<<<<<<<<<<<
  *             proto.body_reader.initialise(
  *                 self.request_headers, self.parser, self.connection.transport,
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_body_reader); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 145, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_body_reader); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 146, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_reader); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 145, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_reader); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 146, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(5, 145, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(5, 146, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_7 = ((!__pyx_t_6) != 0);
   if (__pyx_t_7) {
 
-    /* "extensions/lib/wsgi.pyx":146
+    /* "extensions/lib/wsgi.pyx":147
  *         cdef object proto = self.protocol
  *         if not proto.body_reader.reader:
  *             proto.body_reader.initialise(             # <<<<<<<<<<<<<<
  *                 self.request_headers, self.parser, self.connection.transport,
  *                 self.cfg.stream_buffer, loop=proto._loop
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_body_reader); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 146, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_body_reader); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_initialise); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 146, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_initialise); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "extensions/lib/wsgi.pyx":147
+    /* "extensions/lib/wsgi.pyx":148
  *         if not proto.body_reader.reader:
  *             proto.body_reader.initialise(
  *                 self.request_headers, self.parser, self.connection.transport,             # <<<<<<<<<<<<<<
  *                 self.cfg.stream_buffer, loop=proto._loop
  *             )
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_request_headers); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 147, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_request_headers); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 148, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->connection, __pyx_n_s_transport); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 147, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->connection, __pyx_n_s_transport); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 148, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
 
-    /* "extensions/lib/wsgi.pyx":148
+    /* "extensions/lib/wsgi.pyx":149
  *             proto.body_reader.initialise(
  *                 self.request_headers, self.parser, self.connection.transport,
  *                 self.cfg.stream_buffer, loop=proto._loop             # <<<<<<<<<<<<<<
  *             )
  *         proto.body_reader.feed_data(body)
  */
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->cfg, __pyx_n_s_stream_buffer); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 148, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->cfg, __pyx_n_s_stream_buffer); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 149, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
 
-    /* "extensions/lib/wsgi.pyx":146
+    /* "extensions/lib/wsgi.pyx":147
  *         cdef object proto = self.protocol
  *         if not proto.body_reader.reader:
  *             proto.body_reader.initialise(             # <<<<<<<<<<<<<<
  *                 self.request_headers, self.parser, self.connection.transport,
  *                 self.cfg.stream_buffer, loop=proto._loop
  */
-    __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 146, __pyx_L1_error)
+    __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
@@ -25544,35 +25530,35 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
     __pyx_t_3 = 0;
     __pyx_t_5 = 0;
 
-    /* "extensions/lib/wsgi.pyx":148
+    /* "extensions/lib/wsgi.pyx":149
  *             proto.body_reader.initialise(
  *                 self.request_headers, self.parser, self.connection.transport,
  *                 self.cfg.stream_buffer, loop=proto._loop             # <<<<<<<<<<<<<<
  *             )
  *         proto.body_reader.feed_data(body)
  */
-    __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 148, __pyx_L1_error)
+    __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 149, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_loop_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 148, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_loop_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 149, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_loop, __pyx_t_3) < 0) __PYX_ERR(5, 148, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_loop, __pyx_t_3) < 0) __PYX_ERR(5, 149, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "extensions/lib/wsgi.pyx":146
+    /* "extensions/lib/wsgi.pyx":147
  *         cdef object proto = self.protocol
  *         if not proto.body_reader.reader:
  *             proto.body_reader.initialise(             # <<<<<<<<<<<<<<
  *                 self.request_headers, self.parser, self.connection.transport,
  *                 self.cfg.stream_buffer, loop=proto._loop
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 146, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_4, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "extensions/lib/wsgi.pyx":145
+    /* "extensions/lib/wsgi.pyx":146
  *     cpdef on_body(self, bytes body):
  *         cdef object proto = self.protocol
  *         if not proto.body_reader.reader:             # <<<<<<<<<<<<<<
@@ -25581,16 +25567,16 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":150
+  /* "extensions/lib/wsgi.pyx":151
  *                 self.cfg.stream_buffer, loop=proto._loop
  *             )
  *         proto.body_reader.feed_data(body)             # <<<<<<<<<<<<<<
  * 
  *     cpdef on_message_complete(self):
  */
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_body_reader); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 150, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_body_reader); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 151, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_feed_data); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 150, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_feed_data); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 151, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __pyx_t_5 = NULL;
@@ -25604,13 +25590,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_body); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 150, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_body); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 151, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_4)) {
       PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_body};
-      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 150, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 151, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_3);
     } else
@@ -25618,19 +25604,19 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
       PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_body};
-      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 150, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 151, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_3);
     } else
     #endif
     {
-      __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 150, __pyx_L1_error)
+      __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 151, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_body);
       __Pyx_GIVEREF(__pyx_v_body);
       PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_v_body);
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 150, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 151, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     }
@@ -25638,7 +25624,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_body(struct __pyx_obj_4clib_Wsg
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "extensions/lib/wsgi.pyx":143
+  /* "extensions/lib/wsgi.pyx":144
  *         self.protocol._loop.create_task(self.protocol._response())
  * 
  *     cpdef on_body(self, bytes body):             # <<<<<<<<<<<<<<
@@ -25670,7 +25656,7 @@ static PyObject *__pyx_pw_4clib_12WsgiProtocol_9on_body(PyObject *__pyx_v_self, 
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("on_body (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_body), (&PyBytes_Type), 1, "body", 1))) __PYX_ERR(5, 143, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_body), (&PyBytes_Type), 1, "body", 1))) __PYX_ERR(5, 144, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_12WsgiProtocol_8on_body(((struct __pyx_obj_4clib_WsgiProtocol *)__pyx_v_self), ((PyObject*)__pyx_v_body));
 
   /* function exit code */
@@ -25688,7 +25674,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_8on_body(struct __pyx_obj_4clib_W
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("on_body", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_12WsgiProtocol_on_body(__pyx_v_self, __pyx_v_body, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 143, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_12WsgiProtocol_on_body(__pyx_v_self, __pyx_v_body, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 144, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -25705,7 +25691,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_8on_body(struct __pyx_obj_4clib_W
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":152
+/* "extensions/lib/wsgi.pyx":153
  *         proto.body_reader.feed_data(body)
  * 
  *     cpdef on_message_complete(self):             # <<<<<<<<<<<<<<
@@ -25726,7 +25712,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_message_complete(struct __pyx_o
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_on_message_complete); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 152, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_on_message_complete); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 153, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_11on_message_complete)) {
       __Pyx_XDECREF(__pyx_r);
@@ -25742,10 +25728,10 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_message_complete(struct __pyx_o
         }
       }
       if (__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 152, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 153, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       } else {
-        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 152, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 153, __pyx_L1_error)
       }
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -25757,16 +25743,16 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_message_complete(struct __pyx_o
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/wsgi.pyx":153
+  /* "extensions/lib/wsgi.pyx":154
  * 
  *     cpdef on_message_complete(self):
  *         self.protocol.body_reader.feed_eof()             # <<<<<<<<<<<<<<
  * 
  *     cpdef start_response(self, str status, object response_headers, object exc_info=None):
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->protocol, __pyx_n_s_body_reader); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 153, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->protocol, __pyx_n_s_body_reader); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 154, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_feed_eof); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 153, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_feed_eof); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 154, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -25780,16 +25766,16 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_on_message_complete(struct __pyx_o
     }
   }
   if (__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 153, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 154, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 153, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 154, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":152
+  /* "extensions/lib/wsgi.pyx":153
  *         proto.body_reader.feed_data(body)
  * 
  *     cpdef on_message_complete(self):             # <<<<<<<<<<<<<<
@@ -25832,7 +25818,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_10on_message_complete(struct __py
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("on_message_complete", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_12WsgiProtocol_on_message_complete(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 152, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_12WsgiProtocol_on_message_complete(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 153, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -25849,7 +25835,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_10on_message_complete(struct __py
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":155
+/* "extensions/lib/wsgi.pyx":156
  *         self.protocol.body_reader.feed_eof()
  * 
  *     cpdef start_response(self, str status, object response_headers, object exc_info=None):             # <<<<<<<<<<<<<<
@@ -25895,7 +25881,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_start_response); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 155, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_start_response); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 156, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_13start_response)) {
       __Pyx_XDECREF(__pyx_r);
@@ -25915,7 +25901,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_v_status, __pyx_v_response_headers, __pyx_v_exc_info};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 3+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 155, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 3+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 156, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -25923,13 +25909,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[4] = {__pyx_t_4, __pyx_v_status, __pyx_v_response_headers, __pyx_v_exc_info};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 3+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 155, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 3+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 156, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(3+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 155, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(3+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 156, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         if (__pyx_t_4) {
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -25943,7 +25929,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
         __Pyx_INCREF(__pyx_v_exc_info);
         __Pyx_GIVEREF(__pyx_v_exc_info);
         PyTuple_SET_ITEM(__pyx_t_6, 2+__pyx_t_5, __pyx_v_exc_info);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 155, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 156, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -25956,17 +25942,17 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/wsgi.pyx":159
+  /* "extensions/lib/wsgi.pyx":160
  *         cdef object header
  * 
  *         if exc_info:             # <<<<<<<<<<<<<<
  *             try:
  *                 if self.headers_sent:
  */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_exc_info); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 159, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_exc_info); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 160, __pyx_L1_error)
   if (__pyx_t_7) {
 
-    /* "extensions/lib/wsgi.pyx":160
+    /* "extensions/lib/wsgi.pyx":161
  * 
  *         if exc_info:
  *             try:             # <<<<<<<<<<<<<<
@@ -25975,28 +25961,28 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
  */
     /*try:*/ {
 
-      /* "extensions/lib/wsgi.pyx":161
+      /* "extensions/lib/wsgi.pyx":162
  *         if exc_info:
  *             try:
  *                 if self.headers_sent:             # <<<<<<<<<<<<<<
  *                     # if exc_info is provided, and the HTTP headers have
  *                     # already been sent, start_response must raise an error,
  */
-      __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->headers_sent); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 161, __pyx_L5_error)
+      __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->headers_sent); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 162, __pyx_L5_error)
       if (__pyx_t_7) {
 
-        /* "extensions/lib/wsgi.pyx":165
+        /* "extensions/lib/wsgi.pyx":166
  *                     # already been sent, start_response must raise an error,
  *                     # and should re-raise using the exc_info tuple
  *                     reraise(exc_info[0], exc_info[1], exc_info[2])             # <<<<<<<<<<<<<<
  *             finally:
  *                 # Avoid circular reference
  */
-        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_exc_info, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 165, __pyx_L5_error)
+        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_exc_info, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 166, __pyx_L5_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_2 = __Pyx_GetItemInt(__pyx_v_exc_info, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 165, __pyx_L5_error)
+        __pyx_t_2 = __Pyx_GetItemInt(__pyx_v_exc_info, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 166, __pyx_L5_error)
         __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_exc_info, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 165, __pyx_L5_error)
+        __pyx_t_3 = __Pyx_GetItemInt(__pyx_v_exc_info, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 166, __pyx_L5_error)
         __Pyx_GOTREF(__pyx_t_3);
         __pyx_t_8.__pyx_n = 1;
         __pyx_t_8.tb = __pyx_t_3;
@@ -26005,7 +25991,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-        /* "extensions/lib/wsgi.pyx":161
+        /* "extensions/lib/wsgi.pyx":162
  *         if exc_info:
  *             try:
  *                 if self.headers_sent:             # <<<<<<<<<<<<<<
@@ -26015,7 +26001,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       }
     }
 
-    /* "extensions/lib/wsgi.pyx":168
+    /* "extensions/lib/wsgi.pyx":169
  *             finally:
  *                 # Avoid circular reference
  *                 exc_info = None             # <<<<<<<<<<<<<<
@@ -26069,7 +26055,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       __pyx_L6:;
     }
 
-    /* "extensions/lib/wsgi.pyx":159
+    /* "extensions/lib/wsgi.pyx":160
  *         cdef object header
  * 
  *         if exc_info:             # <<<<<<<<<<<<<<
@@ -26079,30 +26065,30 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
     goto __pyx_L3;
   }
 
-  /* "extensions/lib/wsgi.pyx":169
+  /* "extensions/lib/wsgi.pyx":170
  *                 # Avoid circular reference
  *                 exc_info = None
  *         elif self.status:             # <<<<<<<<<<<<<<
  *             # Headers already set. Raise error
  *             raise RuntimeError("Response headers already set!")
  */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->status); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 169, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->status); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 170, __pyx_L1_error)
   if (__pyx_t_7) {
 
-    /* "extensions/lib/wsgi.pyx":171
+    /* "extensions/lib/wsgi.pyx":172
  *         elif self.status:
  *             # Headers already set. Raise error
  *             raise RuntimeError("Response headers already set!")             # <<<<<<<<<<<<<<
  *         self.status = status
  *         for header, value in response_headers:
  */
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__44, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 171, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__44, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 172, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __PYX_ERR(5, 171, __pyx_L1_error)
+    __PYX_ERR(5, 172, __pyx_L1_error)
 
-    /* "extensions/lib/wsgi.pyx":169
+    /* "extensions/lib/wsgi.pyx":170
  *                 # Avoid circular reference
  *                 exc_info = None
  *         elif self.status:             # <<<<<<<<<<<<<<
@@ -26112,7 +26098,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
   }
   __pyx_L3:;
 
-  /* "extensions/lib/wsgi.pyx":172
+  /* "extensions/lib/wsgi.pyx":173
  *             # Headers already set. Raise error
  *             raise RuntimeError("Response headers already set!")
  *         self.status = status             # <<<<<<<<<<<<<<
@@ -26125,7 +26111,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
   __Pyx_DECREF(__pyx_v_self->status);
   __pyx_v_self->status = __pyx_v_status;
 
-  /* "extensions/lib/wsgi.pyx":173
+  /* "extensions/lib/wsgi.pyx":174
  *             raise RuntimeError("Response headers already set!")
  *         self.status = status
  *         for header, value in response_headers:             # <<<<<<<<<<<<<<
@@ -26136,26 +26122,26 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
     __pyx_t_3 = __pyx_v_response_headers; __Pyx_INCREF(__pyx_t_3); __pyx_t_17 = 0;
     __pyx_t_18 = NULL;
   } else {
-    __pyx_t_17 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_response_headers); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 173, __pyx_L1_error)
+    __pyx_t_17 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_response_headers); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 174, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_18 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_18)) __PYX_ERR(5, 173, __pyx_L1_error)
+    __pyx_t_18 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_18)) __PYX_ERR(5, 174, __pyx_L1_error)
   }
   for (;;) {
     if (likely(!__pyx_t_18)) {
       if (likely(PyList_CheckExact(__pyx_t_3))) {
         if (__pyx_t_17 >= PyList_GET_SIZE(__pyx_t_3)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_17); __Pyx_INCREF(__pyx_t_2); __pyx_t_17++; if (unlikely(0 < 0)) __PYX_ERR(5, 173, __pyx_L1_error)
+        __pyx_t_2 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_17); __Pyx_INCREF(__pyx_t_2); __pyx_t_17++; if (unlikely(0 < 0)) __PYX_ERR(5, 174, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_17); __pyx_t_17++; if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 173, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_17); __pyx_t_17++; if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 174, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       } else {
         if (__pyx_t_17 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_17); __Pyx_INCREF(__pyx_t_2); __pyx_t_17++; if (unlikely(0 < 0)) __PYX_ERR(5, 173, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_17); __Pyx_INCREF(__pyx_t_2); __pyx_t_17++; if (unlikely(0 < 0)) __PYX_ERR(5, 174, __pyx_L1_error)
         #else
-        __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_17); __pyx_t_17++; if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 173, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(__pyx_t_3, __pyx_t_17); __pyx_t_17++; if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 174, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
       }
@@ -26165,7 +26151,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(5, 173, __pyx_L1_error)
+          else __PYX_ERR(5, 174, __pyx_L1_error)
         }
         break;
       }
@@ -26181,7 +26167,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       if (unlikely(size != 2)) {
         if (size > 2) __Pyx_RaiseTooManyValuesError(2);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(5, 173, __pyx_L1_error)
+        __PYX_ERR(5, 174, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
@@ -26194,15 +26180,15 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       __Pyx_INCREF(__pyx_t_1);
       __Pyx_INCREF(__pyx_t_6);
       #else
-      __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 173, __pyx_L1_error)
+      __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 174, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 173, __pyx_L1_error)
+      __pyx_t_6 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 174, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       #endif
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     } else {
       Py_ssize_t index = -1;
-      __pyx_t_4 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 173, __pyx_L1_error)
+      __pyx_t_4 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 174, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_19 = Py_TYPE(__pyx_t_4)->tp_iternext;
@@ -26210,7 +26196,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       __Pyx_GOTREF(__pyx_t_1);
       index = 1; __pyx_t_6 = __pyx_t_19(__pyx_t_4); if (unlikely(!__pyx_t_6)) goto __pyx_L12_unpacking_failed;
       __Pyx_GOTREF(__pyx_t_6);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_19(__pyx_t_4), 2) < 0) __PYX_ERR(5, 173, __pyx_L1_error)
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_19(__pyx_t_4), 2) < 0) __PYX_ERR(5, 174, __pyx_L1_error)
       __pyx_t_19 = NULL;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       goto __pyx_L13_unpacking_done;
@@ -26218,36 +26204,36 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __pyx_t_19 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(5, 173, __pyx_L1_error)
+      __PYX_ERR(5, 174, __pyx_L1_error)
       __pyx_L13_unpacking_done:;
     }
-    if (!(likely(PyString_CheckExact(__pyx_t_6))||((__pyx_t_6) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_6)->tp_name), 0))) __PYX_ERR(5, 173, __pyx_L1_error)
+    if (!(likely(PyString_CheckExact(__pyx_t_6))||((__pyx_t_6) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_6)->tp_name), 0))) __PYX_ERR(5, 174, __pyx_L1_error)
     __Pyx_XDECREF_SET(__pyx_v_header, __pyx_t_1);
     __pyx_t_1 = 0;
     __Pyx_XDECREF_SET(__pyx_v_value, ((PyObject*)__pyx_t_6));
     __pyx_t_6 = 0;
 
-    /* "extensions/lib/wsgi.pyx":174
+    /* "extensions/lib/wsgi.pyx":175
  *         self.status = status
  *         for header, value in response_headers:
  *             if header in HOP_HEADERS:             # <<<<<<<<<<<<<<
  *                 # These features are the exclusive province of this class,
  *                 # this should be considered a fatal error for an application
  */
-    __pyx_t_7 = (__Pyx_PySequence_ContainsTF(__pyx_v_header, __pyx_v_4clib_HOP_HEADERS, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 174, __pyx_L1_error)
+    __pyx_t_7 = (__Pyx_PySequence_ContainsTF(__pyx_v_header, __pyx_v_4clib_HOP_HEADERS, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 175, __pyx_L1_error)
     __pyx_t_20 = (__pyx_t_7 != 0);
     if (__pyx_t_20) {
 
-      /* "extensions/lib/wsgi.pyx":179
+      /* "extensions/lib/wsgi.pyx":180
  *                 # to attempt sending them, but we don't raise an error,
  *                 # just log a warning
  *                 LOGGER.warning('Application passing hop header "%s"', header)             # <<<<<<<<<<<<<<
  *                 continue
  *             self.headers.add(header, value)
  */
-      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_LOGGER); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 179, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_LOGGER); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 180, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warning); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 179, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_warning); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 180, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       __pyx_t_6 = NULL;
@@ -26265,7 +26251,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_kp_s_Application_passing_hop_header_s, __pyx_v_header};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 179, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 180, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -26273,13 +26259,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_kp_s_Application_passing_hop_header_s, __pyx_v_header};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 179, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 180, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_4 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 179, __pyx_L1_error)
+        __pyx_t_4 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 180, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         if (__pyx_t_6) {
           __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
@@ -26290,14 +26276,14 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
         __Pyx_INCREF(__pyx_v_header);
         __Pyx_GIVEREF(__pyx_v_header);
         PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_9, __pyx_v_header);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 179, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 180, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       }
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-      /* "extensions/lib/wsgi.pyx":180
+      /* "extensions/lib/wsgi.pyx":181
  *                 # just log a warning
  *                 LOGGER.warning('Application passing hop header "%s"', header)
  *                 continue             # <<<<<<<<<<<<<<
@@ -26306,7 +26292,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
  */
       goto __pyx_L10_continue;
 
-      /* "extensions/lib/wsgi.pyx":174
+      /* "extensions/lib/wsgi.pyx":175
  *         self.status = status
  *         for header, value in response_headers:
  *             if header in HOP_HEADERS:             # <<<<<<<<<<<<<<
@@ -26315,14 +26301,14 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
  */
     }
 
-    /* "extensions/lib/wsgi.pyx":181
+    /* "extensions/lib/wsgi.pyx":182
  *                 LOGGER.warning('Application passing hop header "%s"', header)
  *                 continue
  *             self.headers.add(header, value)             # <<<<<<<<<<<<<<
  *         self.headers[SERVER] = self.environ['SERVER_SOFTWARE']
  *         self.headers[DATE] = fast_http_date(_current_time_)
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->headers, __pyx_n_s_add); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 181, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->headers, __pyx_n_s_add); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 182, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_4 = NULL;
     __pyx_t_9 = 0;
@@ -26339,7 +26325,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_1)) {
       PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_header, __pyx_v_value};
-      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 181, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 182, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
@@ -26347,13 +26333,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
       PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_header, __pyx_v_value};
-      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 181, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_9, 2+__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 182, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
     #endif
     {
-      __pyx_t_6 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 181, __pyx_L1_error)
+      __pyx_t_6 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 182, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       if (__pyx_t_4) {
         __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -26364,14 +26350,14 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
       __Pyx_INCREF(__pyx_v_value);
       __Pyx_GIVEREF(__pyx_v_value);
       PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_9, __pyx_v_value);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 181, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 182, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "extensions/lib/wsgi.pyx":173
+    /* "extensions/lib/wsgi.pyx":174
  *             raise RuntimeError("Response headers already set!")
  *         self.status = status
  *         for header, value in response_headers:             # <<<<<<<<<<<<<<
@@ -26382,7 +26368,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "extensions/lib/wsgi.pyx":182
+  /* "extensions/lib/wsgi.pyx":183
  *                 continue
  *             self.headers.add(header, value)
  *         self.headers[SERVER] = self.environ['SERVER_SOFTWARE']             # <<<<<<<<<<<<<<
@@ -26391,33 +26377,33 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
  */
   if (unlikely(__pyx_v_self->environ == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(5, 182, __pyx_L1_error)
+    __PYX_ERR(5, 183, __pyx_L1_error)
   }
-  __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_self->environ, __pyx_n_s_SERVER_SOFTWARE); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 182, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_self->environ, __pyx_n_s_SERVER_SOFTWARE); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 183, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (unlikely(PyObject_SetItem(__pyx_v_self->headers, __pyx_v_4clib_SERVER, __pyx_t_3) < 0)) __PYX_ERR(5, 182, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_self->headers, __pyx_v_4clib_SERVER, __pyx_t_3) < 0)) __PYX_ERR(5, 183, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "extensions/lib/wsgi.pyx":183
+  /* "extensions/lib/wsgi.pyx":184
  *             self.headers.add(header, value)
  *         self.headers[SERVER] = self.environ['SERVER_SOFTWARE']
  *         self.headers[DATE] = fast_http_date(_current_time_)             # <<<<<<<<<<<<<<
  *         self.keep_alive = self.parser.should_keep_alive()
  *         return self.write
  */
-  __pyx_t_3 = __pyx_f_4clib_fast_http_date(__pyx_v_4clib__current_time_, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 183, __pyx_L1_error)
+  __pyx_t_3 = __pyx_f_4clib_fast_http_date(__pyx_v_4clib__current_time_, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 184, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (unlikely(PyObject_SetItem(__pyx_v_self->headers, __pyx_v_4clib_DATE, __pyx_t_3) < 0)) __PYX_ERR(5, 183, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_self->headers, __pyx_v_4clib_DATE, __pyx_t_3) < 0)) __PYX_ERR(5, 184, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "extensions/lib/wsgi.pyx":184
+  /* "extensions/lib/wsgi.pyx":185
  *         self.headers[SERVER] = self.environ['SERVER_SOFTWARE']
  *         self.headers[DATE] = fast_http_date(_current_time_)
  *         self.keep_alive = self.parser.should_keep_alive()             # <<<<<<<<<<<<<<
  *         return self.write
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->parser, __pyx_n_s_should_keep_alive); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 184, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->parser, __pyx_n_s_should_keep_alive); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 185, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_1 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -26430,10 +26416,10 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
     }
   }
   if (__pyx_t_1) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 184, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 185, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   } else {
-    __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 184, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 185, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -26443,7 +26429,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
   __pyx_v_self->keep_alive = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "extensions/lib/wsgi.pyx":185
+  /* "extensions/lib/wsgi.pyx":186
  *         self.headers[DATE] = fast_http_date(_current_time_)
  *         self.keep_alive = self.parser.should_keep_alive()
  *         return self.write             # <<<<<<<<<<<<<<
@@ -26451,13 +26437,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_start_response(struct __pyx_obj_4c
  *     cpdef object write(self, bytes data, object force=False):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 185, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_r = __pyx_t_3;
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "extensions/lib/wsgi.pyx":155
+  /* "extensions/lib/wsgi.pyx":156
  *         self.protocol.body_reader.feed_eof()
  * 
  *     cpdef start_response(self, str status, object response_headers, object exc_info=None):             # <<<<<<<<<<<<<<
@@ -26514,7 +26500,7 @@ static PyObject *__pyx_pw_4clib_12WsgiProtocol_13start_response(PyObject *__pyx_
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_response_headers)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("start_response", 0, 2, 3, 1); __PYX_ERR(5, 155, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("start_response", 0, 2, 3, 1); __PYX_ERR(5, 156, __pyx_L3_error)
         }
         case  2:
         if (kw_args > 0) {
@@ -26523,7 +26509,7 @@ static PyObject *__pyx_pw_4clib_12WsgiProtocol_13start_response(PyObject *__pyx_
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "start_response") < 0)) __PYX_ERR(5, 155, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "start_response") < 0)) __PYX_ERR(5, 156, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -26540,13 +26526,13 @@ static PyObject *__pyx_pw_4clib_12WsgiProtocol_13start_response(PyObject *__pyx_
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("start_response", 0, 2, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(5, 155, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("start_response", 0, 2, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(5, 156, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.WsgiProtocol.start_response", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_status), (&PyString_Type), 1, "status", 1))) __PYX_ERR(5, 155, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_status), (&PyString_Type), 1, "status", 1))) __PYX_ERR(5, 156, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_12WsgiProtocol_12start_response(((struct __pyx_obj_4clib_WsgiProtocol *)__pyx_v_self), __pyx_v_status, __pyx_v_response_headers, __pyx_v_exc_info);
 
   /* function exit code */
@@ -26567,7 +26553,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_12start_response(struct __pyx_obj
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.exc_info = __pyx_v_exc_info;
-  __pyx_t_1 = __pyx_vtabptr_4clib_WsgiProtocol->start_response(__pyx_v_self, __pyx_v_status, __pyx_v_response_headers, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 155, __pyx_L1_error)
+  __pyx_t_1 = __pyx_vtabptr_4clib_WsgiProtocol->start_response(__pyx_v_self, __pyx_v_status, __pyx_v_response_headers, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 156, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -26584,7 +26570,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_12start_response(struct __pyx_obj
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":187
+/* "extensions/lib/wsgi.pyx":188
  *         return self.write
  * 
  *     cpdef object write(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
@@ -26615,7 +26601,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
   PyObject *(*__pyx_t_11)(PyObject *);
   PyObject *__pyx_t_12 = NULL;
   PyObject *__pyx_t_13 = NULL;
-  struct __pyx_opt_args_4clib_http_chunks_l __pyx_t_14;
+  struct __pyx_opt_args_4clib_http_chunks __pyx_t_14;
   __Pyx_RefNannySetupContext("write", 0);
   if (__pyx_optional_args) {
     if (__pyx_optional_args->__pyx_n > 0) {
@@ -26626,7 +26612,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_write); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 187, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_write); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 188, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_15write)) {
       __Pyx_XDECREF(__pyx_r);
@@ -26646,7 +26632,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_data, __pyx_v_force};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 187, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 188, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -26654,13 +26640,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_data, __pyx_v_force};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 187, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 188, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 187, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 188, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         if (__pyx_t_4) {
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -26671,7 +26657,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         __Pyx_INCREF(__pyx_v_force);
         __Pyx_GIVEREF(__pyx_v_force);
         PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_force);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 187, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 188, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -26684,7 +26670,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/wsgi.pyx":188
+  /* "extensions/lib/wsgi.pyx":189
  * 
  *     cpdef object write(self, bytes data, object force=False):
  *         cdef bytearray buffer = None             # <<<<<<<<<<<<<<
@@ -26694,7 +26680,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
   __Pyx_INCREF(Py_None);
   __pyx_v_buffer = ((PyObject*)Py_None);
 
-  /* "extensions/lib/wsgi.pyx":189
+  /* "extensions/lib/wsgi.pyx":190
  *     cpdef object write(self, bytes data, object force=False):
  *         cdef bytearray buffer = None
  *         cdef dict env = self.environ             # <<<<<<<<<<<<<<
@@ -26706,7 +26692,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
   __pyx_v_env = ((PyObject*)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":190
+  /* "extensions/lib/wsgi.pyx":191
  *         cdef bytearray buffer = None
  *         cdef dict env = self.environ
  *         cdef object proto = self.protocol             # <<<<<<<<<<<<<<
@@ -26718,25 +26704,25 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
   __pyx_v_proto = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":193
+  /* "extensions/lib/wsgi.pyx":194
  *         cdef object tosend
  * 
  *         if not self.headers_sent:             # <<<<<<<<<<<<<<
  *             self.headers_sent = self.get_headers()
  *             buffer = bytearray(('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET))
  */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->headers_sent); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 193, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->headers_sent); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 194, __pyx_L1_error)
   __pyx_t_8 = ((!__pyx_t_7) != 0);
   if (__pyx_t_8) {
 
-    /* "extensions/lib/wsgi.pyx":194
+    /* "extensions/lib/wsgi.pyx":195
  * 
  *         if not self.headers_sent:
  *             self.headers_sent = self.get_headers()             # <<<<<<<<<<<<<<
  *             buffer = bytearray(('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET))
  *             for k, v in self.headers_sent.items():
  */
-    __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_WsgiProtocol *)__pyx_v_self->__pyx_vtab)->get_headers(__pyx_v_self); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 194, __pyx_L1_error)
+    __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_WsgiProtocol *)__pyx_v_self->__pyx_vtab)->get_headers(__pyx_v_self); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 195, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_GIVEREF(__pyx_t_1);
     __Pyx_GOTREF(__pyx_v_self->headers_sent);
@@ -26744,7 +26730,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
     __pyx_v_self->headers_sent = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "extensions/lib/wsgi.pyx":195
+    /* "extensions/lib/wsgi.pyx":196
  *         if not self.headers_sent:
  *             self.headers_sent = self.get_headers()
  *             buffer = bytearray(('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET))             # <<<<<<<<<<<<<<
@@ -26753,11 +26739,11 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
  */
     if (unlikely(__pyx_v_env == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 195, __pyx_L1_error)
+      __PYX_ERR(5, 196, __pyx_L1_error)
     }
-    __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_env, __pyx_n_s_SERVER_PROTOCOL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 195, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_env, __pyx_n_s_SERVER_PROTOCOL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 196, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 195, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 196, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
@@ -26765,10 +26751,10 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
     __Pyx_GIVEREF(__pyx_v_self->status);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self->status);
     __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_s_s_2, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 195, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_s_s_2, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 196, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_encode); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 195, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_encode); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 196, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_2 = NULL;
@@ -26782,13 +26768,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       }
     }
     if (!__pyx_t_2) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 195, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_4clib_CHARSET};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 195, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else
@@ -26796,43 +26782,43 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_4clib_CHARSET};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 195, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 195, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 196, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_2); __pyx_t_2 = NULL;
         __Pyx_INCREF(__pyx_v_4clib_CHARSET);
         __Pyx_GIVEREF(__pyx_v_4clib_CHARSET);
         PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_4clib_CHARSET);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 195, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 195, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 196, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)(&PyByteArray_Type)), __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 195, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)(&PyByteArray_Type)), __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF_SET(__pyx_v_buffer, ((PyObject*)__pyx_t_1));
     __pyx_t_1 = 0;
 
-    /* "extensions/lib/wsgi.pyx":196
+    /* "extensions/lib/wsgi.pyx":197
  *             self.headers_sent = self.get_headers()
  *             buffer = bytearray(('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET))
  *             for k, v in self.headers_sent.items():             # <<<<<<<<<<<<<<
  *                 buffer.extend(('%s: %s\r\n' % (k, v)).encode(CHARSET))
  *             buffer.extend(CRLF)
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->headers_sent, __pyx_n_s_items); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 196, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->headers_sent, __pyx_n_s_items); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 197, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_6 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -26845,10 +26831,10 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       }
     }
     if (__pyx_t_6) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 197, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     } else {
-      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 197, __pyx_L1_error)
     }
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -26856,9 +26842,9 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       __pyx_t_3 = __pyx_t_1; __Pyx_INCREF(__pyx_t_3); __pyx_t_9 = 0;
       __pyx_t_10 = NULL;
     } else {
-      __pyx_t_9 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 196, __pyx_L1_error)
+      __pyx_t_9 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 197, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_10 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(5, 196, __pyx_L1_error)
+      __pyx_t_10 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(5, 197, __pyx_L1_error)
     }
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     for (;;) {
@@ -26866,17 +26852,17 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         if (likely(PyList_CheckExact(__pyx_t_3))) {
           if (__pyx_t_9 >= PyList_GET_SIZE(__pyx_t_3)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_1 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_9); __Pyx_INCREF(__pyx_t_1); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(5, 196, __pyx_L1_error)
+          __pyx_t_1 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_9); __Pyx_INCREF(__pyx_t_1); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(5, 197, __pyx_L1_error)
           #else
-          __pyx_t_1 = PySequence_ITEM(__pyx_t_3, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
+          __pyx_t_1 = PySequence_ITEM(__pyx_t_3, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 197, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           #endif
         } else {
           if (__pyx_t_9 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_1 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_9); __Pyx_INCREF(__pyx_t_1); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(5, 196, __pyx_L1_error)
+          __pyx_t_1 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_9); __Pyx_INCREF(__pyx_t_1); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(5, 197, __pyx_L1_error)
           #else
-          __pyx_t_1 = PySequence_ITEM(__pyx_t_3, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 196, __pyx_L1_error)
+          __pyx_t_1 = PySequence_ITEM(__pyx_t_3, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 197, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           #endif
         }
@@ -26886,7 +26872,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
           PyObject* exc_type = PyErr_Occurred();
           if (exc_type) {
             if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(5, 196, __pyx_L1_error)
+            else __PYX_ERR(5, 197, __pyx_L1_error)
           }
           break;
         }
@@ -26902,7 +26888,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         if (unlikely(size != 2)) {
           if (size > 2) __Pyx_RaiseTooManyValuesError(2);
           else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-          __PYX_ERR(5, 196, __pyx_L1_error)
+          __PYX_ERR(5, 197, __pyx_L1_error)
         }
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
         if (likely(PyTuple_CheckExact(sequence))) {
@@ -26915,15 +26901,15 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         __Pyx_INCREF(__pyx_t_6);
         __Pyx_INCREF(__pyx_t_2);
         #else
-        __pyx_t_6 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 196, __pyx_L1_error)
+        __pyx_t_6 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 197, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_2 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 196, __pyx_L1_error)
+        __pyx_t_2 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 197, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         #endif
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       } else {
         Py_ssize_t index = -1;
-        __pyx_t_4 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 196, __pyx_L1_error)
+        __pyx_t_4 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 197, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_t_11 = Py_TYPE(__pyx_t_4)->tp_iternext;
@@ -26931,7 +26917,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         __Pyx_GOTREF(__pyx_t_6);
         index = 1; __pyx_t_2 = __pyx_t_11(__pyx_t_4); if (unlikely(!__pyx_t_2)) goto __pyx_L6_unpacking_failed;
         __Pyx_GOTREF(__pyx_t_2);
-        if (__Pyx_IternextUnpackEndCheck(__pyx_t_11(__pyx_t_4), 2) < 0) __PYX_ERR(5, 196, __pyx_L1_error)
+        if (__Pyx_IternextUnpackEndCheck(__pyx_t_11(__pyx_t_4), 2) < 0) __PYX_ERR(5, 197, __pyx_L1_error)
         __pyx_t_11 = NULL;
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         goto __pyx_L7_unpacking_done;
@@ -26939,7 +26925,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         __pyx_t_11 = NULL;
         if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-        __PYX_ERR(5, 196, __pyx_L1_error)
+        __PYX_ERR(5, 197, __pyx_L1_error)
         __pyx_L7_unpacking_done:;
       }
       __Pyx_XDECREF_SET(__pyx_v_k, __pyx_t_6);
@@ -26947,16 +26933,16 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       __Pyx_XDECREF_SET(__pyx_v_v, __pyx_t_2);
       __pyx_t_2 = 0;
 
-      /* "extensions/lib/wsgi.pyx":197
+      /* "extensions/lib/wsgi.pyx":198
  *             buffer = bytearray(('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET))
  *             for k, v in self.headers_sent.items():
  *                 buffer.extend(('%s: %s\r\n' % (k, v)).encode(CHARSET))             # <<<<<<<<<<<<<<
  *             buffer.extend(CRLF)
  *             proto.event('on_headers').fire(data=buffer)
  */
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_buffer, __pyx_n_s_extend); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 197, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_buffer, __pyx_n_s_extend); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 198, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 197, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 198, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_INCREF(__pyx_v_k);
       __Pyx_GIVEREF(__pyx_v_k);
@@ -26964,10 +26950,10 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       __Pyx_INCREF(__pyx_v_v);
       __Pyx_GIVEREF(__pyx_v_v);
       PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_v_v);
-      __pyx_t_12 = __Pyx_PyString_Format(__pyx_kp_s_s_s_3, __pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(5, 197, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyString_Format(__pyx_kp_s_s_s_3, __pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(5, 198, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_12);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_n_s_encode); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 197, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_n_s_encode); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 198, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
       __pyx_t_12 = NULL;
@@ -26981,13 +26967,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         }
       }
       if (!__pyx_t_12) {
-        __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 197, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 198, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_4)) {
           PyObject *__pyx_temp[2] = {__pyx_t_12, __pyx_v_4clib_CHARSET};
-          __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 197, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 198, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_12); __pyx_t_12 = 0;
           __Pyx_GOTREF(__pyx_t_6);
         } else
@@ -26995,19 +26981,19 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
           PyObject *__pyx_temp[2] = {__pyx_t_12, __pyx_v_4clib_CHARSET};
-          __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 197, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 198, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_12); __pyx_t_12 = 0;
           __Pyx_GOTREF(__pyx_t_6);
         } else
         #endif
         {
-          __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 197, __pyx_L1_error)
+          __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 198, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_13);
           __Pyx_GIVEREF(__pyx_t_12); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_12); __pyx_t_12 = NULL;
           __Pyx_INCREF(__pyx_v_4clib_CHARSET);
           __Pyx_GIVEREF(__pyx_v_4clib_CHARSET);
           PyTuple_SET_ITEM(__pyx_t_13, 0+1, __pyx_v_4clib_CHARSET);
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_13, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 197, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_13, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 198, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
         }
@@ -27024,14 +27010,14 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 197, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 198, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_6};
-          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 197, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 198, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -27040,20 +27026,20 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_6};
-          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 197, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 198, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         } else
         #endif
         {
-          __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 197, __pyx_L1_error)
+          __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 198, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_13);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_GIVEREF(__pyx_t_6);
           PyTuple_SET_ITEM(__pyx_t_13, 0+1, __pyx_t_6);
           __pyx_t_6 = 0;
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_13, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 197, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_13, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 198, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
         }
@@ -27061,7 +27047,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "extensions/lib/wsgi.pyx":196
+      /* "extensions/lib/wsgi.pyx":197
  *             self.headers_sent = self.get_headers()
  *             buffer = bytearray(('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET))
  *             for k, v in self.headers_sent.items():             # <<<<<<<<<<<<<<
@@ -27071,14 +27057,14 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "extensions/lib/wsgi.pyx":198
+    /* "extensions/lib/wsgi.pyx":199
  *             for k, v in self.headers_sent.items():
  *                 buffer.extend(('%s: %s\r\n' % (k, v)).encode(CHARSET))
  *             buffer.extend(CRLF)             # <<<<<<<<<<<<<<
  *             proto.event('on_headers').fire(data=buffer)
  * 
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_buffer, __pyx_n_s_extend); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 198, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_buffer, __pyx_n_s_extend); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 199, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_2 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -27091,13 +27077,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       }
     }
     if (!__pyx_t_2) {
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_4clib_CRLF); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 198, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_4clib_CRLF); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 199, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_4clib_CRLF};
-        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 198, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 199, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_3);
       } else
@@ -27105,19 +27091,19 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_4clib_CRLF};
-        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 198, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 199, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_3);
       } else
       #endif
       {
-        __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 198, __pyx_L1_error)
+        __pyx_t_13 = PyTuple_New(1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 199, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_13);
         __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_2); __pyx_t_2 = NULL;
         __Pyx_INCREF(__pyx_v_4clib_CRLF);
         __Pyx_GIVEREF(__pyx_v_4clib_CRLF);
         PyTuple_SET_ITEM(__pyx_t_13, 0+1, __pyx_v_4clib_CRLF);
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_13, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 198, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_13, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 199, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
       }
@@ -27125,31 +27111,31 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "extensions/lib/wsgi.pyx":199
+    /* "extensions/lib/wsgi.pyx":200
  *                 buffer.extend(('%s: %s\r\n' % (k, v)).encode(CHARSET))
  *             buffer.extend(CRLF)
  *             proto.event('on_headers').fire(data=buffer)             # <<<<<<<<<<<<<<
  * 
  *         if data:
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_event); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 199, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_event); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__45, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 199, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__45, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_fire); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 199, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_fire); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 199, __pyx_L1_error)
+    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_data, __pyx_v_buffer) < 0) __PYX_ERR(5, 199, __pyx_L1_error)
-    __pyx_t_13 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 199, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_data, __pyx_v_buffer) < 0) __PYX_ERR(5, 200, __pyx_L1_error)
+    __pyx_t_13 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_13);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
 
-    /* "extensions/lib/wsgi.pyx":193
+    /* "extensions/lib/wsgi.pyx":194
  *         cdef object tosend
  * 
  *         if not self.headers_sent:             # <<<<<<<<<<<<<<
@@ -27158,7 +27144,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":201
+  /* "extensions/lib/wsgi.pyx":202
  *             proto.event('on_headers').fire(data=buffer)
  * 
  *         if data:             # <<<<<<<<<<<<<<
@@ -27168,30 +27154,30 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
   __pyx_t_8 = (__pyx_v_data != Py_None) && (PyBytes_GET_SIZE(__pyx_v_data) != 0);
   if (__pyx_t_8) {
 
-    /* "extensions/lib/wsgi.pyx":202
+    /* "extensions/lib/wsgi.pyx":203
  * 
  *         if data:
  *             if not buffer:             # <<<<<<<<<<<<<<
  *                 buffer = bytearray()
  *             if self.chunked:
  */
-    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_buffer); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 202, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_buffer); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 203, __pyx_L1_error)
     __pyx_t_7 = ((!__pyx_t_8) != 0);
     if (__pyx_t_7) {
 
-      /* "extensions/lib/wsgi.pyx":203
+      /* "extensions/lib/wsgi.pyx":204
  *         if data:
  *             if not buffer:
  *                 buffer = bytearray()             # <<<<<<<<<<<<<<
  *             if self.chunked:
- *                 http_chunks_l(buffer, data)
+ *                 http_chunks(buffer, data)
  */
-      __pyx_t_13 = __Pyx_PyObject_Call(((PyObject *)(&PyByteArray_Type)), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 203, __pyx_L1_error)
+      __pyx_t_13 = __Pyx_PyObject_Call(((PyObject *)(&PyByteArray_Type)), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_13);
       __Pyx_DECREF_SET(__pyx_v_buffer, ((PyObject*)__pyx_t_13));
       __pyx_t_13 = 0;
 
-      /* "extensions/lib/wsgi.pyx":202
+      /* "extensions/lib/wsgi.pyx":203
  * 
  *         if data:
  *             if not buffer:             # <<<<<<<<<<<<<<
@@ -27200,45 +27186,44 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
  */
     }
 
-    /* "extensions/lib/wsgi.pyx":204
+    /* "extensions/lib/wsgi.pyx":205
  *             if not buffer:
  *                 buffer = bytearray()
  *             if self.chunked:             # <<<<<<<<<<<<<<
- *                 http_chunks_l(buffer, data)
+ *                 http_chunks(buffer, data)
  *             else:
  */
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->chunked); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 204, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->chunked); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 205, __pyx_L1_error)
     if (__pyx_t_7) {
 
-      /* "extensions/lib/wsgi.pyx":205
+      /* "extensions/lib/wsgi.pyx":206
  *                 buffer = bytearray()
  *             if self.chunked:
- *                 http_chunks_l(buffer, data)             # <<<<<<<<<<<<<<
+ *                 http_chunks(buffer, data)             # <<<<<<<<<<<<<<
  *             else:
  *                 buffer.extend(data)
  */
-      if (!(likely(PyList_CheckExact(__pyx_v_buffer))||((__pyx_v_buffer) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_v_buffer)->tp_name), 0))) __PYX_ERR(5, 205, __pyx_L1_error)
-      __pyx_f_4clib_http_chunks_l(((PyObject*)__pyx_v_buffer), __pyx_v_data, NULL);
+      __pyx_f_4clib_http_chunks(__pyx_v_buffer, __pyx_v_data, NULL);
 
-      /* "extensions/lib/wsgi.pyx":204
+      /* "extensions/lib/wsgi.pyx":205
  *             if not buffer:
  *                 buffer = bytearray()
  *             if self.chunked:             # <<<<<<<<<<<<<<
- *                 http_chunks_l(buffer, data)
+ *                 http_chunks(buffer, data)
  *             else:
  */
       goto __pyx_L10;
     }
 
-    /* "extensions/lib/wsgi.pyx":207
- *                 http_chunks_l(buffer, data)
+    /* "extensions/lib/wsgi.pyx":208
+ *                 http_chunks(buffer, data)
  *             else:
  *                 buffer.extend(data)             # <<<<<<<<<<<<<<
  * 
  *         elif force and self.chunked:
  */
     /*else*/ {
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_buffer, __pyx_n_s_extend); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 207, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_buffer, __pyx_n_s_extend); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 208, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __pyx_t_3 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -27251,13 +27236,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         }
       }
       if (!__pyx_t_3) {
-        __pyx_t_13 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_data); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 207, __pyx_L1_error)
+        __pyx_t_13 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_data); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 208, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_13);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_1)) {
           PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_data};
-          __pyx_t_13 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 207, __pyx_L1_error)
+          __pyx_t_13 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 208, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_GOTREF(__pyx_t_13);
         } else
@@ -27265,19 +27250,19 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
           PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_data};
-          __pyx_t_13 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 207, __pyx_L1_error)
+          __pyx_t_13 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 208, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_GOTREF(__pyx_t_13);
         } else
         #endif
         {
-          __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 207, __pyx_L1_error)
+          __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 208, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3); __pyx_t_3 = NULL;
           __Pyx_INCREF(__pyx_v_data);
           __Pyx_GIVEREF(__pyx_v_data);
           PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_v_data);
-          __pyx_t_13 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 207, __pyx_L1_error)
+          __pyx_t_13 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 208, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_13);
           __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         }
@@ -27287,7 +27272,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
     }
     __pyx_L10:;
 
-    /* "extensions/lib/wsgi.pyx":201
+    /* "extensions/lib/wsgi.pyx":202
  *             proto.event('on_headers').fire(data=buffer)
  * 
  *         if data:             # <<<<<<<<<<<<<<
@@ -27297,69 +27282,68 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
     goto __pyx_L8;
   }
 
-  /* "extensions/lib/wsgi.pyx":209
+  /* "extensions/lib/wsgi.pyx":210
  *                 buffer.extend(data)
  * 
  *         elif force and self.chunked:             # <<<<<<<<<<<<<<
  *             if not buffer:
  *                 buffer = bytearray()
  */
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_force); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 209, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_force); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 210, __pyx_L1_error)
   if (__pyx_t_8) {
   } else {
     __pyx_t_7 = __pyx_t_8;
     goto __pyx_L11_bool_binop_done;
   }
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_self->chunked); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 209, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_self->chunked); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 210, __pyx_L1_error)
   __pyx_t_7 = __pyx_t_8;
   __pyx_L11_bool_binop_done:;
   if (__pyx_t_7) {
 
-    /* "extensions/lib/wsgi.pyx":210
+    /* "extensions/lib/wsgi.pyx":211
  * 
  *         elif force and self.chunked:
  *             if not buffer:             # <<<<<<<<<<<<<<
  *                 buffer = bytearray()
- *             http_chunks_l(buffer, data, True)
+ *             http_chunks(buffer, data, True)
  */
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_buffer); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 210, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_buffer); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 211, __pyx_L1_error)
     __pyx_t_8 = ((!__pyx_t_7) != 0);
     if (__pyx_t_8) {
 
-      /* "extensions/lib/wsgi.pyx":211
+      /* "extensions/lib/wsgi.pyx":212
  *         elif force and self.chunked:
  *             if not buffer:
  *                 buffer = bytearray()             # <<<<<<<<<<<<<<
- *             http_chunks_l(buffer, data, True)
+ *             http_chunks(buffer, data, True)
  * 
  */
-      __pyx_t_13 = __Pyx_PyObject_Call(((PyObject *)(&PyByteArray_Type)), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 211, __pyx_L1_error)
+      __pyx_t_13 = __Pyx_PyObject_Call(((PyObject *)(&PyByteArray_Type)), __pyx_empty_tuple, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 212, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_13);
       __Pyx_DECREF_SET(__pyx_v_buffer, ((PyObject*)__pyx_t_13));
       __pyx_t_13 = 0;
 
-      /* "extensions/lib/wsgi.pyx":210
+      /* "extensions/lib/wsgi.pyx":211
  * 
  *         elif force and self.chunked:
  *             if not buffer:             # <<<<<<<<<<<<<<
  *                 buffer = bytearray()
- *             http_chunks_l(buffer, data, True)
+ *             http_chunks(buffer, data, True)
  */
     }
 
-    /* "extensions/lib/wsgi.pyx":212
+    /* "extensions/lib/wsgi.pyx":213
  *             if not buffer:
  *                 buffer = bytearray()
- *             http_chunks_l(buffer, data, True)             # <<<<<<<<<<<<<<
+ *             http_chunks(buffer, data, True)             # <<<<<<<<<<<<<<
  * 
  *         if buffer:
  */
-    if (!(likely(PyList_CheckExact(__pyx_v_buffer))||((__pyx_v_buffer) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "list", Py_TYPE(__pyx_v_buffer)->tp_name), 0))) __PYX_ERR(5, 212, __pyx_L1_error)
     __pyx_t_14.__pyx_n = 1;
     __pyx_t_14.finish = Py_True;
-    __pyx_f_4clib_http_chunks_l(((PyObject*)__pyx_v_buffer), __pyx_v_data, &__pyx_t_14); 
+    __pyx_f_4clib_http_chunks(__pyx_v_buffer, __pyx_v_data, &__pyx_t_14); 
 
-    /* "extensions/lib/wsgi.pyx":209
+    /* "extensions/lib/wsgi.pyx":210
  *                 buffer.extend(data)
  * 
  *         elif force and self.chunked:             # <<<<<<<<<<<<<<
@@ -27369,25 +27353,25 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
   }
   __pyx_L8:;
 
-  /* "extensions/lib/wsgi.pyx":214
- *             http_chunks_l(buffer, data, True)
+  /* "extensions/lib/wsgi.pyx":215
+ *             http_chunks(buffer, data, True)
  * 
  *         if buffer:             # <<<<<<<<<<<<<<
  *             return self.connection.write(buffer)
  * 
  */
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_buffer); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 214, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_buffer); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 215, __pyx_L1_error)
   if (__pyx_t_8) {
 
-    /* "extensions/lib/wsgi.pyx":215
+    /* "extensions/lib/wsgi.pyx":216
  * 
  *         if buffer:
  *             return self.connection.write(buffer)             # <<<<<<<<<<<<<<
  * 
- *     cpdef object write_list(self, bytes data, object force=False):
+ *     cdef get_headers(self):
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->connection, __pyx_n_s_write); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 215, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->connection, __pyx_n_s_write); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 216, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_2 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -27400,13 +27384,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       }
     }
     if (!__pyx_t_2) {
-      __pyx_t_13 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_buffer); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 215, __pyx_L1_error)
+      __pyx_t_13 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_buffer); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 216, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_13);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_buffer};
-        __pyx_t_13 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 215, __pyx_L1_error)
+        __pyx_t_13 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 216, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_13);
       } else
@@ -27414,19 +27398,19 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_buffer};
-        __pyx_t_13 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 215, __pyx_L1_error)
+        __pyx_t_13 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 216, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_13);
       } else
       #endif
       {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 215, __pyx_L1_error)
+        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 216, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2); __pyx_t_2 = NULL;
         __Pyx_INCREF(__pyx_v_buffer);
         __Pyx_GIVEREF(__pyx_v_buffer);
         PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_buffer);
-        __pyx_t_13 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 215, __pyx_L1_error)
+        __pyx_t_13 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_13)) __PYX_ERR(5, 216, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_13);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       }
@@ -27436,8 +27420,8 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
     __pyx_t_13 = 0;
     goto __pyx_L0;
 
-    /* "extensions/lib/wsgi.pyx":214
- *             http_chunks_l(buffer, data, True)
+    /* "extensions/lib/wsgi.pyx":215
+ *             http_chunks(buffer, data, True)
  * 
  *         if buffer:             # <<<<<<<<<<<<<<
  *             return self.connection.write(buffer)
@@ -27445,7 +27429,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_write(struct __pyx_obj_4clib_WsgiP
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":187
+  /* "extensions/lib/wsgi.pyx":188
  *         return self.write
  * 
  *     cpdef object write(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
@@ -27510,7 +27494,7 @@ static PyObject *__pyx_pw_4clib_12WsgiProtocol_15write(PyObject *__pyx_v_self, P
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "write") < 0)) __PYX_ERR(5, 187, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "write") < 0)) __PYX_ERR(5, 188, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -27525,13 +27509,13 @@ static PyObject *__pyx_pw_4clib_12WsgiProtocol_15write(PyObject *__pyx_v_self, P
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("write", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(5, 187, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("write", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(5, 188, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.WsgiProtocol.write", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_data), (&PyBytes_Type), 1, "data", 1))) __PYX_ERR(5, 187, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_data), (&PyBytes_Type), 1, "data", 1))) __PYX_ERR(5, 188, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_12WsgiProtocol_14write(((struct __pyx_obj_4clib_WsgiProtocol *)__pyx_v_self), __pyx_v_data, __pyx_v_force);
 
   /* function exit code */
@@ -27552,7 +27536,7 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_14write(struct __pyx_obj_4clib_Ws
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.force = __pyx_v_force;
-  __pyx_t_1 = __pyx_vtabptr_4clib_WsgiProtocol->write(__pyx_v_self, __pyx_v_data, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 187, __pyx_L1_error)
+  __pyx_t_1 = __pyx_vtabptr_4clib_WsgiProtocol->write(__pyx_v_self, __pyx_v_data, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 188, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -27569,1647 +27553,8 @@ static PyObject *__pyx_pf_4clib_12WsgiProtocol_14write(struct __pyx_obj_4clib_Ws
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":217
+/* "extensions/lib/wsgi.pyx":218
  *             return self.connection.write(buffer)
- * 
- *     cpdef object write_list(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
- *         cdef list chunks = None
- *         cdef dict env = self.environ
- */
-
-static PyObject *__pyx_pw_4clib_12WsgiProtocol_17write_list(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_f_4clib_12WsgiProtocol_write_list(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write_list *__pyx_optional_args) {
-  PyObject *__pyx_v_force = ((PyObject *)Py_False);
-  PyObject *__pyx_v_chunks = 0;
-  PyObject *__pyx_v_env = 0;
-  PyObject *__pyx_v_proto = 0;
-  PyObject *__pyx_v_k = NULL;
-  PyObject *__pyx_v_v = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
-  int __pyx_t_7;
-  int __pyx_t_8;
-  Py_ssize_t __pyx_t_9;
-  PyObject *(*__pyx_t_10)(PyObject *);
-  PyObject *(*__pyx_t_11)(PyObject *);
-  int __pyx_t_12;
-  struct __pyx_opt_args_4clib_http_chunks_l __pyx_t_13;
-  __Pyx_RefNannySetupContext("write_list", 0);
-  if (__pyx_optional_args) {
-    if (__pyx_optional_args->__pyx_n > 0) {
-      __pyx_v_force = __pyx_optional_args->force;
-    }
-  }
-  /* Check if called by wrapper */
-  if (unlikely(__pyx_skip_dispatch)) ;
-  /* Check if overridden in Python */
-  else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_write_list); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 217, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_17write_list)) {
-      __Pyx_XDECREF(__pyx_r);
-      __Pyx_INCREF(__pyx_t_1);
-      __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
-      __pyx_t_5 = 0;
-      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-          __pyx_t_5 = 1;
-        }
-      }
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_data, __pyx_v_force};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 217, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_2);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_data, __pyx_v_force};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 217, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_2);
-      } else
-      #endif
-      {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 217, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        if (__pyx_t_4) {
-          __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        }
-        __Pyx_INCREF(__pyx_v_data);
-        __Pyx_GIVEREF(__pyx_v_data);
-        PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_5, __pyx_v_data);
-        __Pyx_INCREF(__pyx_v_force);
-        __Pyx_GIVEREF(__pyx_v_force);
-        PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_force);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 217, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_r = __pyx_t_2;
-      __pyx_t_2 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      goto __pyx_L0;
-    }
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  }
-
-  /* "extensions/lib/wsgi.pyx":218
- * 
- *     cpdef object write_list(self, bytes data, object force=False):
- *         cdef list chunks = None             # <<<<<<<<<<<<<<
- *         cdef dict env = self.environ
- *         cdef object proto = self.protocol
- */
-  __Pyx_INCREF(Py_None);
-  __pyx_v_chunks = ((PyObject*)Py_None);
-
-  /* "extensions/lib/wsgi.pyx":219
- *     cpdef object write_list(self, bytes data, object force=False):
- *         cdef list chunks = None
- *         cdef dict env = self.environ             # <<<<<<<<<<<<<<
- *         cdef object proto = self.protocol
- *         cdef object tosend
- */
-  __pyx_t_1 = __pyx_v_self->environ;
-  __Pyx_INCREF(__pyx_t_1);
-  __pyx_v_env = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "extensions/lib/wsgi.pyx":220
- *         cdef list chunks = None
- *         cdef dict env = self.environ
- *         cdef object proto = self.protocol             # <<<<<<<<<<<<<<
- *         cdef object tosend
- * 
- */
-  __pyx_t_1 = __pyx_v_self->protocol;
-  __Pyx_INCREF(__pyx_t_1);
-  __pyx_v_proto = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "extensions/lib/wsgi.pyx":223
- *         cdef object tosend
- * 
- *         if not self.headers_sent:             # <<<<<<<<<<<<<<
- *             self.headers_sent = self.get_headers()
- *             chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
- */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->headers_sent); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 223, __pyx_L1_error)
-  __pyx_t_8 = ((!__pyx_t_7) != 0);
-  if (__pyx_t_8) {
-
-    /* "extensions/lib/wsgi.pyx":224
- * 
- *         if not self.headers_sent:
- *             self.headers_sent = self.get_headers()             # <<<<<<<<<<<<<<
- *             chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
- *             for k, v in self.headers_sent.items():
- */
-    __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_WsgiProtocol *)__pyx_v_self->__pyx_vtab)->get_headers(__pyx_v_self); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 224, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_GIVEREF(__pyx_t_1);
-    __Pyx_GOTREF(__pyx_v_self->headers_sent);
-    __Pyx_DECREF(__pyx_v_self->headers_sent);
-    __pyx_v_self->headers_sent = __pyx_t_1;
-    __pyx_t_1 = 0;
-
-    /* "extensions/lib/wsgi.pyx":225
- *         if not self.headers_sent:
- *             self.headers_sent = self.get_headers()
- *             chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]             # <<<<<<<<<<<<<<
- *             for k, v in self.headers_sent.items():
- *                 chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))
- */
-    if (unlikely(__pyx_v_env == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 225, __pyx_L1_error)
-    }
-    __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_env, __pyx_n_s_SERVER_PROTOCOL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 225, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 225, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GIVEREF(__pyx_t_2);
-    PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
-    __Pyx_INCREF(__pyx_v_self->status);
-    __Pyx_GIVEREF(__pyx_v_self->status);
-    PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self->status);
-    __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_s_s_2, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 225, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_encode); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 225, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_2)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_2);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-      }
-    }
-    if (!__pyx_t_2) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 225, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_4clib_CHARSET};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 225, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_4clib_CHARSET};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 225, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else
-      #endif
-      {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 225, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_2); __pyx_t_2 = NULL;
-        __Pyx_INCREF(__pyx_v_4clib_CHARSET);
-        __Pyx_GIVEREF(__pyx_v_4clib_CHARSET);
-        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_4clib_CHARSET);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 225, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyList_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 225, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GIVEREF(__pyx_t_1);
-    PyList_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
-    __pyx_t_1 = 0;
-    __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_3));
-    __pyx_t_3 = 0;
-
-    /* "extensions/lib/wsgi.pyx":226
- *             self.headers_sent = self.get_headers()
- *             chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
- *             for k, v in self.headers_sent.items():             # <<<<<<<<<<<<<<
- *                 chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))
- *             chunks.append(CRLF)
- */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->headers_sent, __pyx_n_s_items); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 226, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_6 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
-      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_1);
-      if (likely(__pyx_t_6)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
-        __Pyx_INCREF(__pyx_t_6);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_1, function);
-      }
-    }
-    if (__pyx_t_6) {
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 226, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    } else {
-      __pyx_t_3 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 226, __pyx_L1_error)
-    }
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (likely(PyList_CheckExact(__pyx_t_3)) || PyTuple_CheckExact(__pyx_t_3)) {
-      __pyx_t_1 = __pyx_t_3; __Pyx_INCREF(__pyx_t_1); __pyx_t_9 = 0;
-      __pyx_t_10 = NULL;
-    } else {
-      __pyx_t_9 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 226, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_10 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(5, 226, __pyx_L1_error)
-    }
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    for (;;) {
-      if (likely(!__pyx_t_10)) {
-        if (likely(PyList_CheckExact(__pyx_t_1))) {
-          if (__pyx_t_9 >= PyList_GET_SIZE(__pyx_t_1)) break;
-          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_3 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_9); __Pyx_INCREF(__pyx_t_3); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(5, 226, __pyx_L1_error)
-          #else
-          __pyx_t_3 = PySequence_ITEM(__pyx_t_1, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 226, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_3);
-          #endif
-        } else {
-          if (__pyx_t_9 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
-          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_3 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_9); __Pyx_INCREF(__pyx_t_3); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(5, 226, __pyx_L1_error)
-          #else
-          __pyx_t_3 = PySequence_ITEM(__pyx_t_1, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 226, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_3);
-          #endif
-        }
-      } else {
-        __pyx_t_3 = __pyx_t_10(__pyx_t_1);
-        if (unlikely(!__pyx_t_3)) {
-          PyObject* exc_type = PyErr_Occurred();
-          if (exc_type) {
-            if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(5, 226, __pyx_L1_error)
-          }
-          break;
-        }
-        __Pyx_GOTREF(__pyx_t_3);
-      }
-      if ((likely(PyTuple_CheckExact(__pyx_t_3))) || (PyList_CheckExact(__pyx_t_3))) {
-        PyObject* sequence = __pyx_t_3;
-        #if !CYTHON_COMPILING_IN_PYPY
-        Py_ssize_t size = Py_SIZE(sequence);
-        #else
-        Py_ssize_t size = PySequence_Size(sequence);
-        #endif
-        if (unlikely(size != 2)) {
-          if (size > 2) __Pyx_RaiseTooManyValuesError(2);
-          else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-          __PYX_ERR(5, 226, __pyx_L1_error)
-        }
-        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        if (likely(PyTuple_CheckExact(sequence))) {
-          __pyx_t_6 = PyTuple_GET_ITEM(sequence, 0); 
-          __pyx_t_2 = PyTuple_GET_ITEM(sequence, 1); 
-        } else {
-          __pyx_t_6 = PyList_GET_ITEM(sequence, 0); 
-          __pyx_t_2 = PyList_GET_ITEM(sequence, 1); 
-        }
-        __Pyx_INCREF(__pyx_t_6);
-        __Pyx_INCREF(__pyx_t_2);
-        #else
-        __pyx_t_6 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 226, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_2 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 226, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_2);
-        #endif
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      } else {
-        Py_ssize_t index = -1;
-        __pyx_t_4 = PyObject_GetIter(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 226, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_t_11 = Py_TYPE(__pyx_t_4)->tp_iternext;
-        index = 0; __pyx_t_6 = __pyx_t_11(__pyx_t_4); if (unlikely(!__pyx_t_6)) goto __pyx_L6_unpacking_failed;
-        __Pyx_GOTREF(__pyx_t_6);
-        index = 1; __pyx_t_2 = __pyx_t_11(__pyx_t_4); if (unlikely(!__pyx_t_2)) goto __pyx_L6_unpacking_failed;
-        __Pyx_GOTREF(__pyx_t_2);
-        if (__Pyx_IternextUnpackEndCheck(__pyx_t_11(__pyx_t_4), 2) < 0) __PYX_ERR(5, 226, __pyx_L1_error)
-        __pyx_t_11 = NULL;
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        goto __pyx_L7_unpacking_done;
-        __pyx_L6_unpacking_failed:;
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __pyx_t_11 = NULL;
-        if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-        __PYX_ERR(5, 226, __pyx_L1_error)
-        __pyx_L7_unpacking_done:;
-      }
-      __Pyx_XDECREF_SET(__pyx_v_k, __pyx_t_6);
-      __pyx_t_6 = 0;
-      __Pyx_XDECREF_SET(__pyx_v_v, __pyx_t_2);
-      __pyx_t_2 = 0;
-
-      /* "extensions/lib/wsgi.pyx":227
- *             chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
- *             for k, v in self.headers_sent.items():
- *                 chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))             # <<<<<<<<<<<<<<
- *             chunks.append(CRLF)
- *             proto.event('on_headers').fire(data=chunks)
- */
-      __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 227, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_INCREF(__pyx_v_k);
-      __Pyx_GIVEREF(__pyx_v_k);
-      PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_k);
-      __Pyx_INCREF(__pyx_v_v);
-      __Pyx_GIVEREF(__pyx_v_v);
-      PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_v);
-      __pyx_t_6 = __Pyx_PyString_Format(__pyx_kp_s_s_s_3, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 227, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 227, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = NULL;
-      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
-        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
-        if (likely(__pyx_t_6)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-          __Pyx_INCREF(__pyx_t_6);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_2, function);
-        }
-      }
-      if (!__pyx_t_6) {
-        __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 227, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-      } else {
-        #if CYTHON_FAST_PYCALL
-        if (PyFunction_Check(__pyx_t_2)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_4clib_CHARSET};
-          __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 227, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __Pyx_GOTREF(__pyx_t_3);
-        } else
-        #endif
-        #if CYTHON_FAST_PYCCALL
-        if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_4clib_CHARSET};
-          __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 227, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __Pyx_GOTREF(__pyx_t_3);
-        } else
-        #endif
-        {
-          __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 227, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_4);
-          __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
-          __Pyx_INCREF(__pyx_v_4clib_CHARSET);
-          __Pyx_GIVEREF(__pyx_v_4clib_CHARSET);
-          PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_4clib_CHARSET);
-          __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 227, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_3);
-          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        }
-      }
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_12 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_t_3); if (unlikely(__pyx_t_12 == -1)) __PYX_ERR(5, 227, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-      /* "extensions/lib/wsgi.pyx":226
- *             self.headers_sent = self.get_headers()
- *             chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
- *             for k, v in self.headers_sent.items():             # <<<<<<<<<<<<<<
- *                 chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))
- *             chunks.append(CRLF)
- */
-    }
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "extensions/lib/wsgi.pyx":228
- *             for k, v in self.headers_sent.items():
- *                 chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))
- *             chunks.append(CRLF)             # <<<<<<<<<<<<<<
- *             proto.event('on_headers').fire(data=chunks)
- * 
- */
-    __pyx_t_1 = __pyx_v_4clib_CRLF;
-    __Pyx_INCREF(__pyx_t_1);
-    __pyx_t_12 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_t_1); if (unlikely(__pyx_t_12 == -1)) __PYX_ERR(5, 228, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "extensions/lib/wsgi.pyx":229
- *                 chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))
- *             chunks.append(CRLF)
- *             proto.event('on_headers').fire(data=chunks)             # <<<<<<<<<<<<<<
- * 
- *         if data:
- */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_event); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 229, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__46, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 229, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_fire); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 229, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 229, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_data, __pyx_v_chunks) < 0) __PYX_ERR(5, 229, __pyx_L1_error)
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 229, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-    /* "extensions/lib/wsgi.pyx":223
- *         cdef object tosend
- * 
- *         if not self.headers_sent:             # <<<<<<<<<<<<<<
- *             self.headers_sent = self.get_headers()
- *             chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
- */
-  }
-
-  /* "extensions/lib/wsgi.pyx":231
- *             proto.event('on_headers').fire(data=chunks)
- * 
- *         if data:             # <<<<<<<<<<<<<<
- *             if not chunks:
- *                 chunks = []
- */
-  __pyx_t_8 = (__pyx_v_data != Py_None) && (PyBytes_GET_SIZE(__pyx_v_data) != 0);
-  if (__pyx_t_8) {
-
-    /* "extensions/lib/wsgi.pyx":232
- * 
- *         if data:
- *             if not chunks:             # <<<<<<<<<<<<<<
- *                 chunks = []
- *             if self.chunked:
- */
-    __pyx_t_8 = (__pyx_v_chunks != Py_None) && (PyList_GET_SIZE(__pyx_v_chunks) != 0);
-    __pyx_t_7 = ((!__pyx_t_8) != 0);
-    if (__pyx_t_7) {
-
-      /* "extensions/lib/wsgi.pyx":233
- *         if data:
- *             if not chunks:
- *                 chunks = []             # <<<<<<<<<<<<<<
- *             if self.chunked:
- *                 http_chunks_l(chunks, data)
- */
-      __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 233, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_2));
-      __pyx_t_2 = 0;
-
-      /* "extensions/lib/wsgi.pyx":232
- * 
- *         if data:
- *             if not chunks:             # <<<<<<<<<<<<<<
- *                 chunks = []
- *             if self.chunked:
- */
-    }
-
-    /* "extensions/lib/wsgi.pyx":234
- *             if not chunks:
- *                 chunks = []
- *             if self.chunked:             # <<<<<<<<<<<<<<
- *                 http_chunks_l(chunks, data)
- *             else:
- */
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->chunked); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 234, __pyx_L1_error)
-    if (__pyx_t_7) {
-
-      /* "extensions/lib/wsgi.pyx":235
- *                 chunks = []
- *             if self.chunked:
- *                 http_chunks_l(chunks, data)             # <<<<<<<<<<<<<<
- *             else:
- *                 chunks.append(data)
- */
-      __pyx_f_4clib_http_chunks_l(__pyx_v_chunks, __pyx_v_data, NULL);
-
-      /* "extensions/lib/wsgi.pyx":234
- *             if not chunks:
- *                 chunks = []
- *             if self.chunked:             # <<<<<<<<<<<<<<
- *                 http_chunks_l(chunks, data)
- *             else:
- */
-      goto __pyx_L10;
-    }
-
-    /* "extensions/lib/wsgi.pyx":237
- *                 http_chunks_l(chunks, data)
- *             else:
- *                 chunks.append(data)             # <<<<<<<<<<<<<<
- * 
- *         elif force and self.chunked:
- */
-    /*else*/ {
-      if (unlikely(__pyx_v_chunks == Py_None)) {
-        PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "append");
-        __PYX_ERR(5, 237, __pyx_L1_error)
-      }
-      __pyx_t_12 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_v_data); if (unlikely(__pyx_t_12 == -1)) __PYX_ERR(5, 237, __pyx_L1_error)
-    }
-    __pyx_L10:;
-
-    /* "extensions/lib/wsgi.pyx":231
- *             proto.event('on_headers').fire(data=chunks)
- * 
- *         if data:             # <<<<<<<<<<<<<<
- *             if not chunks:
- *                 chunks = []
- */
-    goto __pyx_L8;
-  }
-
-  /* "extensions/lib/wsgi.pyx":239
- *                 chunks.append(data)
- * 
- *         elif force and self.chunked:             # <<<<<<<<<<<<<<
- *             if not chunks:
- *                 chunks = []
- */
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_force); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 239, __pyx_L1_error)
-  if (__pyx_t_8) {
-  } else {
-    __pyx_t_7 = __pyx_t_8;
-    goto __pyx_L11_bool_binop_done;
-  }
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_self->chunked); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 239, __pyx_L1_error)
-  __pyx_t_7 = __pyx_t_8;
-  __pyx_L11_bool_binop_done:;
-  if (__pyx_t_7) {
-
-    /* "extensions/lib/wsgi.pyx":240
- * 
- *         elif force and self.chunked:
- *             if not chunks:             # <<<<<<<<<<<<<<
- *                 chunks = []
- *             http_chunks_l(chunks, data, True)
- */
-    __pyx_t_7 = (__pyx_v_chunks != Py_None) && (PyList_GET_SIZE(__pyx_v_chunks) != 0);
-    __pyx_t_8 = ((!__pyx_t_7) != 0);
-    if (__pyx_t_8) {
-
-      /* "extensions/lib/wsgi.pyx":241
- *         elif force and self.chunked:
- *             if not chunks:
- *                 chunks = []             # <<<<<<<<<<<<<<
- *             http_chunks_l(chunks, data, True)
- * 
- */
-      __pyx_t_2 = PyList_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 241, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_2));
-      __pyx_t_2 = 0;
-
-      /* "extensions/lib/wsgi.pyx":240
- * 
- *         elif force and self.chunked:
- *             if not chunks:             # <<<<<<<<<<<<<<
- *                 chunks = []
- *             http_chunks_l(chunks, data, True)
- */
-    }
-
-    /* "extensions/lib/wsgi.pyx":242
- *             if not chunks:
- *                 chunks = []
- *             http_chunks_l(chunks, data, True)             # <<<<<<<<<<<<<<
- * 
- *         if chunks:
- */
-    __pyx_t_13.__pyx_n = 1;
-    __pyx_t_13.finish = Py_True;
-    __pyx_f_4clib_http_chunks_l(__pyx_v_chunks, __pyx_v_data, &__pyx_t_13); 
-
-    /* "extensions/lib/wsgi.pyx":239
- *                 chunks.append(data)
- * 
- *         elif force and self.chunked:             # <<<<<<<<<<<<<<
- *             if not chunks:
- *                 chunks = []
- */
-  }
-  __pyx_L8:;
-
-  /* "extensions/lib/wsgi.pyx":244
- *             http_chunks_l(chunks, data, True)
- * 
- *         if chunks:             # <<<<<<<<<<<<<<
- *             return self.connection.write(b''.join(chunks))
- * 
- */
-  __pyx_t_8 = (__pyx_v_chunks != Py_None) && (PyList_GET_SIZE(__pyx_v_chunks) != 0);
-  if (__pyx_t_8) {
-
-    /* "extensions/lib/wsgi.pyx":245
- * 
- *         if chunks:
- *             return self.connection.write(b''.join(chunks))             # <<<<<<<<<<<<<<
- * 
- *     cpdef object write_plus(self, bytes data, object force=False):
- */
-    __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->connection, __pyx_n_s_write); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 245, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_1 = __Pyx_PyBytes_Join(__pyx_kp_b_, __pyx_v_chunks); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 245, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_4)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_4);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-      }
-    }
-    if (!__pyx_t_4) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 245, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      __Pyx_GOTREF(__pyx_t_2);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_1};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 245, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_1};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 245, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      } else
-      #endif
-      {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 245, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        __Pyx_GIVEREF(__pyx_t_1);
-        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_1);
-        __pyx_t_1 = 0;
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 245, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_r = __pyx_t_2;
-    __pyx_t_2 = 0;
-    goto __pyx_L0;
-
-    /* "extensions/lib/wsgi.pyx":244
- *             http_chunks_l(chunks, data, True)
- * 
- *         if chunks:             # <<<<<<<<<<<<<<
- *             return self.connection.write(b''.join(chunks))
- * 
- */
-  }
-
-  /* "extensions/lib/wsgi.pyx":217
- *             return self.connection.write(buffer)
- * 
- *     cpdef object write_list(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
- *         cdef list chunks = None
- *         cdef dict env = self.environ
- */
-
-  /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("clib.WsgiProtocol.write_list", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_chunks);
-  __Pyx_XDECREF(__pyx_v_env);
-  __Pyx_XDECREF(__pyx_v_proto);
-  __Pyx_XDECREF(__pyx_v_k);
-  __Pyx_XDECREF(__pyx_v_v);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_4clib_12WsgiProtocol_17write_list(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_4clib_12WsgiProtocol_17write_list(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_data = 0;
-  PyObject *__pyx_v_force = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("write_list (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_data,&__pyx_n_s_force,0};
-    PyObject* values[2] = {0,0};
-    values[1] = ((PyObject *)Py_False);
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_data)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        case  1:
-        if (kw_args > 0) {
-          PyObject* value = PyDict_GetItem(__pyx_kwds, __pyx_n_s_force);
-          if (value) { values[1] = value; kw_args--; }
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "write_list") < 0)) __PYX_ERR(5, 217, __pyx_L3_error)
-      }
-    } else {
-      switch (PyTuple_GET_SIZE(__pyx_args)) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-    }
-    __pyx_v_data = ((PyObject*)values[0]);
-    __pyx_v_force = values[1];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("write_list", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(5, 217, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("clib.WsgiProtocol.write_list", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_data), (&PyBytes_Type), 1, "data", 1))) __PYX_ERR(5, 217, __pyx_L1_error)
-  __pyx_r = __pyx_pf_4clib_12WsgiProtocol_16write_list(((struct __pyx_obj_4clib_WsgiProtocol *)__pyx_v_self), __pyx_v_data, __pyx_v_force);
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_4clib_12WsgiProtocol_16write_list(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, PyObject *__pyx_v_force) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  struct __pyx_opt_args_4clib_12WsgiProtocol_write_list __pyx_t_2;
-  __Pyx_RefNannySetupContext("write_list", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2.__pyx_n = 1;
-  __pyx_t_2.force = __pyx_v_force;
-  __pyx_t_1 = __pyx_vtabptr_4clib_WsgiProtocol->write_list(__pyx_v_self, __pyx_v_data, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 217, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("clib.WsgiProtocol.write_list", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "extensions/lib/wsgi.pyx":247
- *             return self.connection.write(b''.join(chunks))
- * 
- *     cpdef object write_plus(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
- *         cdef bytes chunks = b''
- *         cdef dict env = self.environ
- */
-
-static PyObject *__pyx_pw_4clib_12WsgiProtocol_19write_plus(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_f_4clib_12WsgiProtocol_write_plus(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write_plus *__pyx_optional_args) {
-  PyObject *__pyx_v_force = ((PyObject *)Py_False);
-  PyObject *__pyx_v_chunks = 0;
-  PyObject *__pyx_v_env = 0;
-  PyObject *__pyx_v_proto = 0;
-  PyObject *__pyx_v_k = NULL;
-  PyObject *__pyx_v_v = NULL;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  int __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
-  int __pyx_t_7;
-  int __pyx_t_8;
-  Py_ssize_t __pyx_t_9;
-  PyObject *(*__pyx_t_10)(PyObject *);
-  PyObject *(*__pyx_t_11)(PyObject *);
-  struct __pyx_opt_args_4clib_http_chunks __pyx_t_12;
-  __Pyx_RefNannySetupContext("write_plus", 0);
-  if (__pyx_optional_args) {
-    if (__pyx_optional_args->__pyx_n > 0) {
-      __pyx_v_force = __pyx_optional_args->force;
-    }
-  }
-  /* Check if called by wrapper */
-  if (unlikely(__pyx_skip_dispatch)) ;
-  /* Check if overridden in Python */
-  else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_write_plus); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 247, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_19write_plus)) {
-      __Pyx_XDECREF(__pyx_r);
-      __Pyx_INCREF(__pyx_t_1);
-      __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
-      __pyx_t_5 = 0;
-      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
-        __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
-        if (likely(__pyx_t_4)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-          __Pyx_INCREF(__pyx_t_4);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_3, function);
-          __pyx_t_5 = 1;
-        }
-      }
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_data, __pyx_v_force};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 247, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_2);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_data, __pyx_v_force};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 247, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_2);
-      } else
-      #endif
-      {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 247, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        if (__pyx_t_4) {
-          __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        }
-        __Pyx_INCREF(__pyx_v_data);
-        __Pyx_GIVEREF(__pyx_v_data);
-        PyTuple_SET_ITEM(__pyx_t_6, 0+__pyx_t_5, __pyx_v_data);
-        __Pyx_INCREF(__pyx_v_force);
-        __Pyx_GIVEREF(__pyx_v_force);
-        PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_force);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 247, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_r = __pyx_t_2;
-      __pyx_t_2 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      goto __pyx_L0;
-    }
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  }
-
-  /* "extensions/lib/wsgi.pyx":248
- * 
- *     cpdef object write_plus(self, bytes data, object force=False):
- *         cdef bytes chunks = b''             # <<<<<<<<<<<<<<
- *         cdef dict env = self.environ
- *         cdef object proto = self.protocol
- */
-  __Pyx_INCREF(__pyx_kp_b_);
-  __pyx_v_chunks = __pyx_kp_b_;
-
-  /* "extensions/lib/wsgi.pyx":249
- *     cpdef object write_plus(self, bytes data, object force=False):
- *         cdef bytes chunks = b''
- *         cdef dict env = self.environ             # <<<<<<<<<<<<<<
- *         cdef object proto = self.protocol
- *         cdef object tosend
- */
-  __pyx_t_1 = __pyx_v_self->environ;
-  __Pyx_INCREF(__pyx_t_1);
-  __pyx_v_env = ((PyObject*)__pyx_t_1);
-  __pyx_t_1 = 0;
-
-  /* "extensions/lib/wsgi.pyx":250
- *         cdef bytes chunks = b''
- *         cdef dict env = self.environ
- *         cdef object proto = self.protocol             # <<<<<<<<<<<<<<
- *         cdef object tosend
- * 
- */
-  __pyx_t_1 = __pyx_v_self->protocol;
-  __Pyx_INCREF(__pyx_t_1);
-  __pyx_v_proto = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "extensions/lib/wsgi.pyx":253
- *         cdef object tosend
- * 
- *         if not self.headers_sent:             # <<<<<<<<<<<<<<
- *             self.headers_sent = self.get_headers()
- *             chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)
- */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->headers_sent); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 253, __pyx_L1_error)
-  __pyx_t_8 = ((!__pyx_t_7) != 0);
-  if (__pyx_t_8) {
-
-    /* "extensions/lib/wsgi.pyx":254
- * 
- *         if not self.headers_sent:
- *             self.headers_sent = self.get_headers()             # <<<<<<<<<<<<<<
- *             chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)
- *             for k, v in self.headers_sent.items():
- */
-    __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_WsgiProtocol *)__pyx_v_self->__pyx_vtab)->get_headers(__pyx_v_self); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 254, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_GIVEREF(__pyx_t_1);
-    __Pyx_GOTREF(__pyx_v_self->headers_sent);
-    __Pyx_DECREF(__pyx_v_self->headers_sent);
-    __pyx_v_self->headers_sent = __pyx_t_1;
-    __pyx_t_1 = 0;
-
-    /* "extensions/lib/wsgi.pyx":255
- *         if not self.headers_sent:
- *             self.headers_sent = self.get_headers()
- *             chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)             # <<<<<<<<<<<<<<
- *             for k, v in self.headers_sent.items():
- *                 chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)
- */
-    if (unlikely(__pyx_v_env == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 255, __pyx_L1_error)
-    }
-    __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_env, __pyx_n_s_SERVER_PROTOCOL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 255, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 255, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GIVEREF(__pyx_t_2);
-    PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
-    __Pyx_INCREF(__pyx_v_self->status);
-    __Pyx_GIVEREF(__pyx_v_self->status);
-    PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self->status);
-    __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_s_s_2, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 255, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_encode); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 255, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_2)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_2);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-      }
-    }
-    if (!__pyx_t_2) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 255, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_4clib_CHARSET};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 255, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_v_4clib_CHARSET};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 255, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else
-      #endif
-      {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 255, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_2); __pyx_t_2 = NULL;
-        __Pyx_INCREF(__pyx_v_4clib_CHARSET);
-        __Pyx_GIVEREF(__pyx_v_4clib_CHARSET);
-        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_4clib_CHARSET);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 255, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (!(likely(PyBytes_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(5, 255, __pyx_L1_error)
-    __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_1));
-    __pyx_t_1 = 0;
-
-    /* "extensions/lib/wsgi.pyx":256
- *             self.headers_sent = self.get_headers()
- *             chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)
- *             for k, v in self.headers_sent.items():             # <<<<<<<<<<<<<<
- *                 chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)
- *             chunks += b'\r\n'
- */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->headers_sent, __pyx_n_s_items); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 256, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_6)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_6);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-      }
-    }
-    if (__pyx_t_6) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 256, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    } else {
-      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 256, __pyx_L1_error)
-    }
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (likely(PyList_CheckExact(__pyx_t_1)) || PyTuple_CheckExact(__pyx_t_1)) {
-      __pyx_t_3 = __pyx_t_1; __Pyx_INCREF(__pyx_t_3); __pyx_t_9 = 0;
-      __pyx_t_10 = NULL;
-    } else {
-      __pyx_t_9 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 256, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_10 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(5, 256, __pyx_L1_error)
-    }
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    for (;;) {
-      if (likely(!__pyx_t_10)) {
-        if (likely(PyList_CheckExact(__pyx_t_3))) {
-          if (__pyx_t_9 >= PyList_GET_SIZE(__pyx_t_3)) break;
-          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_1 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_9); __Pyx_INCREF(__pyx_t_1); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(5, 256, __pyx_L1_error)
-          #else
-          __pyx_t_1 = PySequence_ITEM(__pyx_t_3, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 256, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_1);
-          #endif
-        } else {
-          if (__pyx_t_9 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
-          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_1 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_9); __Pyx_INCREF(__pyx_t_1); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(5, 256, __pyx_L1_error)
-          #else
-          __pyx_t_1 = PySequence_ITEM(__pyx_t_3, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 256, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_1);
-          #endif
-        }
-      } else {
-        __pyx_t_1 = __pyx_t_10(__pyx_t_3);
-        if (unlikely(!__pyx_t_1)) {
-          PyObject* exc_type = PyErr_Occurred();
-          if (exc_type) {
-            if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(5, 256, __pyx_L1_error)
-          }
-          break;
-        }
-        __Pyx_GOTREF(__pyx_t_1);
-      }
-      if ((likely(PyTuple_CheckExact(__pyx_t_1))) || (PyList_CheckExact(__pyx_t_1))) {
-        PyObject* sequence = __pyx_t_1;
-        #if !CYTHON_COMPILING_IN_PYPY
-        Py_ssize_t size = Py_SIZE(sequence);
-        #else
-        Py_ssize_t size = PySequence_Size(sequence);
-        #endif
-        if (unlikely(size != 2)) {
-          if (size > 2) __Pyx_RaiseTooManyValuesError(2);
-          else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-          __PYX_ERR(5, 256, __pyx_L1_error)
-        }
-        #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        if (likely(PyTuple_CheckExact(sequence))) {
-          __pyx_t_6 = PyTuple_GET_ITEM(sequence, 0); 
-          __pyx_t_2 = PyTuple_GET_ITEM(sequence, 1); 
-        } else {
-          __pyx_t_6 = PyList_GET_ITEM(sequence, 0); 
-          __pyx_t_2 = PyList_GET_ITEM(sequence, 1); 
-        }
-        __Pyx_INCREF(__pyx_t_6);
-        __Pyx_INCREF(__pyx_t_2);
-        #else
-        __pyx_t_6 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 256, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_2 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 256, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_2);
-        #endif
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      } else {
-        Py_ssize_t index = -1;
-        __pyx_t_4 = PyObject_GetIter(__pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 256, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_11 = Py_TYPE(__pyx_t_4)->tp_iternext;
-        index = 0; __pyx_t_6 = __pyx_t_11(__pyx_t_4); if (unlikely(!__pyx_t_6)) goto __pyx_L6_unpacking_failed;
-        __Pyx_GOTREF(__pyx_t_6);
-        index = 1; __pyx_t_2 = __pyx_t_11(__pyx_t_4); if (unlikely(!__pyx_t_2)) goto __pyx_L6_unpacking_failed;
-        __Pyx_GOTREF(__pyx_t_2);
-        if (__Pyx_IternextUnpackEndCheck(__pyx_t_11(__pyx_t_4), 2) < 0) __PYX_ERR(5, 256, __pyx_L1_error)
-        __pyx_t_11 = NULL;
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        goto __pyx_L7_unpacking_done;
-        __pyx_L6_unpacking_failed:;
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __pyx_t_11 = NULL;
-        if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-        __PYX_ERR(5, 256, __pyx_L1_error)
-        __pyx_L7_unpacking_done:;
-      }
-      __Pyx_XDECREF_SET(__pyx_v_k, __pyx_t_6);
-      __pyx_t_6 = 0;
-      __Pyx_XDECREF_SET(__pyx_v_v, __pyx_t_2);
-      __pyx_t_2 = 0;
-
-      /* "extensions/lib/wsgi.pyx":257
- *             chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)
- *             for k, v in self.headers_sent.items():
- *                 chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)             # <<<<<<<<<<<<<<
- *             chunks += b'\r\n'
- *             proto.event('on_headers').fire(data=chunks)
- */
-      __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 257, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_INCREF(__pyx_v_k);
-      __Pyx_GIVEREF(__pyx_v_k);
-      PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_k);
-      __Pyx_INCREF(__pyx_v_v);
-      __Pyx_GIVEREF(__pyx_v_v);
-      PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_v);
-      __pyx_t_6 = __Pyx_PyString_Format(__pyx_kp_s_s_s_3, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 257, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 257, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_6 = NULL;
-      if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
-        __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
-        if (likely(__pyx_t_6)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-          __Pyx_INCREF(__pyx_t_6);
-          __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_2, function);
-        }
-      }
-      if (!__pyx_t_6) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_CHARSET); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 257, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_1);
-      } else {
-        #if CYTHON_FAST_PYCALL
-        if (PyFunction_Check(__pyx_t_2)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_4clib_CHARSET};
-          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 257, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __Pyx_GOTREF(__pyx_t_1);
-        } else
-        #endif
-        #if CYTHON_FAST_PYCCALL
-        if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_4clib_CHARSET};
-          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 257, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __Pyx_GOTREF(__pyx_t_1);
-        } else
-        #endif
-        {
-          __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 257, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_4);
-          __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
-          __Pyx_INCREF(__pyx_v_4clib_CHARSET);
-          __Pyx_GIVEREF(__pyx_v_4clib_CHARSET);
-          PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_4clib_CHARSET);
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 257, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_1);
-          __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        }
-      }
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __pyx_t_2 = PyNumber_InPlaceAdd(__pyx_v_chunks, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 257, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_2);
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-      if (!(likely(PyBytes_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(5, 257, __pyx_L1_error)
-      __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_2));
-      __pyx_t_2 = 0;
-
-      /* "extensions/lib/wsgi.pyx":256
- *             self.headers_sent = self.get_headers()
- *             chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)
- *             for k, v in self.headers_sent.items():             # <<<<<<<<<<<<<<
- *                 chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)
- *             chunks += b'\r\n'
- */
-    }
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-    /* "extensions/lib/wsgi.pyx":258
- *             for k, v in self.headers_sent.items():
- *                 chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)
- *             chunks += b'\r\n'             # <<<<<<<<<<<<<<
- *             proto.event('on_headers').fire(data=chunks)
- * 
- */
-    __pyx_t_3 = PyNumber_InPlaceAdd(__pyx_v_chunks, __pyx_kp_b__3); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 258, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_3));
-    __pyx_t_3 = 0;
-
-    /* "extensions/lib/wsgi.pyx":259
- *                 chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)
- *             chunks += b'\r\n'
- *             proto.event('on_headers').fire(data=chunks)             # <<<<<<<<<<<<<<
- * 
- *         if data:
- */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_proto, __pyx_n_s_event); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 259, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__47, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 259, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_fire); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 259, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 259, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_data, __pyx_v_chunks) < 0) __PYX_ERR(5, 259, __pyx_L1_error)
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 259, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-    /* "extensions/lib/wsgi.pyx":253
- *         cdef object tosend
- * 
- *         if not self.headers_sent:             # <<<<<<<<<<<<<<
- *             self.headers_sent = self.get_headers()
- *             chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)
- */
-  }
-
-  /* "extensions/lib/wsgi.pyx":261
- *             proto.event('on_headers').fire(data=chunks)
- * 
- *         if data:             # <<<<<<<<<<<<<<
- *             if self.chunked:
- *                 chunks = http_chunks(chunks, data)
- */
-  __pyx_t_8 = (__pyx_v_data != Py_None) && (PyBytes_GET_SIZE(__pyx_v_data) != 0);
-  if (__pyx_t_8) {
-
-    /* "extensions/lib/wsgi.pyx":262
- * 
- *         if data:
- *             if self.chunked:             # <<<<<<<<<<<<<<
- *                 chunks = http_chunks(chunks, data)
- *             else:
- */
-    __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_self->chunked); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 262, __pyx_L1_error)
-    if (__pyx_t_8) {
-
-      /* "extensions/lib/wsgi.pyx":263
- *         if data:
- *             if self.chunked:
- *                 chunks = http_chunks(chunks, data)             # <<<<<<<<<<<<<<
- *             else:
- *                 chunks += data
- */
-      __pyx_t_1 = __pyx_f_4clib_http_chunks(__pyx_v_chunks, __pyx_v_data, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 263, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_1));
-      __pyx_t_1 = 0;
-
-      /* "extensions/lib/wsgi.pyx":262
- * 
- *         if data:
- *             if self.chunked:             # <<<<<<<<<<<<<<
- *                 chunks = http_chunks(chunks, data)
- *             else:
- */
-      goto __pyx_L9;
-    }
-
-    /* "extensions/lib/wsgi.pyx":265
- *                 chunks = http_chunks(chunks, data)
- *             else:
- *                 chunks += data             # <<<<<<<<<<<<<<
- * 
- *         elif force and self.chunked:
- */
-    /*else*/ {
-      __pyx_t_1 = PyNumber_InPlaceAdd(__pyx_v_chunks, __pyx_v_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 265, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_1));
-      __pyx_t_1 = 0;
-    }
-    __pyx_L9:;
-
-    /* "extensions/lib/wsgi.pyx":261
- *             proto.event('on_headers').fire(data=chunks)
- * 
- *         if data:             # <<<<<<<<<<<<<<
- *             if self.chunked:
- *                 chunks = http_chunks(chunks, data)
- */
-    goto __pyx_L8;
-  }
-
-  /* "extensions/lib/wsgi.pyx":267
- *                 chunks += data
- * 
- *         elif force and self.chunked:             # <<<<<<<<<<<<<<
- *             chunks = http_chunks(chunks, data, True)
- * 
- */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_force); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 267, __pyx_L1_error)
-  if (__pyx_t_7) {
-  } else {
-    __pyx_t_8 = __pyx_t_7;
-    goto __pyx_L10_bool_binop_done;
-  }
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->chunked); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 267, __pyx_L1_error)
-  __pyx_t_8 = __pyx_t_7;
-  __pyx_L10_bool_binop_done:;
-  if (__pyx_t_8) {
-
-    /* "extensions/lib/wsgi.pyx":268
- * 
- *         elif force and self.chunked:
- *             chunks = http_chunks(chunks, data, True)             # <<<<<<<<<<<<<<
- * 
- *         if chunks:
- */
-    __pyx_t_12.__pyx_n = 1;
-    __pyx_t_12.finish = Py_True;
-    __pyx_t_1 = __pyx_f_4clib_http_chunks(__pyx_v_chunks, __pyx_v_data, &__pyx_t_12); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 268, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_1));
-    __pyx_t_1 = 0;
-
-    /* "extensions/lib/wsgi.pyx":267
- *                 chunks += data
- * 
- *         elif force and self.chunked:             # <<<<<<<<<<<<<<
- *             chunks = http_chunks(chunks, data, True)
- * 
- */
-  }
-  __pyx_L8:;
-
-  /* "extensions/lib/wsgi.pyx":270
- *             chunks = http_chunks(chunks, data, True)
- * 
- *         if chunks:             # <<<<<<<<<<<<<<
- *             return self.connection.write(chunks)
- * 
- */
-  __pyx_t_8 = (__pyx_v_chunks != Py_None) && (PyBytes_GET_SIZE(__pyx_v_chunks) != 0);
-  if (__pyx_t_8) {
-
-    /* "extensions/lib/wsgi.pyx":271
- * 
- *         if chunks:
- *             return self.connection.write(chunks)             # <<<<<<<<<<<<<<
- * 
- *     cdef get_headers(self):
- */
-    __Pyx_XDECREF(__pyx_r);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->connection, __pyx_n_s_write); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 271, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
-      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
-      if (likely(__pyx_t_3)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
-        __Pyx_INCREF(__pyx_t_3);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_2, function);
-      }
-    }
-    if (!__pyx_t_3) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_chunks); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 271, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_2)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_chunks};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 271, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_chunks};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 271, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __Pyx_GOTREF(__pyx_t_1);
-      } else
-      #endif
-      {
-        __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 271, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
-        __Pyx_INCREF(__pyx_v_chunks);
-        __Pyx_GIVEREF(__pyx_v_chunks);
-        PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_chunks);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 271, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_1);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_r = __pyx_t_1;
-    __pyx_t_1 = 0;
-    goto __pyx_L0;
-
-    /* "extensions/lib/wsgi.pyx":270
- *             chunks = http_chunks(chunks, data, True)
- * 
- *         if chunks:             # <<<<<<<<<<<<<<
- *             return self.connection.write(chunks)
- * 
- */
-  }
-
-  /* "extensions/lib/wsgi.pyx":247
- *             return self.connection.write(b''.join(chunks))
- * 
- *     cpdef object write_plus(self, bytes data, object force=False):             # <<<<<<<<<<<<<<
- *         cdef bytes chunks = b''
- *         cdef dict env = self.environ
- */
-
-  /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("clib.WsgiProtocol.write_plus", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_chunks);
-  __Pyx_XDECREF(__pyx_v_env);
-  __Pyx_XDECREF(__pyx_v_proto);
-  __Pyx_XDECREF(__pyx_v_k);
-  __Pyx_XDECREF(__pyx_v_v);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* Python wrapper */
-static PyObject *__pyx_pw_4clib_12WsgiProtocol_19write_plus(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyObject *__pyx_pw_4clib_12WsgiProtocol_19write_plus(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_data = 0;
-  PyObject *__pyx_v_force = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("write_plus (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_data,&__pyx_n_s_force,0};
-    PyObject* values[2] = {0,0};
-    values[1] = ((PyObject *)Py_False);
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_data)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        case  1:
-        if (kw_args > 0) {
-          PyObject* value = PyDict_GetItem(__pyx_kwds, __pyx_n_s_force);
-          if (value) { values[1] = value; kw_args--; }
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "write_plus") < 0)) __PYX_ERR(5, 247, __pyx_L3_error)
-      }
-    } else {
-      switch (PyTuple_GET_SIZE(__pyx_args)) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-    }
-    __pyx_v_data = ((PyObject*)values[0]);
-    __pyx_v_force = values[1];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("write_plus", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(5, 247, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("clib.WsgiProtocol.write_plus", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_data), (&PyBytes_Type), 1, "data", 1))) __PYX_ERR(5, 247, __pyx_L1_error)
-  __pyx_r = __pyx_pf_4clib_12WsgiProtocol_18write_plus(((struct __pyx_obj_4clib_WsgiProtocol *)__pyx_v_self), __pyx_v_data, __pyx_v_force);
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_4clib_12WsgiProtocol_18write_plus(struct __pyx_obj_4clib_WsgiProtocol *__pyx_v_self, PyObject *__pyx_v_data, PyObject *__pyx_v_force) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  struct __pyx_opt_args_4clib_12WsgiProtocol_write_plus __pyx_t_2;
-  __Pyx_RefNannySetupContext("write_plus", 0);
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2.__pyx_n = 1;
-  __pyx_t_2.force = __pyx_v_force;
-  __pyx_t_1 = __pyx_vtabptr_4clib_WsgiProtocol->write_plus(__pyx_v_self, __pyx_v_data, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 247, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("clib.WsgiProtocol.write_plus", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "extensions/lib/wsgi.pyx":273
- *             return self.connection.write(chunks)
  * 
  *     cdef get_headers(self):             # <<<<<<<<<<<<<<
  *         cdef object headers = self.headers
@@ -29233,7 +27578,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
   int __pyx_t_8;
   __Pyx_RefNannySetupContext("get_headers", 0);
 
-  /* "extensions/lib/wsgi.pyx":274
+  /* "extensions/lib/wsgi.pyx":219
  * 
  *     cdef get_headers(self):
  *         cdef object headers = self.headers             # <<<<<<<<<<<<<<
@@ -29245,14 +27590,14 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
   __pyx_v_headers = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":275
+  /* "extensions/lib/wsgi.pyx":220
  *     cdef get_headers(self):
  *         cdef object headers = self.headers
  *         cdef object chunked = headers.get(TRANSFER_ENCODING) == 'chunked'             # <<<<<<<<<<<<<<
  *         cdef object content_length = CONTENT_LENGTH in headers
  *         cdef int status = int(self.status.split()[0])
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_get); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 275, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_get); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 220, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -29265,13 +27610,13 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_TRANSFER_ENCODING); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 275, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_TRANSFER_ENCODING); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 220, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_4clib_TRANSFER_ENCODING};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 275, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 220, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -29279,50 +27624,50 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_4clib_TRANSFER_ENCODING};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 275, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 220, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 275, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 220, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_INCREF(__pyx_v_4clib_TRANSFER_ENCODING);
       __Pyx_GIVEREF(__pyx_v_4clib_TRANSFER_ENCODING);
       PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_4clib_TRANSFER_ENCODING);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 275, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 220, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, __pyx_n_s_chunked, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 275, __pyx_L1_error)
+  __pyx_t_2 = PyObject_RichCompare(__pyx_t_1, __pyx_n_s_chunked, Py_EQ); __Pyx_XGOTREF(__pyx_t_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 220, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_chunked = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "extensions/lib/wsgi.pyx":276
+  /* "extensions/lib/wsgi.pyx":221
  *         cdef object headers = self.headers
  *         cdef object chunked = headers.get(TRANSFER_ENCODING) == 'chunked'
  *         cdef object content_length = CONTENT_LENGTH in headers             # <<<<<<<<<<<<<<
  *         cdef int status = int(self.status.split()[0])
  * 
  */
-  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_v_4clib_CONTENT_LENGTH, __pyx_v_headers, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 276, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 276, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PySequence_ContainsTF(__pyx_v_4clib_CONTENT_LENGTH, __pyx_v_headers, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 221, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 221, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_content_length = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "extensions/lib/wsgi.pyx":277
+  /* "extensions/lib/wsgi.pyx":222
  *         cdef object chunked = headers.get(TRANSFER_ENCODING) == 'chunked'
  *         cdef object content_length = CONTENT_LENGTH in headers
  *         cdef int status = int(self.status.split()[0])             # <<<<<<<<<<<<<<
  * 
  *         if status >= 400:
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->status, __pyx_n_s_split); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 277, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->status, __pyx_n_s_split); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 222, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
@@ -29335,24 +27680,24 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
     }
   }
   if (__pyx_t_4) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 277, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 222, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   } else {
-    __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 277, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 222, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_t_2, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 277, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(__pyx_t_2, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 222, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyNumber_Int(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 277, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyNumber_Int(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 222, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(5, 277, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(5, 222, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_status = __pyx_t_6;
 
-  /* "extensions/lib/wsgi.pyx":279
+  /* "extensions/lib/wsgi.pyx":224
  *         cdef int status = int(self.status.split()[0])
  * 
  *         if status >= 400:             # <<<<<<<<<<<<<<
@@ -29362,7 +27707,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
   __pyx_t_5 = ((__pyx_v_status >= 0x190) != 0);
   if (__pyx_t_5) {
 
-    /* "extensions/lib/wsgi.pyx":280
+    /* "extensions/lib/wsgi.pyx":225
  * 
  *         if status >= 400:
  *             self.keep_alive = False             # <<<<<<<<<<<<<<
@@ -29375,7 +27720,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
     __Pyx_DECREF(__pyx_v_self->keep_alive);
     __pyx_v_self->keep_alive = Py_False;
 
-    /* "extensions/lib/wsgi.pyx":279
+    /* "extensions/lib/wsgi.pyx":224
  *         cdef int status = int(self.status.split()[0])
  * 
  *         if status >= 400:             # <<<<<<<<<<<<<<
@@ -29384,31 +27729,31 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":282
+  /* "extensions/lib/wsgi.pyx":227
  *             self.keep_alive = False
  * 
  *         if not self.status:             # <<<<<<<<<<<<<<
  *             # we are sending headers but the start_response was not called
  *             raise RuntimeError('Headers not set.')
  */
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_self->status); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 282, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_self->status); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 227, __pyx_L1_error)
   __pyx_t_7 = ((!__pyx_t_5) != 0);
   if (__pyx_t_7) {
 
-    /* "extensions/lib/wsgi.pyx":284
+    /* "extensions/lib/wsgi.pyx":229
  *         if not self.status:
  *             # we are sending headers but the start_response was not called
  *             raise RuntimeError('Headers not set.')             # <<<<<<<<<<<<<<
  * 
- *         if chunked and (
+ *         if (content_length or
  */
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__48, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 284, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__46, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __PYX_ERR(5, 284, __pyx_L1_error)
+    __PYX_ERR(5, 229, __pyx_L1_error)
 
-    /* "extensions/lib/wsgi.pyx":282
+    /* "extensions/lib/wsgi.pyx":227
  *             self.keep_alive = False
  * 
  *         if not self.status:             # <<<<<<<<<<<<<<
@@ -29417,42 +27762,28 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":286
+  /* "extensions/lib/wsgi.pyx":231
  *             raise RuntimeError('Headers not set.')
  * 
- *         if chunked and (             # <<<<<<<<<<<<<<
- *                 content_length or
- *                 self.status == '200 Connection established' or
- */
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_chunked); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 286, __pyx_L1_error)
-  if (__pyx_t_5) {
-  } else {
-    __pyx_t_7 = __pyx_t_5;
-    goto __pyx_L6_bool_binop_done;
-  }
-
-  /* "extensions/lib/wsgi.pyx":287
- * 
- *         if chunked and (
- *                 content_length or             # <<<<<<<<<<<<<<
+ *         if (content_length or             # <<<<<<<<<<<<<<
  *                 self.status == '200 Connection established' or
  *                 has_empty_content(status) or
  */
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_content_length); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 287, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_content_length); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 231, __pyx_L1_error)
   if (!__pyx_t_5) {
   } else {
     __pyx_t_7 = __pyx_t_5;
     goto __pyx_L6_bool_binop_done;
   }
 
-  /* "extensions/lib/wsgi.pyx":288
- *         if chunked and (
- *                 content_length or
+  /* "extensions/lib/wsgi.pyx":232
+ * 
+ *         if (content_length or
  *                 self.status == '200 Connection established' or             # <<<<<<<<<<<<<<
  *                 has_empty_content(status) or
  *                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
  */
-  __pyx_t_5 = (__Pyx_PyString_Equals(__pyx_v_self->status, __pyx_kp_s_200_Connection_established, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 288, __pyx_L1_error)
+  __pyx_t_5 = (__Pyx_PyString_Equals(__pyx_v_self->status, __pyx_kp_s_200_Connection_established, Py_EQ)); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 232, __pyx_L1_error)
   __pyx_t_8 = (__pyx_t_5 != 0);
   if (!__pyx_t_8) {
   } else {
@@ -29460,16 +27791,16 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
     goto __pyx_L6_bool_binop_done;
   }
 
-  /* "extensions/lib/wsgi.pyx":289
- *                 content_length or
+  /* "extensions/lib/wsgi.pyx":233
+ *         if (content_length or
  *                 self.status == '200 Connection established' or
  *                 has_empty_content(status) or             # <<<<<<<<<<<<<<
  *                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
  *             chunked = False
  */
-  __pyx_t_2 = __pyx_f_4clib_has_empty_content(__pyx_v_status, 0, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 289, __pyx_L1_error)
+  __pyx_t_2 = __pyx_f_4clib_has_empty_content(__pyx_v_status, 0, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 233, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 289, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_2); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 233, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (!__pyx_t_8) {
   } else {
@@ -29477,53 +27808,54 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
     goto __pyx_L6_bool_binop_done;
   }
 
-  /* "extensions/lib/wsgi.pyx":290
+  /* "extensions/lib/wsgi.pyx":234
  *                 self.status == '200 Connection established' or
  *                 has_empty_content(status) or
  *                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):             # <<<<<<<<<<<<<<
  *             chunked = False
- *             headers.pop(TRANSFER_ENCODING)
+ *             headers.pop(TRANSFER_ENCODING, None)
  */
   if (unlikely(__pyx_v_self->environ == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-    __PYX_ERR(5, 290, __pyx_L1_error)
+    __PYX_ERR(5, 234, __pyx_L1_error)
   }
-  __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_self->environ, __pyx_n_s_SERVER_PROTOCOL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 290, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_self->environ, __pyx_n_s_SERVER_PROTOCOL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 234, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_8 = (__Pyx_PyString_Equals(__pyx_t_2, __pyx_kp_s_HTTP_1_0, Py_EQ)); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 290, __pyx_L1_error)
+  __pyx_t_8 = (__Pyx_PyString_Equals(__pyx_t_2, __pyx_kp_s_HTTP_1_0, Py_EQ)); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 234, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_7 = __pyx_t_8;
   __pyx_L6_bool_binop_done:;
 
-  /* "extensions/lib/wsgi.pyx":286
+  /* "extensions/lib/wsgi.pyx":231
  *             raise RuntimeError('Headers not set.')
  * 
- *         if chunked and (             # <<<<<<<<<<<<<<
- *                 content_length or
+ *         if (content_length or             # <<<<<<<<<<<<<<
  *                 self.status == '200 Connection established' or
+ *                 has_empty_content(status) or
  */
   if (__pyx_t_7) {
 
-    /* "extensions/lib/wsgi.pyx":291
+    /* "extensions/lib/wsgi.pyx":235
  *                 has_empty_content(status) or
  *                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
  *             chunked = False             # <<<<<<<<<<<<<<
- *             headers.pop(TRANSFER_ENCODING)
+ *             headers.pop(TRANSFER_ENCODING, None)
  *         elif not chunked and not content_length:
  */
     __Pyx_INCREF(Py_False);
     __Pyx_DECREF_SET(__pyx_v_chunked, Py_False);
 
-    /* "extensions/lib/wsgi.pyx":292
+    /* "extensions/lib/wsgi.pyx":236
  *                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
  *             chunked = False
- *             headers.pop(TRANSFER_ENCODING)             # <<<<<<<<<<<<<<
+ *             headers.pop(TRANSFER_ENCODING, None)             # <<<<<<<<<<<<<<
  *         elif not chunked and not content_length:
  *             chunked = True
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_pop); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 292, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_pop); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 236, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_4 = NULL;
+    __pyx_t_6 = 0;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
       __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_1);
       if (likely(__pyx_t_4)) {
@@ -29531,75 +27863,76 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
         __Pyx_INCREF(__pyx_t_4);
         __Pyx_INCREF(function);
         __Pyx_DECREF_SET(__pyx_t_1, function);
+        __pyx_t_6 = 1;
       }
     }
-    if (!__pyx_t_4) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_v_4clib_TRANSFER_ENCODING); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 292, __pyx_L1_error)
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_1)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_4clib_TRANSFER_ENCODING, Py_None};
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 236, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_2);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_1)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_4clib_TRANSFER_ENCODING};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 292, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_2);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_4clib_TRANSFER_ENCODING};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 292, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_GOTREF(__pyx_t_2);
-      } else
-      #endif
-      {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 292, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_4clib_TRANSFER_ENCODING, Py_None};
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 236, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_2);
+    } else
+    #endif
+    {
+      __pyx_t_3 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 236, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      if (__pyx_t_4) {
         __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
-        __Pyx_INCREF(__pyx_v_4clib_TRANSFER_ENCODING);
-        __Pyx_GIVEREF(__pyx_v_4clib_TRANSFER_ENCODING);
-        PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_4clib_TRANSFER_ENCODING);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 292, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_2);
-        __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       }
+      __Pyx_INCREF(__pyx_v_4clib_TRANSFER_ENCODING);
+      __Pyx_GIVEREF(__pyx_v_4clib_TRANSFER_ENCODING);
+      PyTuple_SET_ITEM(__pyx_t_3, 0+__pyx_t_6, __pyx_v_4clib_TRANSFER_ENCODING);
+      __Pyx_INCREF(Py_None);
+      __Pyx_GIVEREF(Py_None);
+      PyTuple_SET_ITEM(__pyx_t_3, 1+__pyx_t_6, Py_None);
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 236, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "extensions/lib/wsgi.pyx":286
+    /* "extensions/lib/wsgi.pyx":231
  *             raise RuntimeError('Headers not set.')
  * 
- *         if chunked and (             # <<<<<<<<<<<<<<
- *                 content_length or
+ *         if (content_length or             # <<<<<<<<<<<<<<
  *                 self.status == '200 Connection established' or
+ *                 has_empty_content(status) or
  */
     goto __pyx_L5;
   }
 
-  /* "extensions/lib/wsgi.pyx":293
+  /* "extensions/lib/wsgi.pyx":237
  *             chunked = False
- *             headers.pop(TRANSFER_ENCODING)
+ *             headers.pop(TRANSFER_ENCODING, None)
  *         elif not chunked and not content_length:             # <<<<<<<<<<<<<<
  *             chunked = True
  *             headers[TRANSFER_ENCODING] = 'chunked'
  */
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_chunked); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 293, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_chunked); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 237, __pyx_L1_error)
   __pyx_t_5 = ((!__pyx_t_8) != 0);
   if (__pyx_t_5) {
   } else {
     __pyx_t_7 = __pyx_t_5;
-    goto __pyx_L11_bool_binop_done;
+    goto __pyx_L10_bool_binop_done;
   }
-  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_content_length); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 293, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_v_content_length); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(5, 237, __pyx_L1_error)
   __pyx_t_8 = ((!__pyx_t_5) != 0);
   __pyx_t_7 = __pyx_t_8;
-  __pyx_L11_bool_binop_done:;
+  __pyx_L10_bool_binop_done:;
   if (__pyx_t_7) {
 
-    /* "extensions/lib/wsgi.pyx":294
- *             headers.pop(TRANSFER_ENCODING)
+    /* "extensions/lib/wsgi.pyx":238
+ *             headers.pop(TRANSFER_ENCODING, None)
  *         elif not chunked and not content_length:
  *             chunked = True             # <<<<<<<<<<<<<<
  *             headers[TRANSFER_ENCODING] = 'chunked'
@@ -29608,18 +27941,18 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
     __Pyx_INCREF(Py_True);
     __Pyx_DECREF_SET(__pyx_v_chunked, Py_True);
 
-    /* "extensions/lib/wsgi.pyx":295
+    /* "extensions/lib/wsgi.pyx":239
  *         elif not chunked and not content_length:
  *             chunked = True
  *             headers[TRANSFER_ENCODING] = 'chunked'             # <<<<<<<<<<<<<<
  * 
  *         if not self.keep_alive:
  */
-    if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_TRANSFER_ENCODING, __pyx_n_s_chunked) < 0)) __PYX_ERR(5, 295, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_TRANSFER_ENCODING, __pyx_n_s_chunked) < 0)) __PYX_ERR(5, 239, __pyx_L1_error)
 
-    /* "extensions/lib/wsgi.pyx":293
+    /* "extensions/lib/wsgi.pyx":237
  *             chunked = False
- *             headers.pop(TRANSFER_ENCODING)
+ *             headers.pop(TRANSFER_ENCODING, None)
  *         elif not chunked and not content_length:             # <<<<<<<<<<<<<<
  *             chunked = True
  *             headers[TRANSFER_ENCODING] = 'chunked'
@@ -29627,116 +27960,37 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
   }
   __pyx_L5:;
 
-  /* "extensions/lib/wsgi.pyx":297
+  /* "extensions/lib/wsgi.pyx":241
  *             headers[TRANSFER_ENCODING] = 'chunked'
  * 
  *         if not self.keep_alive:             # <<<<<<<<<<<<<<
  *             headers[CONNECTION] = 'close'
- *         elif 'upgrade' in headers.get(CONNECTION, ''):
+ * 
  */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->keep_alive); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 297, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_self->keep_alive); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(5, 241, __pyx_L1_error)
   __pyx_t_8 = ((!__pyx_t_7) != 0);
   if (__pyx_t_8) {
 
-    /* "extensions/lib/wsgi.pyx":298
+    /* "extensions/lib/wsgi.pyx":242
  * 
  *         if not self.keep_alive:
  *             headers[CONNECTION] = 'close'             # <<<<<<<<<<<<<<
- *         elif 'upgrade' in headers.get(CONNECTION, ''):
- *             headers[CONNECTION] = 'upgrade'
+ * 
+ *         self.chunked = chunked
  */
-    if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_CONNECTION, __pyx_n_s_close) < 0)) __PYX_ERR(5, 298, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_CONNECTION, __pyx_n_s_close) < 0)) __PYX_ERR(5, 242, __pyx_L1_error)
 
-    /* "extensions/lib/wsgi.pyx":297
+    /* "extensions/lib/wsgi.pyx":241
  *             headers[TRANSFER_ENCODING] = 'chunked'
  * 
  *         if not self.keep_alive:             # <<<<<<<<<<<<<<
  *             headers[CONNECTION] = 'close'
- *         elif 'upgrade' in headers.get(CONNECTION, ''):
- */
-    goto __pyx_L13;
-  }
-
-  /* "extensions/lib/wsgi.pyx":299
- *         if not self.keep_alive:
- *             headers[CONNECTION] = 'close'
- *         elif 'upgrade' in headers.get(CONNECTION, ''):             # <<<<<<<<<<<<<<
- *             headers[CONNECTION] = 'upgrade'
- * 
- */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_get); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 299, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = NULL;
-  __pyx_t_6 = 0;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
-    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_1);
-    if (likely(__pyx_t_3)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
-      __Pyx_INCREF(__pyx_t_3);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_1, function);
-      __pyx_t_6 = 1;
-    }
-  }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_1)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_4clib_CONNECTION, __pyx_kp_s_};
-    __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 299, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_GOTREF(__pyx_t_2);
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_4clib_CONNECTION, __pyx_kp_s_};
-    __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 299, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_GOTREF(__pyx_t_2);
-  } else
-  #endif
-  {
-    __pyx_t_4 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 299, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    if (__pyx_t_3) {
-      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
-    }
-    __Pyx_INCREF(__pyx_v_4clib_CONNECTION);
-    __Pyx_GIVEREF(__pyx_v_4clib_CONNECTION);
-    PyTuple_SET_ITEM(__pyx_t_4, 0+__pyx_t_6, __pyx_v_4clib_CONNECTION);
-    __Pyx_INCREF(__pyx_kp_s_);
-    __Pyx_GIVEREF(__pyx_kp_s_);
-    PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_6, __pyx_kp_s_);
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 299, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_8 = (__Pyx_PySequence_ContainsTF(__pyx_n_s_upgrade, __pyx_t_2, Py_EQ)); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(5, 299, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_7 = (__pyx_t_8 != 0);
-  if (__pyx_t_7) {
-
-    /* "extensions/lib/wsgi.pyx":300
- *             headers[CONNECTION] = 'close'
- *         elif 'upgrade' in headers.get(CONNECTION, ''):
- *             headers[CONNECTION] = 'upgrade'             # <<<<<<<<<<<<<<
- * 
- *         self.chunked = chunked
- */
-    if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_CONNECTION, __pyx_n_s_upgrade) < 0)) __PYX_ERR(5, 300, __pyx_L1_error)
-
-    /* "extensions/lib/wsgi.pyx":299
- *         if not self.keep_alive:
- *             headers[CONNECTION] = 'close'
- *         elif 'upgrade' in headers.get(CONNECTION, ''):             # <<<<<<<<<<<<<<
- *             headers[CONNECTION] = 'upgrade'
  * 
  */
   }
-  __pyx_L13:;
 
-  /* "extensions/lib/wsgi.pyx":302
- *             headers[CONNECTION] = 'upgrade'
+  /* "extensions/lib/wsgi.pyx":244
+ *             headers[CONNECTION] = 'close'
  * 
  *         self.chunked = chunked             # <<<<<<<<<<<<<<
  *         return headers
@@ -29748,7 +28002,7 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
   __Pyx_DECREF(__pyx_v_self->chunked);
   __pyx_v_self->chunked = __pyx_v_chunked;
 
-  /* "extensions/lib/wsgi.pyx":303
+  /* "extensions/lib/wsgi.pyx":245
  * 
  *         self.chunked = chunked
  *         return headers             # <<<<<<<<<<<<<<
@@ -29760,8 +28014,8 @@ static PyObject *__pyx_f_4clib_12WsgiProtocol_get_headers(struct __pyx_obj_4clib
   __pyx_r = __pyx_v_headers;
   goto __pyx_L0;
 
-  /* "extensions/lib/wsgi.pyx":273
- *             return self.connection.write(chunks)
+  /* "extensions/lib/wsgi.pyx":218
+ *             return self.connection.write(buffer)
  * 
  *     cdef get_headers(self):             # <<<<<<<<<<<<<<
  *         cdef object headers = self.headers
@@ -30233,343 +28487,237 @@ static int __pyx_pf_4clib_12WsgiProtocol_10keep_alive_4__del__(struct __pyx_obj_
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":306
+/* "extensions/lib/wsgi.pyx":248
  * 
  * 
- * cdef void chunk_encoding_l(list chunks, bytes chunk):             # <<<<<<<<<<<<<<
+ * cdef void chunk_encoding(bytearray chunks, bytes chunk):             # <<<<<<<<<<<<<<
  *     '''Write a chunk::
  * 
  */
 
-static void __pyx_f_4clib_chunk_encoding_l(PyObject *__pyx_v_chunks, PyObject *__pyx_v_chunk) {
+static void __pyx_f_4clib_chunk_encoding(PyObject *__pyx_v_chunks, PyObject *__pyx_v_chunk) {
   __Pyx_RefNannyDeclarations
-  Py_ssize_t __pyx_t_1;
+  PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
-  int __pyx_t_4;
-  __Pyx_RefNannySetupContext("chunk_encoding_l", 0);
-
-  /* "extensions/lib/wsgi.pyx":314
- *     If the size is 0, this is the last chunk, and an extra CRLF is appended.
- *     '''
- *     chunks.append(("%X\r\n" % len(chunk)).encode('utf-8'))             # <<<<<<<<<<<<<<
- *     chunks.append(chunk)
- *     chunks.append(CRLF)
- */
-  if (unlikely(__pyx_v_chunks == Py_None)) {
-    PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "append");
-    __PYX_ERR(5, 314, __pyx_L1_error)
-  }
-  if (unlikely(__pyx_v_chunk == Py_None)) {
-    PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(5, 314, __pyx_L1_error)
-  }
-  __pyx_t_1 = PyBytes_GET_SIZE(__pyx_v_chunk); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(5, 314, __pyx_L1_error)
-  __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 314, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyString_Format(__pyx_kp_s_X, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 314, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 314, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__49, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 314, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_4 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_t_3); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(5, 314, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-  /* "extensions/lib/wsgi.pyx":315
- *     '''
- *     chunks.append(("%X\r\n" % len(chunk)).encode('utf-8'))
- *     chunks.append(chunk)             # <<<<<<<<<<<<<<
- *     chunks.append(CRLF)
- * 
- */
-  if (unlikely(__pyx_v_chunks == Py_None)) {
-    PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "append");
-    __PYX_ERR(5, 315, __pyx_L1_error)
-  }
-  __pyx_t_4 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_v_chunk); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(5, 315, __pyx_L1_error)
-
-  /* "extensions/lib/wsgi.pyx":316
- *     chunks.append(("%X\r\n" % len(chunk)).encode('utf-8'))
- *     chunks.append(chunk)
- *     chunks.append(CRLF)             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  if (unlikely(__pyx_v_chunks == Py_None)) {
-    PyErr_Format(PyExc_AttributeError, "'NoneType' object has no attribute '%s'", "append");
-    __PYX_ERR(5, 316, __pyx_L1_error)
-  }
-  __pyx_t_3 = __pyx_v_4clib_CRLF;
-  __Pyx_INCREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyList_Append(__pyx_v_chunks, __pyx_t_3); if (unlikely(__pyx_t_4 == -1)) __PYX_ERR(5, 316, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-
-  /* "extensions/lib/wsgi.pyx":306
- * 
- * 
- * cdef void chunk_encoding_l(list chunks, bytes chunk):             # <<<<<<<<<<<<<<
- *     '''Write a chunk::
- * 
- */
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_WriteUnraisable("clib.chunk_encoding_l", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
-  __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-}
-
-/* "extensions/lib/wsgi.pyx":319
- * 
- * 
- * cdef void http_chunks_l(list chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
- *     cdef bytes chunk
- *     while len(data) >= MAX_CHUNK_SIZE:
- */
-
-static void __pyx_f_4clib_http_chunks_l(PyObject *__pyx_v_chunks, PyObject *__pyx_v_data, struct __pyx_opt_args_4clib_http_chunks_l *__pyx_optional_args) {
-  PyObject *__pyx_v_finish = ((PyObject *)Py_False);
-  PyObject *__pyx_v_chunk = 0;
-  __Pyx_RefNannyDeclarations
-  Py_ssize_t __pyx_t_1;
-  int __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
+  Py_ssize_t __pyx_t_3;
   PyObject *__pyx_t_4 = NULL;
-  __Pyx_RefNannySetupContext("http_chunks_l", 0);
-  if (__pyx_optional_args) {
-    if (__pyx_optional_args->__pyx_n > 0) {
-      __pyx_v_finish = __pyx_optional_args->finish;
-    }
-  }
-  __Pyx_INCREF(__pyx_v_data);
-
-  /* "extensions/lib/wsgi.pyx":321
- * cdef void http_chunks_l(list chunks, bytes data, object finish=False):
- *     cdef bytes chunk
- *     while len(data) >= MAX_CHUNK_SIZE:             # <<<<<<<<<<<<<<
- *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
- *         chunk_encoding_l(chunks, chunk)
- */
-  while (1) {
-    if (unlikely(__pyx_v_data == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(5, 321, __pyx_L1_error)
-    }
-    __pyx_t_1 = PyBytes_GET_SIZE(__pyx_v_data); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(5, 321, __pyx_L1_error)
-    __pyx_t_2 = ((__pyx_t_1 >= __pyx_v_4clib_MAX_CHUNK_SIZE) != 0);
-    if (!__pyx_t_2) break;
-
-    /* "extensions/lib/wsgi.pyx":322
- *     cdef bytes chunk
- *     while len(data) >= MAX_CHUNK_SIZE:
- *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]             # <<<<<<<<<<<<<<
- *         chunk_encoding_l(chunks, chunk)
- *     if data:
- */
-    if (unlikely(__pyx_v_data == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 322, __pyx_L1_error)
-    }
-    __pyx_t_3 = PySequence_GetSlice(__pyx_v_data, 0, __pyx_v_4clib_MAX_CHUNK_SIZE); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 322, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    if (unlikely(__pyx_v_data == Py_None)) {
-      PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 322, __pyx_L1_error)
-    }
-    __pyx_t_4 = PySequence_GetSlice(__pyx_v_data, __pyx_v_4clib_MAX_CHUNK_SIZE, PY_SSIZE_T_MAX); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 322, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_XDECREF_SET(__pyx_v_chunk, ((PyObject*)__pyx_t_3));
-    __pyx_t_3 = 0;
-    __Pyx_DECREF_SET(__pyx_v_data, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
-
-    /* "extensions/lib/wsgi.pyx":323
- *     while len(data) >= MAX_CHUNK_SIZE:
- *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
- *         chunk_encoding_l(chunks, chunk)             # <<<<<<<<<<<<<<
- *     if data:
- *         chunk_encoding_l(chunks, data)
- */
-    __pyx_f_4clib_chunk_encoding_l(__pyx_v_chunks, __pyx_v_chunk);
-  }
-
-  /* "extensions/lib/wsgi.pyx":324
- *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
- *         chunk_encoding_l(chunks, chunk)
- *     if data:             # <<<<<<<<<<<<<<
- *         chunk_encoding_l(chunks, data)
- *     if finish:
- */
-  __pyx_t_2 = (__pyx_v_data != Py_None) && (PyBytes_GET_SIZE(__pyx_v_data) != 0);
-  if (__pyx_t_2) {
-
-    /* "extensions/lib/wsgi.pyx":325
- *         chunk_encoding_l(chunks, chunk)
- *     if data:
- *         chunk_encoding_l(chunks, data)             # <<<<<<<<<<<<<<
- *     if finish:
- *         chunk_encoding_l(chunks, data)
- */
-    __pyx_f_4clib_chunk_encoding_l(__pyx_v_chunks, __pyx_v_data);
-
-    /* "extensions/lib/wsgi.pyx":324
- *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
- *         chunk_encoding_l(chunks, chunk)
- *     if data:             # <<<<<<<<<<<<<<
- *         chunk_encoding_l(chunks, data)
- *     if finish:
- */
-  }
-
-  /* "extensions/lib/wsgi.pyx":326
- *     if data:
- *         chunk_encoding_l(chunks, data)
- *     if finish:             # <<<<<<<<<<<<<<
- *         chunk_encoding_l(chunks, data)
- * 
- */
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_finish); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(5, 326, __pyx_L1_error)
-  if (__pyx_t_2) {
-
-    /* "extensions/lib/wsgi.pyx":327
- *         chunk_encoding_l(chunks, data)
- *     if finish:
- *         chunk_encoding_l(chunks, data)             # <<<<<<<<<<<<<<
- * 
- * 
- */
-    __pyx_f_4clib_chunk_encoding_l(__pyx_v_chunks, __pyx_v_data);
-
-    /* "extensions/lib/wsgi.pyx":326
- *     if data:
- *         chunk_encoding_l(chunks, data)
- *     if finish:             # <<<<<<<<<<<<<<
- *         chunk_encoding_l(chunks, data)
- * 
- */
-  }
-
-  /* "extensions/lib/wsgi.pyx":319
- * 
- * 
- * cdef void http_chunks_l(list chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
- *     cdef bytes chunk
- *     while len(data) >= MAX_CHUNK_SIZE:
- */
-
-  /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_WriteUnraisable("clib.http_chunks_l", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_chunk);
-  __Pyx_XDECREF(__pyx_v_data);
-  __Pyx_RefNannyFinishContext();
-}
-
-/* "extensions/lib/wsgi.pyx":330
- * 
- * 
- * cdef bytes chunk_encoding(bytes total, bytes chunk):             # <<<<<<<<<<<<<<
- *     '''Write a chunk::
- * 
- */
-
-static PyObject *__pyx_f_4clib_chunk_encoding(PyObject *__pyx_v_total, PyObject *__pyx_v_chunk) {
-  PyObject *__pyx_v_le = 0;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  Py_ssize_t __pyx_t_1;
-  PyObject *__pyx_t_2 = NULL;
-  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
   __Pyx_RefNannySetupContext("chunk_encoding", 0);
 
-  /* "extensions/lib/wsgi.pyx":338
+  /* "extensions/lib/wsgi.pyx":256
  *     If the size is 0, this is the last chunk, and an extra CRLF is appended.
  *     '''
- *     cdef bytes le = ("%X\r\n" % len(chunk)).encode('utf-8')             # <<<<<<<<<<<<<<
- *     return total + le + chunk
- * 
+ *     chunks.extend(("%X\r\n" % len(chunk)).encode('utf-8'))             # <<<<<<<<<<<<<<
+ *     chunks.extend(chunk)
+ *     chunks.extend(CRLF)
  */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_chunks, __pyx_n_s_extend); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 256, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   if (unlikely(__pyx_v_chunk == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(5, 338, __pyx_L1_error)
+    __PYX_ERR(5, 256, __pyx_L1_error)
   }
-  __pyx_t_1 = PyBytes_GET_SIZE(__pyx_v_chunk); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(5, 338, __pyx_L1_error)
-  __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 338, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyString_Format(__pyx_kp_s_X, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 338, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_3 = PyBytes_GET_SIZE(__pyx_v_chunk); if (unlikely(__pyx_t_3 == -1)) __PYX_ERR(5, 256, __pyx_L1_error)
+  __pyx_t_4 = PyInt_FromSsize_t(__pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 256, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyString_Format(__pyx_kp_s_X, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 256, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_encode); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 256, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__47, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 256, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_4)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_4);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_4) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 256, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_5};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 256, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_5};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 256, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 256, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
+      __Pyx_GIVEREF(__pyx_t_5);
+      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_5);
+      __pyx_t_5 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 256, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    }
+  }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 338, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__50, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 338, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(5, 338, __pyx_L1_error)
-  __pyx_v_le = ((PyObject*)__pyx_t_3);
-  __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":339
+  /* "extensions/lib/wsgi.pyx":257
  *     '''
- *     cdef bytes le = ("%X\r\n" % len(chunk)).encode('utf-8')
- *     return total + le + chunk             # <<<<<<<<<<<<<<
+ *     chunks.extend(("%X\r\n" % len(chunk)).encode('utf-8'))
+ *     chunks.extend(chunk)             # <<<<<<<<<<<<<<
+ *     chunks.extend(CRLF)
+ * 
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_chunks, __pyx_n_s_extend); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 257, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_6 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_6) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_chunk); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 257, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_chunk};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 257, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_v_chunk};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 257, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    {
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(5, 257, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6); __pyx_t_6 = NULL;
+      __Pyx_INCREF(__pyx_v_chunk);
+      __Pyx_GIVEREF(__pyx_v_chunk);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_chunk);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 257, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+  /* "extensions/lib/wsgi.pyx":258
+ *     chunks.extend(("%X\r\n" % len(chunk)).encode('utf-8'))
+ *     chunks.extend(chunk)
+ *     chunks.extend(CRLF)             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_3 = PyNumber_Add(__pyx_v_total, __pyx_v_le); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 339, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = PyNumber_Add(__pyx_t_3, __pyx_v_chunk); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 339, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_chunks, __pyx_n_s_extend); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 258, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_r = ((PyObject*)__pyx_t_2);
-  __pyx_t_2 = 0;
-  goto __pyx_L0;
+  __pyx_t_5 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+    }
+  }
+  if (!__pyx_t_5) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_4clib_CRLF); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 258, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_4clib_CRLF};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 258, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_4clib_CRLF};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 258, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    {
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 258, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_6);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_4clib_CRLF);
+      __Pyx_GIVEREF(__pyx_v_4clib_CRLF);
+      PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_4clib_CRLF);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 258, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "extensions/lib/wsgi.pyx":330
+  /* "extensions/lib/wsgi.pyx":248
  * 
  * 
- * cdef bytes chunk_encoding(bytes total, bytes chunk):             # <<<<<<<<<<<<<<
+ * cdef void chunk_encoding(bytearray chunks, bytes chunk):             # <<<<<<<<<<<<<<
  *     '''Write a chunk::
  * 
  */
 
   /* function exit code */
+  goto __pyx_L0;
   __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_AddTraceback("clib.chunk_encoding", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_WriteUnraisable("clib.chunk_encoding", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_le);
-  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
-  return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":342
+/* "extensions/lib/wsgi.pyx":261
  * 
  * 
- * cdef bytes http_chunks(bytes chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
+ * cdef void http_chunks(bytearray chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
  *     cdef bytes chunk
  *     while len(data) >= MAX_CHUNK_SIZE:
  */
 
-static PyObject *__pyx_f_4clib_http_chunks(PyObject *__pyx_v_chunks, PyObject *__pyx_v_data, struct __pyx_opt_args_4clib_http_chunks *__pyx_optional_args) {
+static void __pyx_f_4clib_http_chunks(PyObject *__pyx_v_chunks, PyObject *__pyx_v_data, struct __pyx_opt_args_4clib_http_chunks *__pyx_optional_args) {
   PyObject *__pyx_v_finish = ((PyObject *)Py_False);
   PyObject *__pyx_v_chunk = 0;
-  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   Py_ssize_t __pyx_t_1;
   int __pyx_t_2;
@@ -30581,160 +28729,135 @@ static PyObject *__pyx_f_4clib_http_chunks(PyObject *__pyx_v_chunks, PyObject *_
       __pyx_v_finish = __pyx_optional_args->finish;
     }
   }
-  __Pyx_INCREF(__pyx_v_chunks);
   __Pyx_INCREF(__pyx_v_data);
 
-  /* "extensions/lib/wsgi.pyx":344
- * cdef bytes http_chunks(bytes chunks, bytes data, object finish=False):
+  /* "extensions/lib/wsgi.pyx":263
+ * cdef void http_chunks(bytearray chunks, bytes data, object finish=False):
  *     cdef bytes chunk
  *     while len(data) >= MAX_CHUNK_SIZE:             # <<<<<<<<<<<<<<
  *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
- *         chunks = chunk_encoding(chunks, chunk)
+ *         chunk_encoding(chunks, chunk)
  */
   while (1) {
     if (unlikely(__pyx_v_data == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(5, 344, __pyx_L1_error)
+      __PYX_ERR(5, 263, __pyx_L1_error)
     }
-    __pyx_t_1 = PyBytes_GET_SIZE(__pyx_v_data); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(5, 344, __pyx_L1_error)
+    __pyx_t_1 = PyBytes_GET_SIZE(__pyx_v_data); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(5, 263, __pyx_L1_error)
     __pyx_t_2 = ((__pyx_t_1 >= __pyx_v_4clib_MAX_CHUNK_SIZE) != 0);
     if (!__pyx_t_2) break;
 
-    /* "extensions/lib/wsgi.pyx":345
+    /* "extensions/lib/wsgi.pyx":264
  *     cdef bytes chunk
  *     while len(data) >= MAX_CHUNK_SIZE:
  *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]             # <<<<<<<<<<<<<<
- *         chunks = chunk_encoding(chunks, chunk)
+ *         chunk_encoding(chunks, chunk)
  *     if data:
  */
     if (unlikely(__pyx_v_data == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 345, __pyx_L1_error)
+      __PYX_ERR(5, 264, __pyx_L1_error)
     }
-    __pyx_t_3 = PySequence_GetSlice(__pyx_v_data, 0, __pyx_v_4clib_MAX_CHUNK_SIZE); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 345, __pyx_L1_error)
+    __pyx_t_3 = PySequence_GetSlice(__pyx_v_data, 0, __pyx_v_4clib_MAX_CHUNK_SIZE); if (unlikely(!__pyx_t_3)) __PYX_ERR(5, 264, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     if (unlikely(__pyx_v_data == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(5, 345, __pyx_L1_error)
+      __PYX_ERR(5, 264, __pyx_L1_error)
     }
-    __pyx_t_4 = PySequence_GetSlice(__pyx_v_data, __pyx_v_4clib_MAX_CHUNK_SIZE, PY_SSIZE_T_MAX); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 345, __pyx_L1_error)
+    __pyx_t_4 = PySequence_GetSlice(__pyx_v_data, __pyx_v_4clib_MAX_CHUNK_SIZE, PY_SSIZE_T_MAX); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 264, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_XDECREF_SET(__pyx_v_chunk, ((PyObject*)__pyx_t_3));
     __pyx_t_3 = 0;
     __Pyx_DECREF_SET(__pyx_v_data, ((PyObject*)__pyx_t_4));
     __pyx_t_4 = 0;
 
-    /* "extensions/lib/wsgi.pyx":346
+    /* "extensions/lib/wsgi.pyx":265
  *     while len(data) >= MAX_CHUNK_SIZE:
  *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
- *         chunks = chunk_encoding(chunks, chunk)             # <<<<<<<<<<<<<<
+ *         chunk_encoding(chunks, chunk)             # <<<<<<<<<<<<<<
  *     if data:
- *         chunks = chunk_encoding(chunks, data)
+ *         chunk_encoding(chunks, data)
  */
-    __pyx_t_4 = __pyx_f_4clib_chunk_encoding(__pyx_v_chunks, __pyx_v_chunk); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 346, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
+    __pyx_f_4clib_chunk_encoding(__pyx_v_chunks, __pyx_v_chunk);
   }
 
-  /* "extensions/lib/wsgi.pyx":347
+  /* "extensions/lib/wsgi.pyx":266
  *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
- *         chunks = chunk_encoding(chunks, chunk)
+ *         chunk_encoding(chunks, chunk)
  *     if data:             # <<<<<<<<<<<<<<
- *         chunks = chunk_encoding(chunks, data)
+ *         chunk_encoding(chunks, data)
  *     if finish:
  */
   __pyx_t_2 = (__pyx_v_data != Py_None) && (PyBytes_GET_SIZE(__pyx_v_data) != 0);
   if (__pyx_t_2) {
 
-    /* "extensions/lib/wsgi.pyx":348
- *         chunks = chunk_encoding(chunks, chunk)
+    /* "extensions/lib/wsgi.pyx":267
+ *         chunk_encoding(chunks, chunk)
  *     if data:
- *         chunks = chunk_encoding(chunks, data)             # <<<<<<<<<<<<<<
+ *         chunk_encoding(chunks, data)             # <<<<<<<<<<<<<<
  *     if finish:
- *         chunks = chunk_encoding(chunks, b'')
+ *         chunk_encoding(chunks, data)
  */
-    __pyx_t_4 = __pyx_f_4clib_chunk_encoding(__pyx_v_chunks, __pyx_v_data); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 348, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
+    __pyx_f_4clib_chunk_encoding(__pyx_v_chunks, __pyx_v_data);
 
-    /* "extensions/lib/wsgi.pyx":347
+    /* "extensions/lib/wsgi.pyx":266
  *         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
- *         chunks = chunk_encoding(chunks, chunk)
+ *         chunk_encoding(chunks, chunk)
  *     if data:             # <<<<<<<<<<<<<<
- *         chunks = chunk_encoding(chunks, data)
+ *         chunk_encoding(chunks, data)
  *     if finish:
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":349
+  /* "extensions/lib/wsgi.pyx":268
  *     if data:
- *         chunks = chunk_encoding(chunks, data)
+ *         chunk_encoding(chunks, data)
  *     if finish:             # <<<<<<<<<<<<<<
- *         chunks = chunk_encoding(chunks, b'')
- *     return chunks
+ *         chunk_encoding(chunks, data)
+ * 
  */
-  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_finish); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(5, 349, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_finish); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(5, 268, __pyx_L1_error)
   if (__pyx_t_2) {
 
-    /* "extensions/lib/wsgi.pyx":350
- *         chunks = chunk_encoding(chunks, data)
+    /* "extensions/lib/wsgi.pyx":269
+ *         chunk_encoding(chunks, data)
  *     if finish:
- *         chunks = chunk_encoding(chunks, b'')             # <<<<<<<<<<<<<<
- *     return chunks
+ *         chunk_encoding(chunks, data)             # <<<<<<<<<<<<<<
+ * 
  * 
  */
-    __pyx_t_4 = __pyx_f_4clib_chunk_encoding(__pyx_v_chunks, __pyx_kp_b_); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 350, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF_SET(__pyx_v_chunks, ((PyObject*)__pyx_t_4));
-    __pyx_t_4 = 0;
+    __pyx_f_4clib_chunk_encoding(__pyx_v_chunks, __pyx_v_data);
 
-    /* "extensions/lib/wsgi.pyx":349
+    /* "extensions/lib/wsgi.pyx":268
  *     if data:
- *         chunks = chunk_encoding(chunks, data)
+ *         chunk_encoding(chunks, data)
  *     if finish:             # <<<<<<<<<<<<<<
- *         chunks = chunk_encoding(chunks, b'')
- *     return chunks
+ *         chunk_encoding(chunks, data)
+ * 
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":351
- *     if finish:
- *         chunks = chunk_encoding(chunks, b'')
- *     return chunks             # <<<<<<<<<<<<<<
+  /* "extensions/lib/wsgi.pyx":261
  * 
  * 
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_chunks);
-  __pyx_r = __pyx_v_chunks;
-  goto __pyx_L0;
-
-  /* "extensions/lib/wsgi.pyx":342
- * 
- * 
- * cdef bytes http_chunks(bytes chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
+ * cdef void http_chunks(bytearray chunks, bytes data, object finish=False):             # <<<<<<<<<<<<<<
  *     cdef bytes chunk
  *     while len(data) >= MAX_CHUNK_SIZE:
  */
 
   /* function exit code */
+  goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_AddTraceback("clib.http_chunks", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
+  __Pyx_WriteUnraisable("clib.http_chunks", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_chunk);
-  __Pyx_XDECREF(__pyx_v_chunks);
   __Pyx_XDECREF(__pyx_v_data);
-  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
-  return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":354
+/* "extensions/lib/wsgi.pyx":272
  * 
  * 
  * cpdef fast_http_date(int timestamp):             # <<<<<<<<<<<<<<
@@ -30750,7 +28873,7 @@ static PyObject *__pyx_f_4clib_fast_http_date(int __pyx_v_timestamp, CYTHON_UNUS
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("fast_http_date", 0);
 
-  /* "extensions/lib/wsgi.pyx":356
+  /* "extensions/lib/wsgi.pyx":274
  * cpdef fast_http_date(int timestamp):
  *     global _http_time_, _http_date_
  *     if _http_time_ != timestamp:             # <<<<<<<<<<<<<<
@@ -30760,7 +28883,7 @@ static PyObject *__pyx_f_4clib_fast_http_date(int __pyx_v_timestamp, CYTHON_UNUS
   __pyx_t_1 = ((__pyx_v_4clib__http_time_ != __pyx_v_timestamp) != 0);
   if (__pyx_t_1) {
 
-    /* "extensions/lib/wsgi.pyx":357
+    /* "extensions/lib/wsgi.pyx":275
  *     global _http_time_, _http_date_
  *     if _http_time_ != timestamp:
  *         _http_time_ = timestamp             # <<<<<<<<<<<<<<
@@ -30769,22 +28892,22 @@ static PyObject *__pyx_f_4clib_fast_http_date(int __pyx_v_timestamp, CYTHON_UNUS
  */
     __pyx_v_4clib__http_time_ = __pyx_v_timestamp;
 
-    /* "extensions/lib/wsgi.pyx":358
+    /* "extensions/lib/wsgi.pyx":276
  *     if _http_time_ != timestamp:
  *         _http_time_ = timestamp
  *         _http_date_ = _http_date(timestamp)             # <<<<<<<<<<<<<<
  *     return _http_date_
  * 
  */
-    __pyx_t_2 = _http_date(__pyx_v_timestamp); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 358, __pyx_L1_error)
+    __pyx_t_2 = _http_date(__pyx_v_timestamp); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 276, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (!(likely(PyString_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(5, 358, __pyx_L1_error)
+    if (!(likely(PyString_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(5, 276, __pyx_L1_error)
     __Pyx_XGOTREF(__pyx_v_4clib__http_date_);
     __Pyx_DECREF_SET(__pyx_v_4clib__http_date_, ((PyObject*)__pyx_t_2));
     __Pyx_GIVEREF(__pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "extensions/lib/wsgi.pyx":356
+    /* "extensions/lib/wsgi.pyx":274
  * cpdef fast_http_date(int timestamp):
  *     global _http_time_, _http_date_
  *     if _http_time_ != timestamp:             # <<<<<<<<<<<<<<
@@ -30793,7 +28916,7 @@ static PyObject *__pyx_f_4clib_fast_http_date(int __pyx_v_timestamp, CYTHON_UNUS
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":359
+  /* "extensions/lib/wsgi.pyx":277
  *         _http_time_ = timestamp
  *         _http_date_ = _http_date(timestamp)
  *     return _http_date_             # <<<<<<<<<<<<<<
@@ -30805,7 +28928,7 @@ static PyObject *__pyx_f_4clib_fast_http_date(int __pyx_v_timestamp, CYTHON_UNUS
   __pyx_r = __pyx_v_4clib__http_date_;
   goto __pyx_L0;
 
-  /* "extensions/lib/wsgi.pyx":354
+  /* "extensions/lib/wsgi.pyx":272
  * 
  * 
  * cpdef fast_http_date(int timestamp):             # <<<<<<<<<<<<<<
@@ -30832,7 +28955,7 @@ static PyObject *__pyx_pw_4clib_1fast_http_date(PyObject *__pyx_self, PyObject *
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("fast_http_date (wrapper)", 0);
   assert(__pyx_arg_timestamp); {
-    __pyx_v_timestamp = __Pyx_PyInt_As_int(__pyx_arg_timestamp); if (unlikely((__pyx_v_timestamp == (int)-1) && PyErr_Occurred())) __PYX_ERR(5, 354, __pyx_L3_error)
+    __pyx_v_timestamp = __Pyx_PyInt_As_int(__pyx_arg_timestamp); if (unlikely((__pyx_v_timestamp == (int)-1) && PyErr_Occurred())) __PYX_ERR(5, 272, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -30853,7 +28976,7 @@ static PyObject *__pyx_pf_4clib_fast_http_date(CYTHON_UNUSED PyObject *__pyx_sel
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("fast_http_date", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_fast_http_date(__pyx_v_timestamp, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 354, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_fast_http_date(__pyx_v_timestamp, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 272, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -30870,7 +28993,7 @@ static PyObject *__pyx_pf_4clib_fast_http_date(CYTHON_UNUSED PyObject *__pyx_sel
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":362
+/* "extensions/lib/wsgi.pyx":280
  * 
  * 
  * cpdef http_date(int timestamp):             # <<<<<<<<<<<<<<
@@ -30885,7 +29008,7 @@ static PyObject *__pyx_f_4clib_http_date(int __pyx_v_timestamp, CYTHON_UNUSED in
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("http_date", 0);
 
-  /* "extensions/lib/wsgi.pyx":363
+  /* "extensions/lib/wsgi.pyx":281
  * 
  * cpdef http_date(int timestamp):
  *     return _http_date(timestamp)             # <<<<<<<<<<<<<<
@@ -30893,13 +29016,13 @@ static PyObject *__pyx_f_4clib_http_date(int __pyx_v_timestamp, CYTHON_UNUSED in
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = _http_date(__pyx_v_timestamp); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 363, __pyx_L1_error)
+  __pyx_t_1 = _http_date(__pyx_v_timestamp); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 281, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "extensions/lib/wsgi.pyx":362
+  /* "extensions/lib/wsgi.pyx":280
  * 
  * 
  * cpdef http_date(int timestamp):             # <<<<<<<<<<<<<<
@@ -30926,7 +29049,7 @@ static PyObject *__pyx_pw_4clib_3http_date(PyObject *__pyx_self, PyObject *__pyx
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("http_date (wrapper)", 0);
   assert(__pyx_arg_timestamp); {
-    __pyx_v_timestamp = __Pyx_PyInt_As_int(__pyx_arg_timestamp); if (unlikely((__pyx_v_timestamp == (int)-1) && PyErr_Occurred())) __PYX_ERR(5, 362, __pyx_L3_error)
+    __pyx_v_timestamp = __Pyx_PyInt_As_int(__pyx_arg_timestamp); if (unlikely((__pyx_v_timestamp == (int)-1) && PyErr_Occurred())) __PYX_ERR(5, 280, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -30947,7 +29070,7 @@ static PyObject *__pyx_pf_4clib_2http_date(CYTHON_UNUSED PyObject *__pyx_self, i
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("http_date", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_http_date(__pyx_v_timestamp, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 362, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_http_date(__pyx_v_timestamp, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 280, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -30964,7 +29087,7 @@ static PyObject *__pyx_pf_4clib_2http_date(CYTHON_UNUSED PyObject *__pyx_self, i
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":366
+/* "extensions/lib/wsgi.pyx":284
  * 
  * 
  * cpdef has_empty_content(int status, str method=None):             # <<<<<<<<<<<<<<
@@ -30987,7 +29110,7 @@ static PyObject *__pyx_f_4clib_has_empty_content(int __pyx_v_status, CYTHON_UNUS
     }
   }
 
-  /* "extensions/lib/wsgi.pyx":368
+  /* "extensions/lib/wsgi.pyx":286
  * cpdef has_empty_content(int status, str method=None):
  *     """204, 304 and 1xx codes have no content, same for HEAD requests"""
  *     return (status in NO_CONTENT_CODES or             # <<<<<<<<<<<<<<
@@ -30995,20 +29118,20 @@ static PyObject *__pyx_f_4clib_has_empty_content(int __pyx_v_status, CYTHON_UNUS
  *             method == 'HEAD')
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_status); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 368, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_status); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 286, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = (__Pyx_PySequence_ContainsTF(__pyx_t_2, __pyx_v_4clib_NO_CONTENT_CODES, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(5, 368, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PySequence_ContainsTF(__pyx_t_2, __pyx_v_4clib_NO_CONTENT_CODES, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(5, 286, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (!__pyx_t_3) {
   } else {
-    __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 368, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 286, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_1 = __pyx_t_2;
     __pyx_t_2 = 0;
     goto __pyx_L3_bool_binop_done;
   }
 
-  /* "extensions/lib/wsgi.pyx":369
+  /* "extensions/lib/wsgi.pyx":287
  *     """204, 304 and 1xx codes have no content, same for HEAD requests"""
  *     return (status in NO_CONTENT_CODES or
  *             100 <= status < 200 or             # <<<<<<<<<<<<<<
@@ -31021,22 +29144,22 @@ static PyObject *__pyx_f_4clib_has_empty_content(int __pyx_v_status, CYTHON_UNUS
   }
   if (!__pyx_t_3) {
   } else {
-    __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 369, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 287, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_1 = __pyx_t_2;
     __pyx_t_2 = 0;
     goto __pyx_L3_bool_binop_done;
   }
 
-  /* "extensions/lib/wsgi.pyx":370
+  /* "extensions/lib/wsgi.pyx":288
  *     return (status in NO_CONTENT_CODES or
  *             100 <= status < 200 or
  *             method == 'HEAD')             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_v_method, __pyx_n_s_HEAD, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(5, 370, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 370, __pyx_L1_error)
+  __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_v_method, __pyx_n_s_HEAD, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(5, 288, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyBool_FromLong(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(5, 288, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_1 = __pyx_t_2;
   __pyx_t_2 = 0;
@@ -31045,7 +29168,7 @@ static PyObject *__pyx_f_4clib_has_empty_content(int __pyx_v_status, CYTHON_UNUS
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "extensions/lib/wsgi.pyx":366
+  /* "extensions/lib/wsgi.pyx":284
  * 
  * 
  * cpdef has_empty_content(int status, str method=None):             # <<<<<<<<<<<<<<
@@ -31099,7 +29222,7 @@ static PyObject *__pyx_pw_4clib_5has_empty_content(PyObject *__pyx_self, PyObjec
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "has_empty_content") < 0)) __PYX_ERR(5, 366, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "has_empty_content") < 0)) __PYX_ERR(5, 284, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -31109,18 +29232,18 @@ static PyObject *__pyx_pw_4clib_5has_empty_content(PyObject *__pyx_self, PyObjec
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_status = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_status == (int)-1) && PyErr_Occurred())) __PYX_ERR(5, 366, __pyx_L3_error)
+    __pyx_v_status = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_status == (int)-1) && PyErr_Occurred())) __PYX_ERR(5, 284, __pyx_L3_error)
     __pyx_v_method = ((PyObject*)values[1]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("has_empty_content", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(5, 366, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("has_empty_content", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(5, 284, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.has_empty_content", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_method), (&PyString_Type), 1, "method", 1))) __PYX_ERR(5, 366, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_method), (&PyString_Type), 1, "method", 1))) __PYX_ERR(5, 284, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_4has_empty_content(__pyx_self, __pyx_v_status, __pyx_v_method);
 
   /* function exit code */
@@ -31141,7 +29264,7 @@ static PyObject *__pyx_pf_4clib_4has_empty_content(CYTHON_UNUSED PyObject *__pyx
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.method = __pyx_v_method;
-  __pyx_t_1 = __pyx_f_4clib_has_empty_content(__pyx_v_status, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 366, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_has_empty_content(__pyx_v_status, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 284, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -31158,7 +29281,7 @@ static PyObject *__pyx_pf_4clib_4has_empty_content(CYTHON_UNUSED PyObject *__pyx
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgi.pyx":373
+/* "extensions/lib/wsgi.pyx":291
  * 
  * 
  * cdef void reraise(object tp, object value, object tb=None):             # <<<<<<<<<<<<<<
@@ -31182,27 +29305,27 @@ static void __pyx_f_4clib_reraise(CYTHON_UNUSED PyObject *__pyx_v_tp, PyObject *
     }
   }
 
-  /* "extensions/lib/wsgi.pyx":374
+  /* "extensions/lib/wsgi.pyx":292
  * 
  * cdef void reraise(object tp, object value, object tb=None):
  *     if value.__traceback__ is not tb:             # <<<<<<<<<<<<<<
  *         raise value.with_traceback(tb)
  *     raise value
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_traceback); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 374, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_traceback); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_2 = (__pyx_t_1 != __pyx_v_tb);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_3 = (__pyx_t_2 != 0);
   if (__pyx_t_3) {
 
-    /* "extensions/lib/wsgi.pyx":375
+    /* "extensions/lib/wsgi.pyx":293
  * cdef void reraise(object tp, object value, object tb=None):
  *     if value.__traceback__ is not tb:
  *         raise value.with_traceback(tb)             # <<<<<<<<<<<<<<
  *     raise value
  */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_with_traceback); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 375, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_with_traceback); if (unlikely(!__pyx_t_4)) __PYX_ERR(5, 293, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_5 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
@@ -31215,13 +29338,13 @@ static void __pyx_f_4clib_reraise(CYTHON_UNUSED PyObject *__pyx_v_tp, PyObject *
       }
     }
     if (!__pyx_t_5) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_tb); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 375, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_tb); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 293, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_4)) {
         PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_tb};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 375, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 293, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else
@@ -31229,19 +29352,19 @@ static void __pyx_f_4clib_reraise(CYTHON_UNUSED PyObject *__pyx_v_tp, PyObject *
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
         PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_tb};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 375, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 293, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 375, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(5, 293, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
         __Pyx_INCREF(__pyx_v_tb);
         __Pyx_GIVEREF(__pyx_v_tb);
         PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_tb);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 375, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(5, 293, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -31249,9 +29372,9 @@ static void __pyx_f_4clib_reraise(CYTHON_UNUSED PyObject *__pyx_v_tp, PyObject *
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __PYX_ERR(5, 375, __pyx_L1_error)
+    __PYX_ERR(5, 293, __pyx_L1_error)
 
-    /* "extensions/lib/wsgi.pyx":374
+    /* "extensions/lib/wsgi.pyx":292
  * 
  * cdef void reraise(object tp, object value, object tb=None):
  *     if value.__traceback__ is not tb:             # <<<<<<<<<<<<<<
@@ -31260,15 +29383,15 @@ static void __pyx_f_4clib_reraise(CYTHON_UNUSED PyObject *__pyx_v_tp, PyObject *
  */
   }
 
-  /* "extensions/lib/wsgi.pyx":376
+  /* "extensions/lib/wsgi.pyx":294
  *     if value.__traceback__ is not tb:
  *         raise value.with_traceback(tb)
  *     raise value             # <<<<<<<<<<<<<<
  */
   __Pyx_Raise(__pyx_v_value, 0, 0, 0);
-  __PYX_ERR(5, 376, __pyx_L1_error)
+  __PYX_ERR(5, 294, __pyx_L1_error)
 
-  /* "extensions/lib/wsgi.pyx":373
+  /* "extensions/lib/wsgi.pyx":291
  * 
  * 
  * cdef void reraise(object tp, object value, object tb=None):             # <<<<<<<<<<<<<<
@@ -31565,7 +29688,7 @@ static PyObject *__pyx_pf_4clib_6wsgi_cached(CYTHON_UNUSED PyObject *__pyx_self,
  *         cache = self.environ[PULSAR_CACHE]
  *         value = getattr(cache, name, nocache)
  */
-  __pyx_t_1 = __Pyx_CyFunction_NewEx(&__pyx_mdef_4clib_11wsgi_cached_1_, 0, __pyx_n_s_wsgi_cached_locals, ((PyObject*)__pyx_cur_scope), __pyx_n_s_clib, __pyx_d, ((PyObject *)__pyx_codeobj__52)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 18, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_CyFunction_NewEx(&__pyx_mdef_4clib_11wsgi_cached_1_, 0, __pyx_n_s_wsgi_cached_locals, ((PyObject*)__pyx_cur_scope), __pyx_n_s_clib, __pyx_d, ((PyObject *)__pyx_codeobj__49)); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v__ = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -32074,7 +30197,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_set_content(struct __pyx_obj_4clib
  *         if content is None:
  *             self._content = EMPTY
  */
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__53, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 53, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__50, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 53, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -33223,7 +31346,7 @@ static PyObject *__pyx_pf_4clib_12WsgiResponse_6__iter__(struct __pyx_obj_4clib_
  *         self.__wsgi_started__ = True
  *         self._iterated = 1
  */
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__54, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(2, 99, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_RuntimeError, __pyx_tuple__51, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(2, 99, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_Raise(__pyx_t_2, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -33460,7 +31583,7 @@ static PyObject *__pyx_pw_4clib_12WsgiResponse_11delete_cookie(PyObject *__pyx_v
   {
     static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_key,&__pyx_n_s_path,&__pyx_n_s_domain,0};
     PyObject* values[3] = {0,0,0};
-    values[1] = ((PyObject *)__pyx_kp_s__55);
+    values[1] = ((PyObject *)__pyx_kp_s__52);
     values[2] = ((PyObject *)Py_None);
     if (unlikely(__pyx_kwds)) {
       Py_ssize_t kw_args;
@@ -33817,7 +31940,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  * 
  *         assert not self.__wsgi_started__             # <<<<<<<<<<<<<<
  *         self.__wsgi_started__ = True
- *         self.headers = None
+ *         self.environ = None
  */
   #ifndef CYTHON_WITHOUT_ASSERTIONS
   if (unlikely(!Py_OptimizeFlag)) {
@@ -33833,8 +31956,8 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  * 
  *         assert not self.__wsgi_started__
  *         self.__wsgi_started__ = True             # <<<<<<<<<<<<<<
- *         self.headers = None
  *         self.environ = None
+ * 
  */
   __Pyx_INCREF(Py_True);
   __Pyx_GIVEREF(Py_True);
@@ -33845,19 +31968,6 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
   /* "extensions/lib/wsgiresponse.pyx":136
  *         assert not self.__wsgi_started__
  *         self.__wsgi_started__ = True
- *         self.headers = None             # <<<<<<<<<<<<<<
- *         self.environ = None
- * 
- */
-  __Pyx_INCREF(Py_None);
-  __Pyx_GIVEREF(Py_None);
-  __Pyx_GOTREF(__pyx_v_self->headers);
-  __Pyx_DECREF(__pyx_v_self->headers);
-  __pyx_v_self->headers = Py_None;
-
-  /* "extensions/lib/wsgiresponse.pyx":137
- *         self.__wsgi_started__ = True
- *         self.headers = None
  *         self.environ = None             # <<<<<<<<<<<<<<
  * 
  *         if status == 204 or status == 304 or 100 <= status < 200:
@@ -33868,7 +31978,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
   __Pyx_DECREF(__pyx_v_self->environ);
   __pyx_v_self->environ = ((PyObject*)Py_None);
 
-  /* "extensions/lib/wsgiresponse.pyx":139
+  /* "extensions/lib/wsgiresponse.pyx":138
  *         self.environ = None
  * 
  *         if status == 204 or status == 304 or 100 <= status < 200:             # <<<<<<<<<<<<<<
@@ -33896,14 +32006,14 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
   __pyx_L4_bool_binop_done:;
   if (__pyx_t_3) {
 
-    /* "extensions/lib/wsgiresponse.pyx":140
+    /* "extensions/lib/wsgiresponse.pyx":139
  * 
  *         if status == 204 or status == 304 or 100 <= status < 200:
  *             headers.pop(CONTENT_TYPE, None)             # <<<<<<<<<<<<<<
  *             headers.pop(CONTENT_LENGTH, None)
  *             self._content = EMPTY
  */
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_pop); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 140, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_pop); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 139, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_7 = NULL;
     __pyx_t_2 = 0;
@@ -33920,7 +32030,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_6)) {
       PyObject *__pyx_temp[3] = {__pyx_t_7, __pyx_v_4clib_CONTENT_TYPE, Py_None};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 140, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 139, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -33928,13 +32038,13 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
       PyObject *__pyx_temp[3] = {__pyx_t_7, __pyx_v_4clib_CONTENT_TYPE, Py_None};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 140, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 139, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_8 = PyTuple_New(2+__pyx_t_2); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 140, __pyx_L1_error)
+      __pyx_t_8 = PyTuple_New(2+__pyx_t_2); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       if (__pyx_t_7) {
         __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
@@ -33945,21 +32055,21 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __Pyx_INCREF(Py_None);
       __Pyx_GIVEREF(Py_None);
       PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_2, Py_None);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 140, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 139, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     }
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":141
+    /* "extensions/lib/wsgiresponse.pyx":140
  *         if status == 204 or status == 304 or 100 <= status < 200:
  *             headers.pop(CONTENT_TYPE, None)
  *             headers.pop(CONTENT_LENGTH, None)             # <<<<<<<<<<<<<<
  *             self._content = EMPTY
  *         else:
  */
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_pop); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 141, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_pop); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 140, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_8 = NULL;
     __pyx_t_2 = 0;
@@ -33976,7 +32086,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_6)) {
       PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_v_4clib_CONTENT_LENGTH, Py_None};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 141, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 140, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -33984,13 +32094,13 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
       PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_v_4clib_CONTENT_LENGTH, Py_None};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 141, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 140, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_7 = PyTuple_New(2+__pyx_t_2); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 141, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(2+__pyx_t_2); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 140, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       if (__pyx_t_8) {
         __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_8); __pyx_t_8 = NULL;
@@ -34001,14 +32111,14 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __Pyx_INCREF(Py_None);
       __Pyx_GIVEREF(Py_None);
       PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_2, Py_None);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 141, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 140, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     }
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":142
+    /* "extensions/lib/wsgiresponse.pyx":141
  *             headers.pop(CONTENT_TYPE, None)
  *             headers.pop(CONTENT_LENGTH, None)
  *             self._content = EMPTY             # <<<<<<<<<<<<<<
@@ -34021,7 +32131,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     __Pyx_DECREF(__pyx_v_self->_content);
     __pyx_v_self->_content = __pyx_v_4clib_EMPTY;
 
-    /* "extensions/lib/wsgiresponse.pyx":139
+    /* "extensions/lib/wsgiresponse.pyx":138
  *         self.environ = None
  * 
  *         if status == 204 or status == 304 or 100 <= status < 200:             # <<<<<<<<<<<<<<
@@ -34031,7 +32141,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     goto __pyx_L3;
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":144
+  /* "extensions/lib/wsgiresponse.pyx":143
  *             self._content = EMPTY
  *         else:
  *             try:             # <<<<<<<<<<<<<<
@@ -34048,7 +32158,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __Pyx_XGOTREF(__pyx_t_11);
       /*try:*/ {
 
-        /* "extensions/lib/wsgiresponse.pyx":145
+        /* "extensions/lib/wsgiresponse.pyx":144
  *         else:
  *             try:
  *                 len(self._content)             # <<<<<<<<<<<<<<
@@ -34057,10 +32167,10 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  */
         __pyx_t_1 = __pyx_v_self->_content;
         __Pyx_INCREF(__pyx_t_1);
-        __pyx_t_12 = PyObject_Length(__pyx_t_1); if (unlikely(__pyx_t_12 == -1)) __PYX_ERR(2, 145, __pyx_L7_error)
+        __pyx_t_12 = PyObject_Length(__pyx_t_1); if (unlikely(__pyx_t_12 == -1)) __PYX_ERR(2, 144, __pyx_L7_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-        /* "extensions/lib/wsgiresponse.pyx":144
+        /* "extensions/lib/wsgiresponse.pyx":143
  *             self._content = EMPTY
  *         else:
  *             try:             # <<<<<<<<<<<<<<
@@ -34069,7 +32179,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  */
       }
 
-      /* "extensions/lib/wsgiresponse.pyx":149
+      /* "extensions/lib/wsgiresponse.pyx":148
  *                 pass
  *             else:
  *                 cl = reduce(count_len, self._content, 0)             # <<<<<<<<<<<<<<
@@ -34077,9 +32187,9 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  *             ct = headers.get(CONTENT_TYPE)
  */
       /*else:*/ {
-        __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_reduce); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 149, __pyx_L9_except_error)
+        __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_reduce); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 148, __pyx_L9_except_error)
         __Pyx_GOTREF(__pyx_t_6);
-        __pyx_t_7 = __Pyx_CFunc_int____int____object___to_py(__pyx_f_4clib_count_len); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 149, __pyx_L9_except_error)
+        __pyx_t_7 = __Pyx_CFunc_int____int____object___to_py(__pyx_f_4clib_count_len); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 148, __pyx_L9_except_error)
         __Pyx_GOTREF(__pyx_t_7);
         __pyx_t_8 = NULL;
         __pyx_t_2 = 0;
@@ -34096,7 +32206,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_6)) {
           PyObject *__pyx_temp[4] = {__pyx_t_8, __pyx_t_7, __pyx_v_self->_content, __pyx_int_0};
-          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 3+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 149, __pyx_L9_except_error)
+          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 3+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 148, __pyx_L9_except_error)
           __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -34105,14 +32215,14 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
           PyObject *__pyx_temp[4] = {__pyx_t_8, __pyx_t_7, __pyx_v_self->_content, __pyx_int_0};
-          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 3+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 149, __pyx_L9_except_error)
+          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_2, 3+__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 148, __pyx_L9_except_error)
           __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
         } else
         #endif
         {
-          __pyx_t_13 = PyTuple_New(3+__pyx_t_2); if (unlikely(!__pyx_t_13)) __PYX_ERR(2, 149, __pyx_L9_except_error)
+          __pyx_t_13 = PyTuple_New(3+__pyx_t_2); if (unlikely(!__pyx_t_13)) __PYX_ERR(2, 148, __pyx_L9_except_error)
           __Pyx_GOTREF(__pyx_t_13);
           if (__pyx_t_8) {
             __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_8); __pyx_t_8 = NULL;
@@ -34126,33 +32236,33 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
           __Pyx_GIVEREF(__pyx_int_0);
           PyTuple_SET_ITEM(__pyx_t_13, 2+__pyx_t_2, __pyx_int_0);
           __pyx_t_7 = 0;
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_13, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 149, __pyx_L9_except_error)
+          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_13, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 148, __pyx_L9_except_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
         }
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(2, 149, __pyx_L9_except_error)
+        __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(2, 148, __pyx_L9_except_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_v_cl = __pyx_t_2;
 
-        /* "extensions/lib/wsgiresponse.pyx":150
+        /* "extensions/lib/wsgiresponse.pyx":149
  *             else:
  *                 cl = reduce(count_len, self._content, 0)
  *                 headers[CONTENT_LENGTH] = str(cl)             # <<<<<<<<<<<<<<
  *             ct = headers.get(CONTENT_TYPE)
  *             # content type encoding available
  */
-        __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_cl); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 150, __pyx_L9_except_error)
+        __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_cl); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 149, __pyx_L9_except_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 150, __pyx_L9_except_error)
+        __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 149, __pyx_L9_except_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GIVEREF(__pyx_t_1);
         PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
         __pyx_t_1 = 0;
-        __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 150, __pyx_L9_except_error)
+        __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 149, __pyx_L9_except_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-        if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_CONTENT_LENGTH, __pyx_t_1) < 0)) __PYX_ERR(2, 150, __pyx_L9_except_error)
+        if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_CONTENT_LENGTH, __pyx_t_1) < 0)) __PYX_ERR(2, 149, __pyx_L9_except_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       }
       __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
@@ -34166,7 +32276,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":146
+      /* "extensions/lib/wsgiresponse.pyx":145
  *             try:
  *                 len(self._content)
  *             except TypeError:             # <<<<<<<<<<<<<<
@@ -34181,7 +32291,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       goto __pyx_L9_except_error;
       __pyx_L9_except_error:;
 
-      /* "extensions/lib/wsgiresponse.pyx":144
+      /* "extensions/lib/wsgiresponse.pyx":143
  *             self._content = EMPTY
  *         else:
  *             try:             # <<<<<<<<<<<<<<
@@ -34203,14 +32313,14 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __pyx_L14_try_end:;
     }
 
-    /* "extensions/lib/wsgiresponse.pyx":151
+    /* "extensions/lib/wsgiresponse.pyx":150
  *                 cl = reduce(count_len, self._content, 0)
  *                 headers[CONTENT_LENGTH] = str(cl)
  *             ct = headers.get(CONTENT_TYPE)             # <<<<<<<<<<<<<<
  *             # content type encoding available
  *             if self.encoding:
  */
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_get); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 151, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_get); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 150, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_13 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
@@ -34223,13 +32333,13 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       }
     }
     if (!__pyx_t_13) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_4clib_CONTENT_TYPE); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 151, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_v_4clib_CONTENT_TYPE); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 150, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_13, __pyx_v_4clib_CONTENT_TYPE};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 151, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 150, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else
@@ -34237,46 +32347,46 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_13, __pyx_v_4clib_CONTENT_TYPE};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 151, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 150, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else
       #endif
       {
-        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 151, __pyx_L1_error)
+        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 150, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_GIVEREF(__pyx_t_13); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_13); __pyx_t_13 = NULL;
         __Pyx_INCREF(__pyx_v_4clib_CONTENT_TYPE);
         __Pyx_GIVEREF(__pyx_v_4clib_CONTENT_TYPE);
         PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_v_4clib_CONTENT_TYPE);
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 151, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 150, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       }
     }
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(2, 151, __pyx_L1_error)
+    if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(2, 150, __pyx_L1_error)
     __pyx_v_ct = ((PyObject*)__pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":153
+    /* "extensions/lib/wsgiresponse.pyx":152
  *             ct = headers.get(CONTENT_TYPE)
  *             # content type encoding available
  *             if self.encoding:             # <<<<<<<<<<<<<<
  *                 ct = ct or 'text/plain'
  *                 if ';' not in ct:
  */
-    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_self->encoding); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 153, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_self->encoding); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 152, __pyx_L1_error)
     if (__pyx_t_3) {
 
-      /* "extensions/lib/wsgiresponse.pyx":154
+      /* "extensions/lib/wsgiresponse.pyx":153
  *             # content type encoding available
  *             if self.encoding:
  *                 ct = ct or 'text/plain'             # <<<<<<<<<<<<<<
  *                 if ';' not in ct:
  *                     ct = '%s; charset=%s' % (ct, self.encoding)
  */
-      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_ct); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 154, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_ct); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 153, __pyx_L1_error)
       if (!__pyx_t_3) {
       } else {
         __Pyx_INCREF(__pyx_v_ct);
@@ -34289,25 +32399,25 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __Pyx_DECREF_SET(__pyx_v_ct, ((PyObject*)__pyx_t_1));
       __pyx_t_1 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":155
+      /* "extensions/lib/wsgiresponse.pyx":154
  *             if self.encoding:
  *                 ct = ct or 'text/plain'
  *                 if ';' not in ct:             # <<<<<<<<<<<<<<
  *                     ct = '%s; charset=%s' % (ct, self.encoding)
  *                 headers[CONTENT_TYPE] = ct
  */
-      __pyx_t_3 = (__Pyx_PySequence_ContainsTF(__pyx_kp_s__56, __pyx_v_ct, Py_NE)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 155, __pyx_L1_error)
+      __pyx_t_3 = (__Pyx_PySequence_ContainsTF(__pyx_kp_s__53, __pyx_v_ct, Py_NE)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 154, __pyx_L1_error)
       __pyx_t_5 = (__pyx_t_3 != 0);
       if (__pyx_t_5) {
 
-        /* "extensions/lib/wsgiresponse.pyx":156
+        /* "extensions/lib/wsgiresponse.pyx":155
  *                 ct = ct or 'text/plain'
  *                 if ';' not in ct:
  *                     ct = '%s; charset=%s' % (ct, self.encoding)             # <<<<<<<<<<<<<<
  *                 headers[CONTENT_TYPE] = ct
  *             if environ and environ['REQUEST_METHOD'] == 'HEAD':
  */
-        __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 156, __pyx_L1_error)
+        __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 155, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_INCREF(__pyx_v_ct);
         __Pyx_GIVEREF(__pyx_v_ct);
@@ -34315,14 +32425,14 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
         __Pyx_INCREF(__pyx_v_self->encoding);
         __Pyx_GIVEREF(__pyx_v_self->encoding);
         PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_v_self->encoding);
-        __pyx_t_6 = __Pyx_PyString_Format(__pyx_kp_s_s_charset_s, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 156, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyString_Format(__pyx_kp_s_s_charset_s, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 155, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        if (!(likely(PyString_CheckExact(__pyx_t_6))||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_6)->tp_name), 0))) __PYX_ERR(2, 156, __pyx_L1_error)
+        if (!(likely(PyString_CheckExact(__pyx_t_6))||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_6)->tp_name), 0))) __PYX_ERR(2, 155, __pyx_L1_error)
         __Pyx_DECREF_SET(__pyx_v_ct, ((PyObject*)__pyx_t_6));
         __pyx_t_6 = 0;
 
-        /* "extensions/lib/wsgiresponse.pyx":155
+        /* "extensions/lib/wsgiresponse.pyx":154
  *             if self.encoding:
  *                 ct = ct or 'text/plain'
  *                 if ';' not in ct:             # <<<<<<<<<<<<<<
@@ -34331,16 +32441,16 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  */
       }
 
-      /* "extensions/lib/wsgiresponse.pyx":157
+      /* "extensions/lib/wsgiresponse.pyx":156
  *                 if ';' not in ct:
  *                     ct = '%s; charset=%s' % (ct, self.encoding)
  *                 headers[CONTENT_TYPE] = ct             # <<<<<<<<<<<<<<
  *             if environ and environ['REQUEST_METHOD'] == 'HEAD':
  *                 self._content = EMPTY
  */
-      if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_CONTENT_TYPE, __pyx_v_ct) < 0)) __PYX_ERR(2, 157, __pyx_L1_error)
+      if (unlikely(PyObject_SetItem(__pyx_v_headers, __pyx_v_4clib_CONTENT_TYPE, __pyx_v_ct) < 0)) __PYX_ERR(2, 156, __pyx_L1_error)
 
-      /* "extensions/lib/wsgiresponse.pyx":153
+      /* "extensions/lib/wsgiresponse.pyx":152
  *             ct = headers.get(CONTENT_TYPE)
  *             # content type encoding available
  *             if self.encoding:             # <<<<<<<<<<<<<<
@@ -34349,14 +32459,14 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  */
     }
 
-    /* "extensions/lib/wsgiresponse.pyx":158
+    /* "extensions/lib/wsgiresponse.pyx":157
  *                     ct = '%s; charset=%s' % (ct, self.encoding)
  *                 headers[CONTENT_TYPE] = ct
  *             if environ and environ['REQUEST_METHOD'] == 'HEAD':             # <<<<<<<<<<<<<<
  *                 self._content = EMPTY
  *         # Cookies
  */
-    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_environ); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 158, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_environ); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 157, __pyx_L1_error)
     if (__pyx_t_3) {
     } else {
       __pyx_t_5 = __pyx_t_3;
@@ -34364,17 +32474,17 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     }
     if (unlikely(__pyx_v_environ == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(2, 158, __pyx_L1_error)
+      __PYX_ERR(2, 157, __pyx_L1_error)
     }
-    __pyx_t_6 = __Pyx_PyDict_GetItem(__pyx_v_environ, __pyx_n_s_REQUEST_METHOD); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 158, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyDict_GetItem(__pyx_v_environ, __pyx_n_s_REQUEST_METHOD); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 157, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_t_6, __pyx_n_s_HEAD, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 158, __pyx_L1_error)
+    __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_t_6, __pyx_n_s_HEAD, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 157, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_t_5 = __pyx_t_3;
     __pyx_L20_bool_binop_done:;
     if (__pyx_t_5) {
 
-      /* "extensions/lib/wsgiresponse.pyx":159
+      /* "extensions/lib/wsgiresponse.pyx":158
  *                 headers[CONTENT_TYPE] = ct
  *             if environ and environ['REQUEST_METHOD'] == 'HEAD':
  *                 self._content = EMPTY             # <<<<<<<<<<<<<<
@@ -34387,7 +32497,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __Pyx_DECREF(__pyx_v_self->_content);
       __pyx_v_self->_content = __pyx_v_4clib_EMPTY;
 
-      /* "extensions/lib/wsgiresponse.pyx":158
+      /* "extensions/lib/wsgiresponse.pyx":157
  *                     ct = '%s; charset=%s' % (ct, self.encoding)
  *                 headers[CONTENT_TYPE] = ct
  *             if environ and environ['REQUEST_METHOD'] == 'HEAD':             # <<<<<<<<<<<<<<
@@ -34398,7 +32508,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
   }
   __pyx_L3:;
 
-  /* "extensions/lib/wsgiresponse.pyx":161
+  /* "extensions/lib/wsgiresponse.pyx":160
  *                 self._content = EMPTY
  *         # Cookies
  *         if (self.status_code < 400 and self.can_store_cookies and             # <<<<<<<<<<<<<<
@@ -34411,25 +32521,25 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     __pyx_t_5 = __pyx_t_3;
     goto __pyx_L23_bool_binop_done;
   }
-  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_self->can_store_cookies); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 161, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_self->can_store_cookies); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 160, __pyx_L1_error)
   if (__pyx_t_3) {
   } else {
     __pyx_t_5 = __pyx_t_3;
     goto __pyx_L23_bool_binop_done;
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":162
+  /* "extensions/lib/wsgiresponse.pyx":161
  *         # Cookies
  *         if (self.status_code < 400 and self.can_store_cookies and
  *                 self._cookies):             # <<<<<<<<<<<<<<
  *             for c in self.cookies.values():
  *                 headers.add_header(SET_COOKIE, c.OutputString())
  */
-  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_self->_cookies); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 162, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_v_self->_cookies); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(2, 161, __pyx_L1_error)
   __pyx_t_5 = __pyx_t_3;
   __pyx_L23_bool_binop_done:;
 
-  /* "extensions/lib/wsgiresponse.pyx":161
+  /* "extensions/lib/wsgiresponse.pyx":160
  *                 self._content = EMPTY
  *         # Cookies
  *         if (self.status_code < 400 and self.can_store_cookies and             # <<<<<<<<<<<<<<
@@ -34438,16 +32548,16 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  */
   if (__pyx_t_5) {
 
-    /* "extensions/lib/wsgiresponse.pyx":163
+    /* "extensions/lib/wsgiresponse.pyx":162
  *         if (self.status_code < 400 and self.can_store_cookies and
  *                 self._cookies):
  *             for c in self.cookies.values():             # <<<<<<<<<<<<<<
  *                 headers.add_header(SET_COOKIE, c.OutputString())
  *         return headers.items()
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_cookies); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 163, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_cookies); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 162, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_values); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 163, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_values); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 162, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_1 = NULL;
@@ -34461,10 +32571,10 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       }
     }
     if (__pyx_t_1) {
-      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 163, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_1); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 162, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     } else {
-      __pyx_t_6 = __Pyx_PyObject_CallNoArg(__pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 163, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_CallNoArg(__pyx_t_7); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 162, __pyx_L1_error)
     }
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -34472,9 +32582,9 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __pyx_t_7 = __pyx_t_6; __Pyx_INCREF(__pyx_t_7); __pyx_t_12 = 0;
       __pyx_t_14 = NULL;
     } else {
-      __pyx_t_12 = -1; __pyx_t_7 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 163, __pyx_L1_error)
+      __pyx_t_12 = -1; __pyx_t_7 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 162, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
-      __pyx_t_14 = Py_TYPE(__pyx_t_7)->tp_iternext; if (unlikely(!__pyx_t_14)) __PYX_ERR(2, 163, __pyx_L1_error)
+      __pyx_t_14 = Py_TYPE(__pyx_t_7)->tp_iternext; if (unlikely(!__pyx_t_14)) __PYX_ERR(2, 162, __pyx_L1_error)
     }
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     for (;;) {
@@ -34482,17 +32592,17 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
         if (likely(PyList_CheckExact(__pyx_t_7))) {
           if (__pyx_t_12 >= PyList_GET_SIZE(__pyx_t_7)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_6 = PyList_GET_ITEM(__pyx_t_7, __pyx_t_12); __Pyx_INCREF(__pyx_t_6); __pyx_t_12++; if (unlikely(0 < 0)) __PYX_ERR(2, 163, __pyx_L1_error)
+          __pyx_t_6 = PyList_GET_ITEM(__pyx_t_7, __pyx_t_12); __Pyx_INCREF(__pyx_t_6); __pyx_t_12++; if (unlikely(0 < 0)) __PYX_ERR(2, 162, __pyx_L1_error)
           #else
-          __pyx_t_6 = PySequence_ITEM(__pyx_t_7, __pyx_t_12); __pyx_t_12++; if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 163, __pyx_L1_error)
+          __pyx_t_6 = PySequence_ITEM(__pyx_t_7, __pyx_t_12); __pyx_t_12++; if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 162, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           #endif
         } else {
           if (__pyx_t_12 >= PyTuple_GET_SIZE(__pyx_t_7)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_7, __pyx_t_12); __Pyx_INCREF(__pyx_t_6); __pyx_t_12++; if (unlikely(0 < 0)) __PYX_ERR(2, 163, __pyx_L1_error)
+          __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_7, __pyx_t_12); __Pyx_INCREF(__pyx_t_6); __pyx_t_12++; if (unlikely(0 < 0)) __PYX_ERR(2, 162, __pyx_L1_error)
           #else
-          __pyx_t_6 = PySequence_ITEM(__pyx_t_7, __pyx_t_12); __pyx_t_12++; if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 163, __pyx_L1_error)
+          __pyx_t_6 = PySequence_ITEM(__pyx_t_7, __pyx_t_12); __pyx_t_12++; if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 162, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           #endif
         }
@@ -34502,7 +32612,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
           PyObject* exc_type = PyErr_Occurred();
           if (exc_type) {
             if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(2, 163, __pyx_L1_error)
+            else __PYX_ERR(2, 162, __pyx_L1_error)
           }
           break;
         }
@@ -34511,16 +32621,16 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       __Pyx_XDECREF_SET(__pyx_v_c, __pyx_t_6);
       __pyx_t_6 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":164
+      /* "extensions/lib/wsgiresponse.pyx":163
  *                 self._cookies):
  *             for c in self.cookies.values():
  *                 headers.add_header(SET_COOKIE, c.OutputString())             # <<<<<<<<<<<<<<
  *         return headers.items()
  * 
  */
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_add_header); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 164, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_add_header); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 163, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_c, __pyx_n_s_OutputString); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 164, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_c, __pyx_n_s_OutputString); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 163, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       __pyx_t_15 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
@@ -34533,10 +32643,10 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
         }
       }
       if (__pyx_t_15) {
-        __pyx_t_13 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_15); if (unlikely(!__pyx_t_13)) __PYX_ERR(2, 164, __pyx_L1_error)
+        __pyx_t_13 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_15); if (unlikely(!__pyx_t_13)) __PYX_ERR(2, 163, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
       } else {
-        __pyx_t_13 = __Pyx_PyObject_CallNoArg(__pyx_t_8); if (unlikely(!__pyx_t_13)) __PYX_ERR(2, 164, __pyx_L1_error)
+        __pyx_t_13 = __Pyx_PyObject_CallNoArg(__pyx_t_8); if (unlikely(!__pyx_t_13)) __PYX_ERR(2, 163, __pyx_L1_error)
       }
       __Pyx_GOTREF(__pyx_t_13);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
@@ -34555,7 +32665,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_v_4clib_SET_COOKIE, __pyx_t_13};
-        __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 164, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 163, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
@@ -34564,14 +32674,14 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
         PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_v_4clib_SET_COOKIE, __pyx_t_13};
-        __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 164, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_2, 2+__pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 163, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
       } else
       #endif
       {
-        __pyx_t_15 = PyTuple_New(2+__pyx_t_2); if (unlikely(!__pyx_t_15)) __PYX_ERR(2, 164, __pyx_L1_error)
+        __pyx_t_15 = PyTuple_New(2+__pyx_t_2); if (unlikely(!__pyx_t_15)) __PYX_ERR(2, 163, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_15);
         if (__pyx_t_8) {
           __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_15, 0, __pyx_t_8); __pyx_t_8 = NULL;
@@ -34582,14 +32692,14 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
         __Pyx_GIVEREF(__pyx_t_13);
         PyTuple_SET_ITEM(__pyx_t_15, 1+__pyx_t_2, __pyx_t_13);
         __pyx_t_13 = 0;
-        __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_15, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 164, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_15, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 163, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
       }
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":163
+      /* "extensions/lib/wsgiresponse.pyx":162
  *         if (self.status_code < 400 and self.can_store_cookies and
  *                 self._cookies):
  *             for c in self.cookies.values():             # <<<<<<<<<<<<<<
@@ -34599,7 +32709,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     }
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":161
+    /* "extensions/lib/wsgiresponse.pyx":160
  *                 self._content = EMPTY
  *         # Cookies
  *         if (self.status_code < 400 and self.can_store_cookies and             # <<<<<<<<<<<<<<
@@ -34608,7 +32718,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  */
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":165
+  /* "extensions/lib/wsgiresponse.pyx":164
  *             for c in self.cookies.values():
  *                 headers.add_header(SET_COOKIE, c.OutputString())
  *         return headers.items()             # <<<<<<<<<<<<<<
@@ -34616,7 +32726,7 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_items); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 165, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_headers, __pyx_n_s_items); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 164, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __pyx_t_1 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
@@ -34629,10 +32739,10 @@ static PyObject *__pyx_f_4clib_12WsgiResponse_get_headers(struct __pyx_obj_4clib
     }
   }
   if (__pyx_t_1) {
-    __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_1); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 165, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_1); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 164, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   } else {
-    __pyx_t_7 = __Pyx_PyObject_CallNoArg(__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 165, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_CallNoArg(__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(2, 164, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -35223,7 +33333,7 @@ static int __pyx_pf_4clib_12WsgiResponse_16__wsgi_started___4__del__(struct __py
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgiresponse.pyx":168
+/* "extensions/lib/wsgiresponse.pyx":167
  * 
  * 
  * cdef int count_len(int a, object b):             # <<<<<<<<<<<<<<
@@ -35237,18 +33347,18 @@ static int __pyx_f_4clib_count_len(int __pyx_v_a, PyObject *__pyx_v_b) {
   Py_ssize_t __pyx_t_1;
   __Pyx_RefNannySetupContext("count_len", 0);
 
-  /* "extensions/lib/wsgiresponse.pyx":169
+  /* "extensions/lib/wsgiresponse.pyx":168
  * 
  * cdef int count_len(int a, object b):
  *     return a + len(b)             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_1 = PyObject_Length(__pyx_v_b); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(2, 169, __pyx_L1_error)
+  __pyx_t_1 = PyObject_Length(__pyx_v_b); if (unlikely(__pyx_t_1 == -1)) __PYX_ERR(2, 168, __pyx_L1_error)
   __pyx_r = (__pyx_v_a + __pyx_t_1);
   goto __pyx_L0;
 
-  /* "extensions/lib/wsgiresponse.pyx":168
+  /* "extensions/lib/wsgiresponse.pyx":167
  * 
  * 
  * cdef int count_len(int a, object b):             # <<<<<<<<<<<<<<
@@ -35265,27 +33375,43 @@ static int __pyx_f_4clib_count_len(int __pyx_v_a, PyObject *__pyx_v_b) {
   return __pyx_r;
 }
 
-/* "extensions/lib/wsgiresponse.pyx":172
+/* "extensions/lib/wsgiresponse.pyx":171
  * 
  * 
- * cpdef set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',             # <<<<<<<<<<<<<<
- *                   domain=None, secure=False, httponly=False):
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
+ * cpdef set_cookie(             # <<<<<<<<<<<<<<
+ *         object cookies, str key, value='', max_age=None,
+ *         expires=None, path='/',
  */
 
 static PyObject *__pyx_pw_4clib_9set_cookie(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
 static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *__pyx_v_key, CYTHON_UNUSED int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_set_cookie *__pyx_optional_args) {
   PyObject *__pyx_v_value = ((PyObject *)__pyx_kp_s_);
+
+  /* "extensions/lib/wsgiresponse.pyx":172
+ * 
+ * cpdef set_cookie(
+ *         object cookies, str key, value='', max_age=None,             # <<<<<<<<<<<<<<
+ *         expires=None, path='/',
+ *         domain=None, secure=False, httponly=False):
+ */
   PyObject *__pyx_v_max_age = ((PyObject *)Py_None);
-  PyObject *__pyx_v_expires = ((PyObject *)Py_None);
-  PyObject *__pyx_v_path = ((PyObject *)__pyx_kp_s__55);
 
   /* "extensions/lib/wsgiresponse.pyx":173
- * 
- * cpdef set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
- *                   domain=None, secure=False, httponly=False):             # <<<<<<<<<<<<<<
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
- *     cookies[key] = value
+ * cpdef set_cookie(
+ *         object cookies, str key, value='', max_age=None,
+ *         expires=None, path='/',             # <<<<<<<<<<<<<<
+ *         domain=None, secure=False, httponly=False):
+ *     """Set a cookie key into the cookies dictionary
+ */
+  PyObject *__pyx_v_expires = ((PyObject *)Py_None);
+  PyObject *__pyx_v_path = ((PyObject *)__pyx_kp_s__52);
+
+  /* "extensions/lib/wsgiresponse.pyx":174
+ *         object cookies, str key, value='', max_age=None,
+ *         expires=None, path='/',
+ *         domain=None, secure=False, httponly=False):             # <<<<<<<<<<<<<<
+ *     """Set a cookie key into the cookies dictionary
+ *     """
  */
   PyObject *__pyx_v_domain = ((PyObject *)Py_None);
   PyObject *__pyx_v_secure = ((PyObject *)Py_False);
@@ -35331,17 +33457,17 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
   __Pyx_INCREF(__pyx_v_max_age);
   __Pyx_INCREF(__pyx_v_expires);
 
-  /* "extensions/lib/wsgiresponse.pyx":175
- *                   domain=None, secure=False, httponly=False):
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
+  /* "extensions/lib/wsgiresponse.pyx":177
+ *     """Set a cookie key into the cookies dictionary
+ *     """
  *     cookies[key] = value             # <<<<<<<<<<<<<<
  *     if expires is not None:
  *         if isinstance(expires, datetime):
  */
-  if (unlikely(PyObject_SetItem(__pyx_v_cookies, __pyx_v_key, __pyx_v_value) < 0)) __PYX_ERR(2, 175, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_cookies, __pyx_v_key, __pyx_v_value) < 0)) __PYX_ERR(2, 177, __pyx_L1_error)
 
-  /* "extensions/lib/wsgiresponse.pyx":176
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
+  /* "extensions/lib/wsgiresponse.pyx":178
+ *     """
  *     cookies[key] = value
  *     if expires is not None:             # <<<<<<<<<<<<<<
  *         if isinstance(expires, datetime):
@@ -35351,35 +33477,35 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
 
-    /* "extensions/lib/wsgiresponse.pyx":177
+    /* "extensions/lib/wsgiresponse.pyx":179
  *     cookies[key] = value
  *     if expires is not None:
  *         if isinstance(expires, datetime):             # <<<<<<<<<<<<<<
  *             now = (expires.now(expires.tzinfo) if expires.tzinfo else
  *                    expires.utcnow())
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_datetime); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 177, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_datetime); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 179, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = PyObject_IsInstance(__pyx_v_expires, __pyx_t_3); if (unlikely(__pyx_t_2 == -1)) __PYX_ERR(2, 177, __pyx_L1_error)
+    __pyx_t_2 = PyObject_IsInstance(__pyx_v_expires, __pyx_t_3); if (unlikely(__pyx_t_2 == -1)) __PYX_ERR(2, 179, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_1 = (__pyx_t_2 != 0);
     if (__pyx_t_1) {
 
-      /* "extensions/lib/wsgiresponse.pyx":178
+      /* "extensions/lib/wsgiresponse.pyx":180
  *     if expires is not None:
  *         if isinstance(expires, datetime):
  *             now = (expires.now(expires.tzinfo) if expires.tzinfo else             # <<<<<<<<<<<<<<
  *                    expires.utcnow())
  *             delta = expires - now
  */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_expires, __pyx_n_s_tzinfo); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 178, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_expires, __pyx_n_s_tzinfo); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 180, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(2, 178, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(2, 180, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       if (__pyx_t_1) {
-        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_expires, __pyx_n_s_now); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 178, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_expires, __pyx_n_s_now); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 180, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_expires, __pyx_n_s_tzinfo); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 178, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_expires, __pyx_n_s_tzinfo); if (unlikely(!__pyx_t_6)) __PYX_ERR(2, 180, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __pyx_t_7 = NULL;
         if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
@@ -35392,14 +33518,14 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
           }
         }
         if (!__pyx_t_7) {
-          __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 178, __pyx_L1_error)
+          __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 180, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           __Pyx_GOTREF(__pyx_t_4);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_5)) {
             PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_6};
-            __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 178, __pyx_L1_error)
+            __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 180, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
             __Pyx_GOTREF(__pyx_t_4);
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -35408,20 +33534,20 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
             PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_6};
-            __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 178, __pyx_L1_error)
+            __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 180, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
             __Pyx_GOTREF(__pyx_t_4);
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           } else
           #endif
           {
-            __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 178, __pyx_L1_error)
+            __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 180, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_8);
             __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
             __Pyx_GIVEREF(__pyx_t_6);
             PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_6);
             __pyx_t_6 = 0;
-            __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 178, __pyx_L1_error)
+            __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 180, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_4);
             __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
           }
@@ -35431,14 +33557,14 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
         __pyx_t_4 = 0;
       } else {
 
-        /* "extensions/lib/wsgiresponse.pyx":179
+        /* "extensions/lib/wsgiresponse.pyx":181
  *         if isinstance(expires, datetime):
  *             now = (expires.now(expires.tzinfo) if expires.tzinfo else
  *                    expires.utcnow())             # <<<<<<<<<<<<<<
  *             delta = expires - now
  *             # Add one second so the date matches exactly (a fraction of
  */
-        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_expires, __pyx_n_s_utcnow); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 179, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_expires, __pyx_n_s_utcnow); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 181, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
         __pyx_t_8 = NULL;
         if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
@@ -35451,10 +33577,10 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
           }
         }
         if (__pyx_t_8) {
-          __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 179, __pyx_L1_error)
+          __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_8); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 181, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
         } else {
-          __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 179, __pyx_L1_error)
+          __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 181, __pyx_L1_error)
         }
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -35464,41 +33590,41 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
       __pyx_v_now = __pyx_t_3;
       __pyx_t_3 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":180
+      /* "extensions/lib/wsgiresponse.pyx":182
  *             now = (expires.now(expires.tzinfo) if expires.tzinfo else
  *                    expires.utcnow())
  *             delta = expires - now             # <<<<<<<<<<<<<<
  *             # Add one second so the date matches exactly (a fraction of
  *             # time gets lost between converting to a timedelta and
  */
-      __pyx_t_3 = PyNumber_Subtract(__pyx_v_expires, __pyx_v_now); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 180, __pyx_L1_error)
+      __pyx_t_3 = PyNumber_Subtract(__pyx_v_expires, __pyx_v_now); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 182, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __pyx_v_delta = __pyx_t_3;
       __pyx_t_3 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":184
+      /* "extensions/lib/wsgiresponse.pyx":186
  *             # time gets lost between converting to a timedelta and
  *             # then the date string).
  *             delta = delta + timedelta(seconds=1)             # <<<<<<<<<<<<<<
  *             # Just set max_age - the max_age logic will set expires.
  *             expires = None
  */
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_timedelta); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 184, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_timedelta); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 186, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 184, __pyx_L1_error)
+      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 186, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_seconds, __pyx_int_1) < 0) __PYX_ERR(2, 184, __pyx_L1_error)
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 184, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_seconds, __pyx_int_1) < 0) __PYX_ERR(2, 186, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 186, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = PyNumber_Add(__pyx_v_delta, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 184, __pyx_L1_error)
+      __pyx_t_4 = PyNumber_Add(__pyx_v_delta, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 186, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF_SET(__pyx_v_delta, __pyx_t_4);
       __pyx_t_4 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":186
+      /* "extensions/lib/wsgiresponse.pyx":188
  *             delta = delta + timedelta(seconds=1)
  *             # Just set max_age - the max_age logic will set expires.
  *             expires = None             # <<<<<<<<<<<<<<
@@ -35508,36 +33634,36 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
       __Pyx_INCREF(Py_None);
       __Pyx_DECREF_SET(__pyx_v_expires, Py_None);
 
-      /* "extensions/lib/wsgiresponse.pyx":187
+      /* "extensions/lib/wsgiresponse.pyx":189
  *             # Just set max_age - the max_age logic will set expires.
  *             expires = None
  *             max_age = max(0, delta.days * 86400 + delta.seconds)             # <<<<<<<<<<<<<<
  *         else:
  *             cookies[key]['expires'] = expires
  */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_delta, __pyx_n_s_days); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 187, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_delta, __pyx_n_s_days); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 189, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_5 = PyNumber_Multiply(__pyx_t_4, __pyx_int_86400); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 187, __pyx_L1_error)
+      __pyx_t_5 = PyNumber_Multiply(__pyx_t_4, __pyx_int_86400); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 189, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_delta, __pyx_n_s_seconds); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 187, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_delta, __pyx_n_s_seconds); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 189, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_3 = PyNumber_Add(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 187, __pyx_L1_error)
+      __pyx_t_3 = PyNumber_Add(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 189, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __pyx_t_9 = 0;
-      __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_t_9); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 187, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyInt_From_long(__pyx_t_9); if (unlikely(!__pyx_t_5)) __PYX_ERR(2, 189, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_8 = PyObject_RichCompare(__pyx_t_3, __pyx_t_5, Py_GT); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 187, __pyx_L1_error)
+      __pyx_t_8 = PyObject_RichCompare(__pyx_t_3, __pyx_t_5, Py_GT); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 189, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(2, 187, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(2, 189, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       if (__pyx_t_1) {
         __Pyx_INCREF(__pyx_t_3);
         __pyx_t_4 = __pyx_t_3;
       } else {
-        __pyx_t_8 = __Pyx_PyInt_From_long(__pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 187, __pyx_L1_error)
+        __pyx_t_8 = __Pyx_PyInt_From_long(__pyx_t_9); if (unlikely(!__pyx_t_8)) __PYX_ERR(2, 189, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __pyx_t_4 = __pyx_t_8;
         __pyx_t_8 = 0;
@@ -35549,7 +33675,7 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
       __Pyx_DECREF_SET(__pyx_v_max_age, __pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":177
+      /* "extensions/lib/wsgiresponse.pyx":179
  *     cookies[key] = value
  *     if expires is not None:
  *         if isinstance(expires, datetime):             # <<<<<<<<<<<<<<
@@ -35559,7 +33685,7 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
       goto __pyx_L4;
     }
 
-    /* "extensions/lib/wsgiresponse.pyx":189
+    /* "extensions/lib/wsgiresponse.pyx":191
  *             max_age = max(0, delta.days * 86400 + delta.seconds)
  *         else:
  *             cookies[key]['expires'] = expires             # <<<<<<<<<<<<<<
@@ -35567,15 +33693,15 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
  *         cookies[key]['max-age'] = max_age
  */
     /*else*/ {
-      __pyx_t_3 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 189, __pyx_L1_error)
+      __pyx_t_3 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 191, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (unlikely(PyObject_SetItem(__pyx_t_3, __pyx_n_s_expires, __pyx_v_expires) < 0)) __PYX_ERR(2, 189, __pyx_L1_error)
+      if (unlikely(PyObject_SetItem(__pyx_t_3, __pyx_n_s_expires, __pyx_v_expires) < 0)) __PYX_ERR(2, 191, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
     __pyx_L4:;
 
-    /* "extensions/lib/wsgiresponse.pyx":176
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
+    /* "extensions/lib/wsgiresponse.pyx":178
+ *     """
  *     cookies[key] = value
  *     if expires is not None:             # <<<<<<<<<<<<<<
  *         if isinstance(expires, datetime):
@@ -35583,7 +33709,7 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
  */
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":190
+  /* "extensions/lib/wsgiresponse.pyx":192
  *         else:
  *             cookies[key]['expires'] = expires
  *     if max_age is not None:             # <<<<<<<<<<<<<<
@@ -35594,52 +33720,52 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
 
-    /* "extensions/lib/wsgiresponse.pyx":191
+    /* "extensions/lib/wsgiresponse.pyx":193
  *             cookies[key]['expires'] = expires
  *     if max_age is not None:
  *         cookies[key]['max-age'] = max_age             # <<<<<<<<<<<<<<
  *         # IE requires expires, so set it if hasn't been already.
  *         if not expires:
  */
-    __pyx_t_3 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 191, __pyx_L1_error)
+    __pyx_t_3 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 193, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (unlikely(PyObject_SetItem(__pyx_t_3, __pyx_kp_s_max_age_2, __pyx_v_max_age) < 0)) __PYX_ERR(2, 191, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_3, __pyx_kp_s_max_age_2, __pyx_v_max_age) < 0)) __PYX_ERR(2, 193, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":193
+    /* "extensions/lib/wsgiresponse.pyx":195
  *         cookies[key]['max-age'] = max_age
  *         # IE requires expires, so set it if hasn't been already.
  *         if not expires:             # <<<<<<<<<<<<<<
  *             cookies[key]['expires'] = _http_date(_current_time_ + max_age)
  *     if path is not None:
  */
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_expires); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(2, 193, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_v_expires); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(2, 195, __pyx_L1_error)
     __pyx_t_1 = ((!__pyx_t_2) != 0);
     if (__pyx_t_1) {
 
-      /* "extensions/lib/wsgiresponse.pyx":194
+      /* "extensions/lib/wsgiresponse.pyx":196
  *         # IE requires expires, so set it if hasn't been already.
  *         if not expires:
  *             cookies[key]['expires'] = _http_date(_current_time_ + max_age)             # <<<<<<<<<<<<<<
  *     if path is not None:
  *         cookies[key]['path'] = path
  */
-      __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_4clib__current_time_); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 194, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_4clib__current_time_); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 196, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = PyNumber_Add(__pyx_t_3, __pyx_v_max_age); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 194, __pyx_L1_error)
+      __pyx_t_4 = PyNumber_Add(__pyx_t_3, __pyx_v_max_age); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 196, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_10 = __Pyx_PyInt_As_time_t(__pyx_t_4); if (unlikely((__pyx_t_10 == ((time_t)-1)) && PyErr_Occurred())) __PYX_ERR(2, 194, __pyx_L1_error)
+      __pyx_t_10 = __Pyx_PyInt_As_time_t(__pyx_t_4); if (unlikely((__pyx_t_10 == ((time_t)-1)) && PyErr_Occurred())) __PYX_ERR(2, 196, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = _http_date(__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 194, __pyx_L1_error)
+      __pyx_t_4 = _http_date(__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 196, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_3 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 194, __pyx_L1_error)
+      __pyx_t_3 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_3)) __PYX_ERR(2, 196, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      if (unlikely(PyObject_SetItem(__pyx_t_3, __pyx_n_s_expires, __pyx_t_4) < 0)) __PYX_ERR(2, 194, __pyx_L1_error)
+      if (unlikely(PyObject_SetItem(__pyx_t_3, __pyx_n_s_expires, __pyx_t_4) < 0)) __PYX_ERR(2, 196, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-      /* "extensions/lib/wsgiresponse.pyx":193
+      /* "extensions/lib/wsgiresponse.pyx":195
  *         cookies[key]['max-age'] = max_age
  *         # IE requires expires, so set it if hasn't been already.
  *         if not expires:             # <<<<<<<<<<<<<<
@@ -35648,7 +33774,7 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
  */
     }
 
-    /* "extensions/lib/wsgiresponse.pyx":190
+    /* "extensions/lib/wsgiresponse.pyx":192
  *         else:
  *             cookies[key]['expires'] = expires
  *     if max_age is not None:             # <<<<<<<<<<<<<<
@@ -35657,7 +33783,7 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
  */
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":195
+  /* "extensions/lib/wsgiresponse.pyx":197
  *         if not expires:
  *             cookies[key]['expires'] = _http_date(_current_time_ + max_age)
  *     if path is not None:             # <<<<<<<<<<<<<<
@@ -35668,19 +33794,19 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
 
-    /* "extensions/lib/wsgiresponse.pyx":196
+    /* "extensions/lib/wsgiresponse.pyx":198
  *             cookies[key]['expires'] = _http_date(_current_time_ + max_age)
  *     if path is not None:
  *         cookies[key]['path'] = path             # <<<<<<<<<<<<<<
  *     if domain is not None:
  *         cookies[key]['domain'] = domain
  */
-    __pyx_t_4 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 196, __pyx_L1_error)
+    __pyx_t_4 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 198, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_s_path, __pyx_v_path) < 0)) __PYX_ERR(2, 196, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_s_path, __pyx_v_path) < 0)) __PYX_ERR(2, 198, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":195
+    /* "extensions/lib/wsgiresponse.pyx":197
  *         if not expires:
  *             cookies[key]['expires'] = _http_date(_current_time_ + max_age)
  *     if path is not None:             # <<<<<<<<<<<<<<
@@ -35689,7 +33815,7 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
  */
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":197
+  /* "extensions/lib/wsgiresponse.pyx":199
  *     if path is not None:
  *         cookies[key]['path'] = path
  *     if domain is not None:             # <<<<<<<<<<<<<<
@@ -35700,19 +33826,19 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
 
-    /* "extensions/lib/wsgiresponse.pyx":198
+    /* "extensions/lib/wsgiresponse.pyx":200
  *         cookies[key]['path'] = path
  *     if domain is not None:
  *         cookies[key]['domain'] = domain             # <<<<<<<<<<<<<<
  *     if secure:
  *         cookies[key]['secure'] = True
  */
-    __pyx_t_4 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 198, __pyx_L1_error)
+    __pyx_t_4 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_s_domain, __pyx_v_domain) < 0)) __PYX_ERR(2, 198, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_s_domain, __pyx_v_domain) < 0)) __PYX_ERR(2, 200, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":197
+    /* "extensions/lib/wsgiresponse.pyx":199
  *     if path is not None:
  *         cookies[key]['path'] = path
  *     if domain is not None:             # <<<<<<<<<<<<<<
@@ -35721,29 +33847,29 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
  */
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":199
+  /* "extensions/lib/wsgiresponse.pyx":201
  *     if domain is not None:
  *         cookies[key]['domain'] = domain
  *     if secure:             # <<<<<<<<<<<<<<
  *         cookies[key]['secure'] = True
  *     if httponly:
  */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_secure); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(2, 199, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_secure); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(2, 201, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "extensions/lib/wsgiresponse.pyx":200
+    /* "extensions/lib/wsgiresponse.pyx":202
  *         cookies[key]['domain'] = domain
  *     if secure:
  *         cookies[key]['secure'] = True             # <<<<<<<<<<<<<<
  *     if httponly:
  *         cookies[key]['httponly'] = True
  */
-    __pyx_t_4 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 200, __pyx_L1_error)
+    __pyx_t_4 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 202, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_s_secure, Py_True) < 0)) __PYX_ERR(2, 200, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_s_secure, Py_True) < 0)) __PYX_ERR(2, 202, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":199
+    /* "extensions/lib/wsgiresponse.pyx":201
  *     if domain is not None:
  *         cookies[key]['domain'] = domain
  *     if secure:             # <<<<<<<<<<<<<<
@@ -35752,26 +33878,26 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
  */
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":201
+  /* "extensions/lib/wsgiresponse.pyx":203
  *     if secure:
  *         cookies[key]['secure'] = True
  *     if httponly:             # <<<<<<<<<<<<<<
  *         cookies[key]['httponly'] = True
  */
-  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_httponly); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(2, 201, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_httponly); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(2, 203, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "extensions/lib/wsgiresponse.pyx":202
+    /* "extensions/lib/wsgiresponse.pyx":204
  *         cookies[key]['secure'] = True
  *     if httponly:
  *         cookies[key]['httponly'] = True             # <<<<<<<<<<<<<<
  */
-    __pyx_t_4 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 202, __pyx_L1_error)
+    __pyx_t_4 = PyObject_GetItem(__pyx_v_cookies, __pyx_v_key); if (unlikely(!__pyx_t_4)) __PYX_ERR(2, 204, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_s_httponly, Py_True) < 0)) __PYX_ERR(2, 202, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_n_s_httponly, Py_True) < 0)) __PYX_ERR(2, 204, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "extensions/lib/wsgiresponse.pyx":201
+    /* "extensions/lib/wsgiresponse.pyx":203
  *     if secure:
  *         cookies[key]['secure'] = True
  *     if httponly:             # <<<<<<<<<<<<<<
@@ -35779,12 +33905,12 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
  */
   }
 
-  /* "extensions/lib/wsgiresponse.pyx":172
+  /* "extensions/lib/wsgiresponse.pyx":171
  * 
  * 
- * cpdef set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',             # <<<<<<<<<<<<<<
- *                   domain=None, secure=False, httponly=False):
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
+ * cpdef set_cookie(             # <<<<<<<<<<<<<<
+ *         object cookies, str key, value='', max_age=None,
+ *         expires=None, path='/',
  */
 
   /* function exit code */
@@ -35811,7 +33937,7 @@ static PyObject *__pyx_f_4clib_set_cookie(PyObject *__pyx_v_cookies, PyObject *_
 
 /* Python wrapper */
 static PyObject *__pyx_pw_4clib_9set_cookie(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_4clib_8set_cookie[] = "Set a cookie key into the cookies dictionary *cookies*.";
+static char __pyx_doc_4clib_8set_cookie[] = "Set a cookie key into the cookies dictionary\n    ";
 static PyObject *__pyx_pw_4clib_9set_cookie(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_cookies = 0;
   PyObject *__pyx_v_key = 0;
@@ -35829,16 +33955,32 @@ static PyObject *__pyx_pw_4clib_9set_cookie(PyObject *__pyx_self, PyObject *__py
     static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_cookies,&__pyx_n_s_key,&__pyx_n_s_value,&__pyx_n_s_max_age,&__pyx_n_s_expires,&__pyx_n_s_path,&__pyx_n_s_domain,&__pyx_n_s_secure,&__pyx_n_s_httponly,0};
     PyObject* values[9] = {0,0,0,0,0,0,0,0,0};
     values[2] = ((PyObject *)__pyx_kp_s_);
+
+    /* "extensions/lib/wsgiresponse.pyx":172
+ * 
+ * cpdef set_cookie(
+ *         object cookies, str key, value='', max_age=None,             # <<<<<<<<<<<<<<
+ *         expires=None, path='/',
+ *         domain=None, secure=False, httponly=False):
+ */
     values[3] = ((PyObject *)Py_None);
-    values[4] = ((PyObject *)Py_None);
-    values[5] = ((PyObject *)__pyx_kp_s__55);
 
     /* "extensions/lib/wsgiresponse.pyx":173
- * 
- * cpdef set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
- *                   domain=None, secure=False, httponly=False):             # <<<<<<<<<<<<<<
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
- *     cookies[key] = value
+ * cpdef set_cookie(
+ *         object cookies, str key, value='', max_age=None,
+ *         expires=None, path='/',             # <<<<<<<<<<<<<<
+ *         domain=None, secure=False, httponly=False):
+ *     """Set a cookie key into the cookies dictionary
+ */
+    values[4] = ((PyObject *)Py_None);
+    values[5] = ((PyObject *)__pyx_kp_s__52);
+
+    /* "extensions/lib/wsgiresponse.pyx":174
+ *         object cookies, str key, value='', max_age=None,
+ *         expires=None, path='/',
+ *         domain=None, secure=False, httponly=False):             # <<<<<<<<<<<<<<
+ *     """Set a cookie key into the cookies dictionary
+ *     """
  */
     values[6] = ((PyObject *)Py_None);
     values[7] = ((PyObject *)Py_False);
@@ -35867,7 +34009,7 @@ static PyObject *__pyx_pw_4clib_9set_cookie(PyObject *__pyx_self, PyObject *__py
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_key)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("set_cookie", 0, 2, 9, 1); __PYX_ERR(2, 172, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("set_cookie", 0, 2, 9, 1); __PYX_ERR(2, 171, __pyx_L3_error)
         }
         case  2:
         if (kw_args > 0) {
@@ -35906,7 +34048,7 @@ static PyObject *__pyx_pw_4clib_9set_cookie(PyObject *__pyx_self, PyObject *__py
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "set_cookie") < 0)) __PYX_ERR(2, 172, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "set_cookie") < 0)) __PYX_ERR(2, 171, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -35924,7 +34066,7 @@ static PyObject *__pyx_pw_4clib_9set_cookie(PyObject *__pyx_self, PyObject *__py
       }
     }
     __pyx_v_cookies = values[0];
-    __pyx_v_key = values[1];
+    __pyx_v_key = ((PyObject*)values[1]);
     __pyx_v_value = values[2];
     __pyx_v_max_age = values[3];
     __pyx_v_expires = values[4];
@@ -35935,23 +34077,28 @@ static PyObject *__pyx_pw_4clib_9set_cookie(PyObject *__pyx_self, PyObject *__py
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("set_cookie", 0, 2, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(2, 172, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("set_cookie", 0, 2, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(2, 171, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.set_cookie", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_key), (&PyString_Type), 1, "key", 1))) __PYX_ERR(2, 172, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_8set_cookie(__pyx_self, __pyx_v_cookies, __pyx_v_key, __pyx_v_value, __pyx_v_max_age, __pyx_v_expires, __pyx_v_path, __pyx_v_domain, __pyx_v_secure, __pyx_v_httponly);
 
-  /* "extensions/lib/wsgiresponse.pyx":172
+  /* "extensions/lib/wsgiresponse.pyx":171
  * 
  * 
- * cpdef set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',             # <<<<<<<<<<<<<<
- *                   domain=None, secure=False, httponly=False):
- *     '''Set a cookie key into the cookies dictionary *cookies*.'''
+ * cpdef set_cookie(             # <<<<<<<<<<<<<<
+ *         object cookies, str key, value='', max_age=None,
+ *         expires=None, path='/',
  */
 
   /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -35971,7 +34118,7 @@ static PyObject *__pyx_pf_4clib_8set_cookie(CYTHON_UNUSED PyObject *__pyx_self, 
   __pyx_t_2.domain = __pyx_v_domain;
   __pyx_t_2.secure = __pyx_v_secure;
   __pyx_t_2.httponly = __pyx_v_httponly;
-  __pyx_t_1 = __pyx_f_4clib_set_cookie(__pyx_v_cookies, __pyx_v_key, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 172, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_set_cookie(__pyx_v_cookies, __pyx_v_key, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 171, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -36124,7 +34271,7 @@ static CYTHON_INLINE PyObject *__pyx_f_9websocket_to_bytes(PyObject *__pyx_v_val
  *         raise TypeError('Requires bytes or string')             # <<<<<<<<<<<<<<
  */
   /*else*/ {
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__57, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(6, 13, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__54, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(6, 13, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_Raise(__pyx_t_3, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -36398,7 +34545,7 @@ static PyObject *__Pyx_CFunc_int____int____object___to_py(int (*__pyx_v_f)(int, 
  *         """wrap(a: 'int', b) -> 'int'"""
  *         return f(a, b)
  */
-  __pyx_t_1 = __Pyx_CyFunction_NewEx(&__pyx_mdef_11cfunc_dot_to_py_40__Pyx_CFunc_int____int____object___to_py_1wrap, 0, __pyx_n_s_Pyx_CFunc_int____int____object, ((PyObject*)__pyx_cur_scope), __pyx_n_s_cfunc_to_py, __pyx_d, ((PyObject *)__pyx_codeobj__59)); if (unlikely(!__pyx_t_1)) __PYX_ERR(8, 65, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_CyFunction_NewEx(&__pyx_mdef_11cfunc_dot_to_py_40__Pyx_CFunc_int____int____object___to_py_1wrap, 0, __pyx_n_s_Pyx_CFunc_int____int____object, ((PyObject*)__pyx_cur_scope), __pyx_n_s_cfunc_to_py, __pyx_d, ((PyObject *)__pyx_codeobj__56)); if (unlikely(!__pyx_t_1)) __PYX_ERR(8, 65, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_wrap = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -38309,8 +36456,6 @@ static PyMethodDef __pyx_methods_4clib_WsgiProtocol[] = {
   {"on_message_complete", (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_11on_message_complete, METH_NOARGS, 0},
   {"start_response", (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_13start_response, METH_VARARGS|METH_KEYWORDS, 0},
   {"write", (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_15write, METH_VARARGS|METH_KEYWORDS, 0},
-  {"write_list", (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_17write_list, METH_VARARGS|METH_KEYWORDS, 0},
-  {"write_plus", (PyCFunction)__pyx_pw_4clib_12WsgiProtocol_19write_plus, METH_VARARGS|METH_KEYWORDS, 0},
   {0, 0, 0, 0}
 };
 
@@ -39720,11 +37865,11 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s__39, __pyx_k__39, sizeof(__pyx_k__39), 0, 0, 1, 0},
   {&__pyx_kp_b__42, __pyx_k__42, sizeof(__pyx_k__42), 0, 0, 0, 0},
   {&__pyx_kp_s__42, __pyx_k__42, sizeof(__pyx_k__42), 0, 0, 1, 0},
-  {&__pyx_kp_s__55, __pyx_k__55, sizeof(__pyx_k__55), 0, 0, 1, 0},
-  {&__pyx_kp_s__56, __pyx_k__56, sizeof(__pyx_k__56), 0, 0, 1, 0},
-  {&__pyx_kp_b__85, __pyx_k__85, sizeof(__pyx_k__85), 0, 0, 0, 0},
-  {&__pyx_kp_b__86, __pyx_k__86, sizeof(__pyx_k__86), 0, 0, 0, 0},
-  {&__pyx_kp_b__87, __pyx_k__87, sizeof(__pyx_k__87), 0, 0, 0, 0},
+  {&__pyx_kp_s__52, __pyx_k__52, sizeof(__pyx_k__52), 0, 0, 1, 0},
+  {&__pyx_kp_s__53, __pyx_k__53, sizeof(__pyx_k__53), 0, 0, 1, 0},
+  {&__pyx_kp_b__82, __pyx_k__82, sizeof(__pyx_k__82), 0, 0, 0, 0},
+  {&__pyx_kp_b__83, __pyx_k__83, sizeof(__pyx_k__83), 0, 0, 0, 0},
+  {&__pyx_kp_b__84, __pyx_k__84, sizeof(__pyx_k__84), 0, 0, 0, 0},
   {&__pyx_n_s_a, __pyx_k_a, sizeof(__pyx_k_a), 0, 0, 1, 1},
   {&__pyx_n_s_add, __pyx_k_add, sizeof(__pyx_k_add), 0, 0, 1, 1},
   {&__pyx_n_s_add_header, __pyx_k_add_header, sizeof(__pyx_k_add_header), 0, 0, 1, 1},
@@ -39830,6 +37975,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_itertools, __pyx_k_itertools, sizeof(__pyx_k_itertools), 0, 0, 1, 1},
   {&__pyx_n_s_join, __pyx_k_join, sizeof(__pyx_k_join), 0, 0, 1, 1},
   {&__pyx_n_s_keep_alive, __pyx_k_keep_alive, sizeof(__pyx_k_keep_alive), 0, 0, 1, 1},
+  {&__pyx_kp_s_keep_alive_2, __pyx_k_keep_alive_2, sizeof(__pyx_k_keep_alive_2), 0, 0, 1, 0},
   {&__pyx_n_s_key, __pyx_k_key, sizeof(__pyx_k_key), 0, 0, 1, 1},
   {&__pyx_n_s_kind, __pyx_k_kind, sizeof(__pyx_k_kind), 0, 0, 1, 1},
   {&__pyx_n_s_len, __pyx_k_len, sizeof(__pyx_k_len), 0, 0, 1, 1},
@@ -39973,8 +38119,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_with_traceback, __pyx_k_with_traceback, sizeof(__pyx_k_with_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_wrap, __pyx_k_wrap, sizeof(__pyx_k_wrap), 0, 0, 1, 1},
   {&__pyx_n_s_write, __pyx_k_write, sizeof(__pyx_k_write), 0, 0, 1, 1},
-  {&__pyx_n_s_write_list, __pyx_k_write_list, sizeof(__pyx_k_write_list), 0, 0, 1, 1},
-  {&__pyx_n_s_write_plus, __pyx_k_write_plus, sizeof(__pyx_k_write_plus), 0, 0, 1, 1},
   {&__pyx_n_s_wsgi_cached, __pyx_k_wsgi_cached, sizeof(__pyx_k_wsgi_cached), 0, 0, 1, 1},
   {&__pyx_n_s_wsgi_cached_locals, __pyx_k_wsgi_cached_locals, sizeof(__pyx_k_wsgi_cached_locals), 0, 0, 1, 1},
   {&__pyx_kp_s_wsgi_errors, __pyx_k_wsgi_errors, sizeof(__pyx_k_wsgi_errors), 0, 0, 1, 0},
@@ -39994,9 +38138,9 @@ static int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 96, __pyx_L1_error)
   __pyx_builtin_OSError = __Pyx_GetBuiltinName(__pyx_n_s_OSError); if (!__pyx_builtin_OSError) __PYX_ERR(0, 98, __pyx_L1_error)
   __pyx_builtin_NameError = __Pyx_GetBuiltinName(__pyx_n_s_NameError); if (!__pyx_builtin_NameError) __PYX_ERR(0, 98, __pyx_L1_error)
-  __pyx_builtin_AttributeError = __Pyx_GetBuiltinName(__pyx_n_s_AttributeError); if (!__pyx_builtin_AttributeError) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_builtin_AttributeError = __Pyx_GetBuiltinName(__pyx_n_s_AttributeError); if (!__pyx_builtin_AttributeError) __PYX_ERR(0, 184, __pyx_L1_error)
   __pyx_builtin_property = __Pyx_GetBuiltinName(__pyx_n_s_property); if (!__pyx_builtin_property) __PYX_ERR(2, 26, __pyx_L1_error)
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(2, 146, __pyx_L1_error)
+  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(2, 145, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -40369,126 +38513,93 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__36);
   __Pyx_GIVEREF(__pyx_tuple__36);
 
-  /* "extensions/lib/wsgi.pyx":113
+  /* "extensions/lib/wsgi.pyx":114
  *             if hnd and hnd(self.environ, header_value):
  *                 return
  *         self.environ['HTTP_%s' % header.upper().replace('-', '_')] = header_value             # <<<<<<<<<<<<<<
  * 
  *     cpdef void on_headers_complete(self):
  */
-  __pyx_tuple__38 = PyTuple_Pack(2, __pyx_kp_s__37, __pyx_n_s__33); if (unlikely(!__pyx_tuple__38)) __PYX_ERR(5, 113, __pyx_L1_error)
+  __pyx_tuple__38 = PyTuple_Pack(2, __pyx_kp_s__37, __pyx_n_s__33); if (unlikely(!__pyx_tuple__38)) __PYX_ERR(5, 114, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__38);
   __Pyx_GIVEREF(__pyx_tuple__38);
 
-  /* "extensions/lib/wsgi.pyx":126
+  /* "extensions/lib/wsgi.pyx":127
  *             # we only took the last one
  *             # http://en.wikipedia.org/wiki/X-Forwarded-For
  *             if forward.find(",") >= 0:             # <<<<<<<<<<<<<<
  *                 forward = forward.rsplit(",", 1)[1].strip()
  *             client_address = forward.split(":")
  */
-  __pyx_tuple__40 = PyTuple_Pack(1, __pyx_kp_s__39); if (unlikely(!__pyx_tuple__40)) __PYX_ERR(5, 126, __pyx_L1_error)
+  __pyx_tuple__40 = PyTuple_Pack(1, __pyx_kp_s__39); if (unlikely(!__pyx_tuple__40)) __PYX_ERR(5, 127, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__40);
   __Pyx_GIVEREF(__pyx_tuple__40);
 
-  /* "extensions/lib/wsgi.pyx":127
+  /* "extensions/lib/wsgi.pyx":128
  *             # http://en.wikipedia.org/wiki/X-Forwarded-For
  *             if forward.find(",") >= 0:
  *                 forward = forward.rsplit(",", 1)[1].strip()             # <<<<<<<<<<<<<<
  *             client_address = forward.split(":")
  *             if len(client_address) < 2:
  */
-  __pyx_tuple__41 = PyTuple_Pack(2, __pyx_kp_s__39, __pyx_int_1); if (unlikely(!__pyx_tuple__41)) __PYX_ERR(5, 127, __pyx_L1_error)
+  __pyx_tuple__41 = PyTuple_Pack(2, __pyx_kp_s__39, __pyx_int_1); if (unlikely(!__pyx_tuple__41)) __PYX_ERR(5, 128, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__41);
   __Pyx_GIVEREF(__pyx_tuple__41);
 
-  /* "extensions/lib/wsgi.pyx":128
+  /* "extensions/lib/wsgi.pyx":129
  *             if forward.find(",") >= 0:
  *                 forward = forward.rsplit(",", 1)[1].strip()
  *             client_address = forward.split(":")             # <<<<<<<<<<<<<<
  *             if len(client_address) < 2:
  *                 client_address.append('80')
  */
-  __pyx_tuple__43 = PyTuple_Pack(1, __pyx_kp_s__42); if (unlikely(!__pyx_tuple__43)) __PYX_ERR(5, 128, __pyx_L1_error)
+  __pyx_tuple__43 = PyTuple_Pack(1, __pyx_kp_s__42); if (unlikely(!__pyx_tuple__43)) __PYX_ERR(5, 129, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__43);
   __Pyx_GIVEREF(__pyx_tuple__43);
 
-  /* "extensions/lib/wsgi.pyx":171
+  /* "extensions/lib/wsgi.pyx":172
  *         elif self.status:
  *             # Headers already set. Raise error
  *             raise RuntimeError("Response headers already set!")             # <<<<<<<<<<<<<<
  *         self.status = status
  *         for header, value in response_headers:
  */
-  __pyx_tuple__44 = PyTuple_Pack(1, __pyx_kp_s_Response_headers_already_set); if (unlikely(!__pyx_tuple__44)) __PYX_ERR(5, 171, __pyx_L1_error)
+  __pyx_tuple__44 = PyTuple_Pack(1, __pyx_kp_s_Response_headers_already_set); if (unlikely(!__pyx_tuple__44)) __PYX_ERR(5, 172, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__44);
   __Pyx_GIVEREF(__pyx_tuple__44);
 
-  /* "extensions/lib/wsgi.pyx":199
+  /* "extensions/lib/wsgi.pyx":200
  *                 buffer.extend(('%s: %s\r\n' % (k, v)).encode(CHARSET))
  *             buffer.extend(CRLF)
  *             proto.event('on_headers').fire(data=buffer)             # <<<<<<<<<<<<<<
  * 
  *         if data:
  */
-  __pyx_tuple__45 = PyTuple_Pack(1, __pyx_n_s_on_headers); if (unlikely(!__pyx_tuple__45)) __PYX_ERR(5, 199, __pyx_L1_error)
+  __pyx_tuple__45 = PyTuple_Pack(1, __pyx_n_s_on_headers); if (unlikely(!__pyx_tuple__45)) __PYX_ERR(5, 200, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__45);
   __Pyx_GIVEREF(__pyx_tuple__45);
 
   /* "extensions/lib/wsgi.pyx":229
- *                 chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))
- *             chunks.append(CRLF)
- *             proto.event('on_headers').fire(data=chunks)             # <<<<<<<<<<<<<<
- * 
- *         if data:
- */
-  __pyx_tuple__46 = PyTuple_Pack(1, __pyx_n_s_on_headers); if (unlikely(!__pyx_tuple__46)) __PYX_ERR(5, 229, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__46);
-  __Pyx_GIVEREF(__pyx_tuple__46);
-
-  /* "extensions/lib/wsgi.pyx":259
- *                 chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)
- *             chunks += b'\r\n'
- *             proto.event('on_headers').fire(data=chunks)             # <<<<<<<<<<<<<<
- * 
- *         if data:
- */
-  __pyx_tuple__47 = PyTuple_Pack(1, __pyx_n_s_on_headers); if (unlikely(!__pyx_tuple__47)) __PYX_ERR(5, 259, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__47);
-  __Pyx_GIVEREF(__pyx_tuple__47);
-
-  /* "extensions/lib/wsgi.pyx":284
  *         if not self.status:
  *             # we are sending headers but the start_response was not called
  *             raise RuntimeError('Headers not set.')             # <<<<<<<<<<<<<<
  * 
- *         if chunked and (
+ *         if (content_length or
  */
-  __pyx_tuple__48 = PyTuple_Pack(1, __pyx_kp_s_Headers_not_set); if (unlikely(!__pyx_tuple__48)) __PYX_ERR(5, 284, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__48);
-  __Pyx_GIVEREF(__pyx_tuple__48);
+  __pyx_tuple__46 = PyTuple_Pack(1, __pyx_kp_s_Headers_not_set); if (unlikely(!__pyx_tuple__46)) __PYX_ERR(5, 229, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__46);
+  __Pyx_GIVEREF(__pyx_tuple__46);
 
-  /* "extensions/lib/wsgi.pyx":314
+  /* "extensions/lib/wsgi.pyx":256
  *     If the size is 0, this is the last chunk, and an extra CRLF is appended.
  *     '''
- *     chunks.append(("%X\r\n" % len(chunk)).encode('utf-8'))             # <<<<<<<<<<<<<<
- *     chunks.append(chunk)
- *     chunks.append(CRLF)
+ *     chunks.extend(("%X\r\n" % len(chunk)).encode('utf-8'))             # <<<<<<<<<<<<<<
+ *     chunks.extend(chunk)
+ *     chunks.extend(CRLF)
  */
-  __pyx_tuple__49 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__49)) __PYX_ERR(5, 314, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__49);
-  __Pyx_GIVEREF(__pyx_tuple__49);
-
-  /* "extensions/lib/wsgi.pyx":338
- *     If the size is 0, this is the last chunk, and an extra CRLF is appended.
- *     '''
- *     cdef bytes le = ("%X\r\n" % len(chunk)).encode('utf-8')             # <<<<<<<<<<<<<<
- *     return total + le + chunk
- * 
- */
-  __pyx_tuple__50 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__50)) __PYX_ERR(5, 338, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__50);
-  __Pyx_GIVEREF(__pyx_tuple__50);
+  __pyx_tuple__47 = PyTuple_Pack(1, __pyx_kp_s_utf_8); if (unlikely(!__pyx_tuple__47)) __PYX_ERR(5, 256, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__47);
+  __Pyx_GIVEREF(__pyx_tuple__47);
 
   /* "extensions/lib/wsgiresponse.pyx":18
  *     cdef str name = method.__name__
@@ -40497,10 +38608,10 @@ static int __Pyx_InitCachedConstants(void) {
  *         cache = self.environ[PULSAR_CACHE]
  *         value = getattr(cache, name, nocache)
  */
-  __pyx_tuple__51 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_cache, __pyx_n_s_value); if (unlikely(!__pyx_tuple__51)) __PYX_ERR(2, 18, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__51);
-  __Pyx_GIVEREF(__pyx_tuple__51);
-  __pyx_codeobj__52 = (PyObject*)__Pyx_PyCode_New(1, 0, 3, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__51, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_lsbardel_workspace_pulsar, __pyx_n_s__33, 18, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__52)) __PYX_ERR(2, 18, __pyx_L1_error)
+  __pyx_tuple__48 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_cache, __pyx_n_s_value); if (unlikely(!__pyx_tuple__48)) __PYX_ERR(2, 18, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__48);
+  __Pyx_GIVEREF(__pyx_tuple__48);
+  __pyx_codeobj__49 = (PyObject*)__Pyx_PyCode_New(1, 0, 3, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__48, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_lsbardel_workspace_pulsar, __pyx_n_s__33, 18, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__49)) __PYX_ERR(2, 18, __pyx_L1_error)
 
   /* "extensions/lib/wsgiresponse.pyx":53
  *     cpdef object set_content(self, object content):
@@ -40509,9 +38620,9 @@ static int __Pyx_InitCachedConstants(void) {
  *         if content is None:
  *             self._content = EMPTY
  */
-  __pyx_tuple__53 = PyTuple_Pack(1, __pyx_kp_s_Cannot_set_content_Already_itera); if (unlikely(!__pyx_tuple__53)) __PYX_ERR(2, 53, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__53);
-  __Pyx_GIVEREF(__pyx_tuple__53);
+  __pyx_tuple__50 = PyTuple_Pack(1, __pyx_kp_s_Cannot_set_content_Already_itera); if (unlikely(!__pyx_tuple__50)) __PYX_ERR(2, 53, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__50);
+  __Pyx_GIVEREF(__pyx_tuple__50);
 
   /* "extensions/lib/wsgiresponse.pyx":99
  *     def __iter__(self):
@@ -40520,18 +38631,18 @@ static int __Pyx_InitCachedConstants(void) {
  *         self.__wsgi_started__ = True
  *         self._iterated = 1
  */
-  __pyx_tuple__54 = PyTuple_Pack(1, __pyx_kp_s_WsgiResponse_can_be_iterated_onc); if (unlikely(!__pyx_tuple__54)) __PYX_ERR(2, 99, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__54);
-  __Pyx_GIVEREF(__pyx_tuple__54);
+  __pyx_tuple__51 = PyTuple_Pack(1, __pyx_kp_s_WsgiResponse_can_be_iterated_onc); if (unlikely(!__pyx_tuple__51)) __PYX_ERR(2, 99, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__51);
+  __Pyx_GIVEREF(__pyx_tuple__51);
 
   /* "websocket.pxd":13
  *         return value.encode(encoding)
  *     else:
  *         raise TypeError('Requires bytes or string')             # <<<<<<<<<<<<<<
  */
-  __pyx_tuple__57 = PyTuple_Pack(1, __pyx_kp_s_Requires_bytes_or_string); if (unlikely(!__pyx_tuple__57)) __PYX_ERR(6, 13, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__57);
-  __Pyx_GIVEREF(__pyx_tuple__57);
+  __pyx_tuple__54 = PyTuple_Pack(1, __pyx_kp_s_Requires_bytes_or_string); if (unlikely(!__pyx_tuple__54)) __PYX_ERR(6, 13, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__54);
+  __Pyx_GIVEREF(__pyx_tuple__54);
 
   /* "cfunc.to_py":65
  * @cname("__Pyx_CFunc_int____int____object___to_py")
@@ -40540,10 +38651,10 @@ static int __Pyx_InitCachedConstants(void) {
  *         """wrap(a: 'int', b) -> 'int'"""
  *         return f(a, b)
  */
-  __pyx_tuple__58 = PyTuple_Pack(2, __pyx_n_s_a, __pyx_n_s_b); if (unlikely(!__pyx_tuple__58)) __PYX_ERR(8, 65, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__58);
-  __Pyx_GIVEREF(__pyx_tuple__58);
-  __pyx_codeobj__59 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__58, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_wrap, 65, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__59)) __PYX_ERR(8, 65, __pyx_L1_error)
+  __pyx_tuple__55 = PyTuple_Pack(2, __pyx_n_s_a, __pyx_n_s_b); if (unlikely(!__pyx_tuple__55)) __PYX_ERR(8, 65, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__55);
+  __Pyx_GIVEREF(__pyx_tuple__55);
+  __pyx_codeobj__56 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__55, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stringsource, __pyx_n_s_wrap, 65, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__56)) __PYX_ERR(8, 65, __pyx_L1_error)
 
   /* "extensions/lib/globals.pyx":9
  * cdef str CHARSET = 'ISO-8859-1'
@@ -40552,9 +38663,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef str OS_SCRIPT_NAME = os.environ.get("SCRIPT_NAME", "")
  * cdef str PULSAR_CACHE = 'pulsar.cache'
  */
-  __pyx_tuple__60 = PyTuple_Pack(2, __pyx_kp_s_wsgi_url_scheme, __pyx_n_s_http); if (unlikely(!__pyx_tuple__60)) __PYX_ERR(10, 9, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__60);
-  __Pyx_GIVEREF(__pyx_tuple__60);
+  __pyx_tuple__57 = PyTuple_Pack(2, __pyx_kp_s_wsgi_url_scheme, __pyx_n_s_http); if (unlikely(!__pyx_tuple__57)) __PYX_ERR(10, 9, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__57);
+  __Pyx_GIVEREF(__pyx_tuple__57);
 
   /* "extensions/lib/globals.pyx":10
  * 
@@ -40563,9 +38674,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef str PULSAR_CACHE = 'pulsar.cache'
  * cdef int MAX_CHUNK_SIZE = 65536
  */
-  __pyx_tuple__61 = PyTuple_Pack(2, __pyx_n_s_SCRIPT_NAME, __pyx_kp_s_); if (unlikely(!__pyx_tuple__61)) __PYX_ERR(10, 10, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__61);
-  __Pyx_GIVEREF(__pyx_tuple__61);
+  __pyx_tuple__58 = PyTuple_Pack(2, __pyx_n_s_SCRIPT_NAME, __pyx_kp_s_); if (unlikely(!__pyx_tuple__58)) __PYX_ERR(10, 10, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__58);
+  __Pyx_GIVEREF(__pyx_tuple__58);
 
   /* "extensions/lib/globals.pyx":13
  * cdef str PULSAR_CACHE = 'pulsar.cache'
@@ -40574,9 +38685,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object NO_CONTENT_CODES = frozenset((204, 304))
  * 
  */
-  __pyx_tuple__62 = PyTuple_Pack(2, __pyx_n_s_https, __pyx_n_s_wss); if (unlikely(!__pyx_tuple__62)) __PYX_ERR(10, 13, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__62);
-  __Pyx_GIVEREF(__pyx_tuple__62);
+  __pyx_tuple__59 = PyTuple_Pack(2, __pyx_n_s_https, __pyx_n_s_wss); if (unlikely(!__pyx_tuple__59)) __PYX_ERR(10, 13, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__59);
+  __Pyx_GIVEREF(__pyx_tuple__59);
 
   /* "extensions/lib/globals.pyx":14
  * cdef int MAX_CHUNK_SIZE = 65536
@@ -40585,9 +38696,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * cdef object COOKIE = istr('Cookie')
  */
-  __pyx_tuple__63 = PyTuple_Pack(2, __pyx_int_204, __pyx_int_304); if (unlikely(!__pyx_tuple__63)) __PYX_ERR(10, 14, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__63);
-  __Pyx_GIVEREF(__pyx_tuple__63);
+  __pyx_tuple__60 = PyTuple_Pack(2, __pyx_int_204, __pyx_int_304); if (unlikely(!__pyx_tuple__60)) __PYX_ERR(10, 14, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__60);
+  __Pyx_GIVEREF(__pyx_tuple__60);
 
   /* "extensions/lib/globals.pyx":16
  * cdef object NO_CONTENT_CODES = frozenset((204, 304))
@@ -40596,9 +38707,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object CONNECTION = istr('Connection')
  * cdef object CONTENT_LENGTH = istr('Content-Length')
  */
-  __pyx_tuple__64 = PyTuple_Pack(1, __pyx_n_s_Cookie); if (unlikely(!__pyx_tuple__64)) __PYX_ERR(10, 16, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__64);
-  __Pyx_GIVEREF(__pyx_tuple__64);
+  __pyx_tuple__61 = PyTuple_Pack(1, __pyx_n_s_Cookie); if (unlikely(!__pyx_tuple__61)) __PYX_ERR(10, 16, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__61);
+  __Pyx_GIVEREF(__pyx_tuple__61);
 
   /* "extensions/lib/globals.pyx":17
  * 
@@ -40607,9 +38718,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object CONTENT_LENGTH = istr('Content-Length')
  * cdef object CONTENT_TYPE = istr('Content-Type')
  */
-  __pyx_tuple__65 = PyTuple_Pack(1, __pyx_n_s_Connection); if (unlikely(!__pyx_tuple__65)) __PYX_ERR(10, 17, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__65);
-  __Pyx_GIVEREF(__pyx_tuple__65);
+  __pyx_tuple__62 = PyTuple_Pack(1, __pyx_n_s_Connection); if (unlikely(!__pyx_tuple__62)) __PYX_ERR(10, 17, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__62);
+  __Pyx_GIVEREF(__pyx_tuple__62);
 
   /* "extensions/lib/globals.pyx":18
  * cdef object COOKIE = istr('Cookie')
@@ -40618,9 +38729,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object CONTENT_TYPE = istr('Content-Type')
  * cdef object DATE = istr('Date')
  */
-  __pyx_tuple__66 = PyTuple_Pack(1, __pyx_kp_s_Content_Length); if (unlikely(!__pyx_tuple__66)) __PYX_ERR(10, 18, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__66);
-  __Pyx_GIVEREF(__pyx_tuple__66);
+  __pyx_tuple__63 = PyTuple_Pack(1, __pyx_kp_s_Content_Length); if (unlikely(!__pyx_tuple__63)) __PYX_ERR(10, 18, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__63);
+  __Pyx_GIVEREF(__pyx_tuple__63);
 
   /* "extensions/lib/globals.pyx":19
  * cdef object CONNECTION = istr('Connection')
@@ -40629,9 +38740,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object DATE = istr('Date')
  * cdef object HOST = istr('Host')
  */
-  __pyx_tuple__67 = PyTuple_Pack(1, __pyx_kp_s_Content_Type); if (unlikely(!__pyx_tuple__67)) __PYX_ERR(10, 19, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__67);
-  __Pyx_GIVEREF(__pyx_tuple__67);
+  __pyx_tuple__64 = PyTuple_Pack(1, __pyx_kp_s_Content_Type); if (unlikely(!__pyx_tuple__64)) __PYX_ERR(10, 19, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__64);
+  __Pyx_GIVEREF(__pyx_tuple__64);
 
   /* "extensions/lib/globals.pyx":20
  * cdef object CONTENT_LENGTH = istr('Content-Length')
@@ -40640,9 +38751,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object HOST = istr('Host')
  * cdef object KEEP_ALIVE = istr('Keep-Alive')
  */
-  __pyx_tuple__68 = PyTuple_Pack(1, __pyx_n_s_Date); if (unlikely(!__pyx_tuple__68)) __PYX_ERR(10, 20, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__68);
-  __Pyx_GIVEREF(__pyx_tuple__68);
+  __pyx_tuple__65 = PyTuple_Pack(1, __pyx_n_s_Date); if (unlikely(!__pyx_tuple__65)) __PYX_ERR(10, 20, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__65);
+  __Pyx_GIVEREF(__pyx_tuple__65);
 
   /* "extensions/lib/globals.pyx":21
  * cdef object CONTENT_TYPE = istr('Content-Type')
@@ -40651,9 +38762,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object KEEP_ALIVE = istr('Keep-Alive')
  * cdef object LOCATION = istr('Location')
  */
-  __pyx_tuple__69 = PyTuple_Pack(1, __pyx_n_s_Host); if (unlikely(!__pyx_tuple__69)) __PYX_ERR(10, 21, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__69);
-  __Pyx_GIVEREF(__pyx_tuple__69);
+  __pyx_tuple__66 = PyTuple_Pack(1, __pyx_n_s_Host); if (unlikely(!__pyx_tuple__66)) __PYX_ERR(10, 21, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__66);
+  __Pyx_GIVEREF(__pyx_tuple__66);
 
   /* "extensions/lib/globals.pyx":22
  * cdef object DATE = istr('Date')
@@ -40662,9 +38773,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object LOCATION = istr('Location')
  * cdef object PROXY_AUTHENTICATE = istr('Proxy-Authenticate')
  */
-  __pyx_tuple__70 = PyTuple_Pack(1, __pyx_kp_s_Keep_Alive); if (unlikely(!__pyx_tuple__70)) __PYX_ERR(10, 22, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__70);
-  __Pyx_GIVEREF(__pyx_tuple__70);
+  __pyx_tuple__67 = PyTuple_Pack(1, __pyx_kp_s_Keep_Alive); if (unlikely(!__pyx_tuple__67)) __PYX_ERR(10, 22, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__67);
+  __Pyx_GIVEREF(__pyx_tuple__67);
 
   /* "extensions/lib/globals.pyx":23
  * cdef object HOST = istr('Host')
@@ -40673,9 +38784,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object PROXY_AUTHENTICATE = istr('Proxy-Authenticate')
  * cdef object PROXY_AUTHORIZATION = istr('Proxy-Authorization')
  */
-  __pyx_tuple__71 = PyTuple_Pack(1, __pyx_n_s_Location); if (unlikely(!__pyx_tuple__71)) __PYX_ERR(10, 23, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__71);
-  __Pyx_GIVEREF(__pyx_tuple__71);
+  __pyx_tuple__68 = PyTuple_Pack(1, __pyx_n_s_Location); if (unlikely(!__pyx_tuple__68)) __PYX_ERR(10, 23, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__68);
+  __Pyx_GIVEREF(__pyx_tuple__68);
 
   /* "extensions/lib/globals.pyx":24
  * cdef object KEEP_ALIVE = istr('Keep-Alive')
@@ -40684,9 +38795,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object PROXY_AUTHORIZATION = istr('Proxy-Authorization')
  * cdef object SCRIPT_NAME = istr("Script_Name")
  */
-  __pyx_tuple__72 = PyTuple_Pack(1, __pyx_kp_s_Proxy_Authenticate); if (unlikely(!__pyx_tuple__72)) __PYX_ERR(10, 24, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__72);
-  __Pyx_GIVEREF(__pyx_tuple__72);
+  __pyx_tuple__69 = PyTuple_Pack(1, __pyx_kp_s_Proxy_Authenticate); if (unlikely(!__pyx_tuple__69)) __PYX_ERR(10, 24, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__69);
+  __Pyx_GIVEREF(__pyx_tuple__69);
 
   /* "extensions/lib/globals.pyx":25
  * cdef object LOCATION = istr('Location')
@@ -40695,9 +38806,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object SCRIPT_NAME = istr("Script_Name")
  * cdef object SERVER = istr('Server')
  */
-  __pyx_tuple__73 = PyTuple_Pack(1, __pyx_kp_s_Proxy_Authorization); if (unlikely(!__pyx_tuple__73)) __PYX_ERR(10, 25, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__73);
-  __Pyx_GIVEREF(__pyx_tuple__73);
+  __pyx_tuple__70 = PyTuple_Pack(1, __pyx_kp_s_Proxy_Authorization); if (unlikely(!__pyx_tuple__70)) __PYX_ERR(10, 25, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__70);
+  __Pyx_GIVEREF(__pyx_tuple__70);
 
   /* "extensions/lib/globals.pyx":26
  * cdef object PROXY_AUTHENTICATE = istr('Proxy-Authenticate')
@@ -40706,9 +38817,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object SERVER = istr('Server')
  * cdef object SET_COOKIE = istr('Set-Cookie')
  */
-  __pyx_tuple__74 = PyTuple_Pack(1, __pyx_n_s_Script_Name); if (unlikely(!__pyx_tuple__74)) __PYX_ERR(10, 26, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__74);
-  __Pyx_GIVEREF(__pyx_tuple__74);
+  __pyx_tuple__71 = PyTuple_Pack(1, __pyx_n_s_Script_Name); if (unlikely(!__pyx_tuple__71)) __PYX_ERR(10, 26, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__71);
+  __Pyx_GIVEREF(__pyx_tuple__71);
 
   /* "extensions/lib/globals.pyx":27
  * cdef object PROXY_AUTHORIZATION = istr('Proxy-Authorization')
@@ -40717,9 +38828,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object SET_COOKIE = istr('Set-Cookie')
  * cdef object TE = istr('Te')
  */
-  __pyx_tuple__75 = PyTuple_Pack(1, __pyx_n_s_Server); if (unlikely(!__pyx_tuple__75)) __PYX_ERR(10, 27, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__75);
-  __Pyx_GIVEREF(__pyx_tuple__75);
+  __pyx_tuple__72 = PyTuple_Pack(1, __pyx_n_s_Server); if (unlikely(!__pyx_tuple__72)) __PYX_ERR(10, 27, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__72);
+  __Pyx_GIVEREF(__pyx_tuple__72);
 
   /* "extensions/lib/globals.pyx":28
  * cdef object SCRIPT_NAME = istr("Script_Name")
@@ -40728,9 +38839,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object TE = istr('Te')
  * cdef object TRAILERS = istr('Trailers')
  */
-  __pyx_tuple__76 = PyTuple_Pack(1, __pyx_kp_s_Set_Cookie); if (unlikely(!__pyx_tuple__76)) __PYX_ERR(10, 28, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__76);
-  __Pyx_GIVEREF(__pyx_tuple__76);
+  __pyx_tuple__73 = PyTuple_Pack(1, __pyx_kp_s_Set_Cookie); if (unlikely(!__pyx_tuple__73)) __PYX_ERR(10, 28, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__73);
+  __Pyx_GIVEREF(__pyx_tuple__73);
 
   /* "extensions/lib/globals.pyx":29
  * cdef object SERVER = istr('Server')
@@ -40739,9 +38850,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object TRAILERS = istr('Trailers')
  * cdef object TRANSFER_ENCODING = istr('Transfer-Encoding')
  */
-  __pyx_tuple__77 = PyTuple_Pack(1, __pyx_n_s_Te); if (unlikely(!__pyx_tuple__77)) __PYX_ERR(10, 29, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__77);
-  __Pyx_GIVEREF(__pyx_tuple__77);
+  __pyx_tuple__74 = PyTuple_Pack(1, __pyx_n_s_Te); if (unlikely(!__pyx_tuple__74)) __PYX_ERR(10, 29, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__74);
+  __Pyx_GIVEREF(__pyx_tuple__74);
 
   /* "extensions/lib/globals.pyx":30
  * cdef object SET_COOKIE = istr('Set-Cookie')
@@ -40750,9 +38861,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object TRANSFER_ENCODING = istr('Transfer-Encoding')
  * cdef object UPGRADE = istr('Upgrade')
  */
-  __pyx_tuple__78 = PyTuple_Pack(1, __pyx_n_s_Trailers); if (unlikely(!__pyx_tuple__78)) __PYX_ERR(10, 30, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__78);
-  __Pyx_GIVEREF(__pyx_tuple__78);
+  __pyx_tuple__75 = PyTuple_Pack(1, __pyx_n_s_Trailers); if (unlikely(!__pyx_tuple__75)) __PYX_ERR(10, 30, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__75);
+  __Pyx_GIVEREF(__pyx_tuple__75);
 
   /* "extensions/lib/globals.pyx":31
  * cdef object TE = istr('Te')
@@ -40761,9 +38872,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object UPGRADE = istr('Upgrade')
  * cdef object X_FORWARDED_FOR = istr('X-Forwarded-For')
  */
-  __pyx_tuple__79 = PyTuple_Pack(1, __pyx_kp_s_Transfer_Encoding); if (unlikely(!__pyx_tuple__79)) __PYX_ERR(10, 31, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__79);
-  __Pyx_GIVEREF(__pyx_tuple__79);
+  __pyx_tuple__76 = PyTuple_Pack(1, __pyx_kp_s_Transfer_Encoding); if (unlikely(!__pyx_tuple__76)) __PYX_ERR(10, 31, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__76);
+  __Pyx_GIVEREF(__pyx_tuple__76);
 
   /* "extensions/lib/globals.pyx":32
  * cdef object TRAILERS = istr('Trailers')
@@ -40772,9 +38883,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object X_FORWARDED_FOR = istr('X-Forwarded-For')
  * cdef object X_FORWARDED_PROTOCOL = istr("X-Forwarded-Protocol")
  */
-  __pyx_tuple__80 = PyTuple_Pack(1, __pyx_n_s_Upgrade); if (unlikely(!__pyx_tuple__80)) __PYX_ERR(10, 32, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__80);
-  __Pyx_GIVEREF(__pyx_tuple__80);
+  __pyx_tuple__77 = PyTuple_Pack(1, __pyx_n_s_Upgrade); if (unlikely(!__pyx_tuple__77)) __PYX_ERR(10, 32, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__77);
+  __Pyx_GIVEREF(__pyx_tuple__77);
 
   /* "extensions/lib/globals.pyx":33
  * cdef object TRANSFER_ENCODING = istr('Transfer-Encoding')
@@ -40783,9 +38894,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object X_FORWARDED_PROTOCOL = istr("X-Forwarded-Protocol")
  * cdef object X_FORWARDED_PROTO = istr("X-Forwarded-Proto")
  */
-  __pyx_tuple__81 = PyTuple_Pack(1, __pyx_kp_s_X_Forwarded_For); if (unlikely(!__pyx_tuple__81)) __PYX_ERR(10, 33, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__81);
-  __Pyx_GIVEREF(__pyx_tuple__81);
+  __pyx_tuple__78 = PyTuple_Pack(1, __pyx_kp_s_X_Forwarded_For); if (unlikely(!__pyx_tuple__78)) __PYX_ERR(10, 33, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__78);
+  __Pyx_GIVEREF(__pyx_tuple__78);
 
   /* "extensions/lib/globals.pyx":34
  * cdef object UPGRADE = istr('Upgrade')
@@ -40794,9 +38905,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object X_FORWARDED_PROTO = istr("X-Forwarded-Proto")
  * cdef object X_FORWARDED_SSL = istr("X-Forwarded-Ssl")
  */
-  __pyx_tuple__82 = PyTuple_Pack(1, __pyx_kp_s_X_Forwarded_Protocol); if (unlikely(!__pyx_tuple__82)) __PYX_ERR(10, 34, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__82);
-  __Pyx_GIVEREF(__pyx_tuple__82);
+  __pyx_tuple__79 = PyTuple_Pack(1, __pyx_kp_s_X_Forwarded_Protocol); if (unlikely(!__pyx_tuple__79)) __PYX_ERR(10, 34, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__79);
+  __Pyx_GIVEREF(__pyx_tuple__79);
 
   /* "extensions/lib/globals.pyx":35
  * cdef object X_FORWARDED_FOR = istr('X-Forwarded-For')
@@ -40805,9 +38916,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object X_FORWARDED_SSL = istr("X-Forwarded-Ssl")
  * cdef object HOP_HEADERS = frozenset((
  */
-  __pyx_tuple__83 = PyTuple_Pack(1, __pyx_kp_s_X_Forwarded_Proto); if (unlikely(!__pyx_tuple__83)) __PYX_ERR(10, 35, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__83);
-  __Pyx_GIVEREF(__pyx_tuple__83);
+  __pyx_tuple__80 = PyTuple_Pack(1, __pyx_kp_s_X_Forwarded_Proto); if (unlikely(!__pyx_tuple__80)) __PYX_ERR(10, 35, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__80);
+  __Pyx_GIVEREF(__pyx_tuple__80);
 
   /* "extensions/lib/globals.pyx":36
  * cdef object X_FORWARDED_PROTOCOL = istr("X-Forwarded-Protocol")
@@ -40816,9 +38927,9 @@ static int __Pyx_InitCachedConstants(void) {
  * cdef object HOP_HEADERS = frozenset((
  *     CONNECTION, KEEP_ALIVE, PROXY_AUTHENTICATE,
  */
-  __pyx_tuple__84 = PyTuple_Pack(1, __pyx_kp_s_X_Forwarded_Ssl); if (unlikely(!__pyx_tuple__84)) __PYX_ERR(10, 36, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__84);
-  __Pyx_GIVEREF(__pyx_tuple__84);
+  __pyx_tuple__81 = PyTuple_Pack(1, __pyx_kp_s_X_Forwarded_Ssl); if (unlikely(!__pyx_tuple__81)) __PYX_ERR(10, 36, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__81);
+  __Pyx_GIVEREF(__pyx_tuple__81);
 
   /* "extensions/lib/events.pyx":5
  * 
@@ -40827,9 +38938,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  * 
  */
-  __pyx_tuple__88 = PyTuple_Pack(1, __pyx_kp_s_pulsar_events); if (unlikely(!__pyx_tuple__88)) __PYX_ERR(1, 5, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__88);
-  __Pyx_GIVEREF(__pyx_tuple__88);
+  __pyx_tuple__85 = PyTuple_Pack(1, __pyx_kp_s_pulsar_events); if (unlikely(!__pyx_tuple__85)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__85);
+  __Pyx_GIVEREF(__pyx_tuple__85);
 
   /* "extensions/lib/protocols.pyx":136
  * 
@@ -40838,9 +38949,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *     cdef readonly:
  */
-  __pyx_tuple__89 = PyTuple_Pack(1, __pyx_n_s_post_request); if (unlikely(!__pyx_tuple__89)) __PYX_ERR(0, 136, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__89);
-  __Pyx_GIVEREF(__pyx_tuple__89);
+  __pyx_tuple__86 = PyTuple_Pack(1, __pyx_n_s_post_request); if (unlikely(!__pyx_tuple__86)) __PYX_ERR(0, 136, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__86);
+  __Pyx_GIVEREF(__pyx_tuple__86);
 
   /* "extensions/lib/wsgiresponse.pyx":15
  * 
@@ -40849,10 +38960,10 @@ static int __Pyx_InitCachedConstants(void) {
  *     cdef str name = method.__name__
  * 
  */
-  __pyx_tuple__90 = PyTuple_Pack(4, __pyx_n_s_method, __pyx_n_s_name, __pyx_n_s__33, __pyx_n_s__33); if (unlikely(!__pyx_tuple__90)) __PYX_ERR(2, 15, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__90);
-  __Pyx_GIVEREF(__pyx_tuple__90);
-  __pyx_codeobj__91 = (PyObject*)__Pyx_PyCode_New(1, 0, 4, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__90, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_lsbardel_workspace_pulsar, __pyx_n_s_wsgi_cached, 15, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__91)) __PYX_ERR(2, 15, __pyx_L1_error)
+  __pyx_tuple__87 = PyTuple_Pack(4, __pyx_n_s_method, __pyx_n_s_name, __pyx_n_s__33, __pyx_n_s__33); if (unlikely(!__pyx_tuple__87)) __PYX_ERR(2, 15, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__87);
+  __Pyx_GIVEREF(__pyx_tuple__87);
+  __pyx_codeobj__88 = (PyObject*)__Pyx_PyCode_New(1, 0, 4, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__87, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_Users_lsbardel_workspace_pulsar, __pyx_n_s_wsgi_cached, 15, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__88)) __PYX_ERR(2, 15, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -41142,8 +39253,6 @@ PyMODINIT_FUNC PyInit_clib(void)
   __pyx_vtable_4clib_WsgiProtocol.on_message_complete = (PyObject *(*)(struct __pyx_obj_4clib_WsgiProtocol *, int __pyx_skip_dispatch))__pyx_f_4clib_12WsgiProtocol_on_message_complete;
   __pyx_vtable_4clib_WsgiProtocol.start_response = (PyObject *(*)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_start_response *__pyx_optional_args))__pyx_f_4clib_12WsgiProtocol_start_response;
   __pyx_vtable_4clib_WsgiProtocol.write = (PyObject *(*)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write *__pyx_optional_args))__pyx_f_4clib_12WsgiProtocol_write;
-  __pyx_vtable_4clib_WsgiProtocol.write_list = (PyObject *(*)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write_list *__pyx_optional_args))__pyx_f_4clib_12WsgiProtocol_write_list;
-  __pyx_vtable_4clib_WsgiProtocol.write_plus = (PyObject *(*)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_12WsgiProtocol_write_plus *__pyx_optional_args))__pyx_f_4clib_12WsgiProtocol_write_plus;
   __pyx_vtable_4clib_WsgiProtocol.get_headers = (PyObject *(*)(struct __pyx_obj_4clib_WsgiProtocol *))__pyx_f_4clib_12WsgiProtocol_get_headers;
   if (PyType_Ready(&__pyx_type_4clib_WsgiProtocol) < 0) __PYX_ERR(5, 43, __pyx_L1_error)
   __pyx_type_4clib_WsgiProtocol.tp_print = 0;
@@ -41262,7 +39371,7 @@ PyMODINIT_FUNC PyInit_clib(void)
   __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_get); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__60, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 9, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__57, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (!(likely(PyString_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(10, 9, __pyx_L1_error)
@@ -41286,7 +39395,7 @@ PyMODINIT_FUNC PyInit_clib(void)
   __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_get); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 10, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__61, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 10, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__58, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 10, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (!(likely(PyString_CheckExact(__pyx_t_2))||((__pyx_t_2) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_2)->tp_name), 0))) __PYX_ERR(10, 10, __pyx_L1_error)
@@ -41323,7 +39432,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  * cdef object NO_CONTENT_CODES = frozenset((204, 304))
  * 
  */
-  __pyx_t_2 = __Pyx_PyFrozenSet_New(__pyx_tuple__62); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 13, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyFrozenSet_New(__pyx_tuple__59); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 13, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_XGOTREF(__pyx_v_4clib_TLS_SCHEMES);
   __Pyx_DECREF_SET(__pyx_v_4clib_TLS_SCHEMES, __pyx_t_2);
@@ -41337,7 +39446,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  * 
  * cdef object COOKIE = istr('Cookie')
  */
-  __pyx_t_2 = __Pyx_PyFrozenSet_New(__pyx_tuple__63); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 14, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyFrozenSet_New(__pyx_tuple__60); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 14, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_XGOTREF(__pyx_v_4clib_NO_CONTENT_CODES);
   __Pyx_DECREF_SET(__pyx_v_4clib_NO_CONTENT_CODES, __pyx_t_2);
@@ -41353,7 +39462,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__64, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 16, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__61, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 16, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_COOKIE);
@@ -41370,7 +39479,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__65, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 17, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__62, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_CONNECTION);
@@ -41387,7 +39496,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__66, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 18, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__63, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 18, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_CONTENT_LENGTH);
@@ -41404,7 +39513,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 19, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__67, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 19, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__64, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 19, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_CONTENT_TYPE);
@@ -41421,7 +39530,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 20, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__68, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 20, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__65, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 20, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_DATE);
@@ -41438,7 +39547,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__69, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 21, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__66, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 21, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_HOST);
@@ -41455,7 +39564,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__70, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 22, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__67, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 22, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_KEEP_ALIVE);
@@ -41472,7 +39581,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__71, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 23, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__68, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 23, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_LOCATION);
@@ -41489,7 +39598,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 24, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__72, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 24, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__69, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 24, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_PROXY_AUTHENTICATE);
@@ -41506,7 +39615,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 25, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__73, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 25, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__70, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 25, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_PROXY_AUTHORIZATION);
@@ -41523,7 +39632,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__74, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 26, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__71, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_SCRIPT_NAME);
@@ -41540,7 +39649,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 27, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__75, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 27, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__72, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 27, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_SERVER);
@@ -41557,7 +39666,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__76, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 28, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__73, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 28, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_SET_COOKIE);
@@ -41574,7 +39683,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 29, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__77, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 29, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__74, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 29, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_TE);
@@ -41591,7 +39700,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__78, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 30, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__75, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_TRAILERS);
@@ -41608,7 +39717,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__79, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 31, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__76, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_TRANSFER_ENCODING);
@@ -41625,7 +39734,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__80, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 32, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__77, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_UPGRADE);
@@ -41642,7 +39751,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 33, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__81, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 33, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__78, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 33, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_X_FORWARDED_FOR);
@@ -41659,7 +39768,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__82, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 34, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__79, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_X_FORWARDED_PROTOCOL);
@@ -41676,7 +39785,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 35, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__83, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 35, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__80, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 35, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_X_FORWARDED_PROTO);
@@ -41693,7 +39802,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_istr); if (unlikely(!__pyx_t_2)) __PYX_ERR(10, 36, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__84, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 36, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__81, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(10, 36, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_XGOTREF(__pyx_v_4clib_X_FORWARDED_SSL);
@@ -41815,10 +39924,10 @@ PyMODINIT_FUNC PyInit_clib(void)
  * cdef bytes RESPONSE_ARRAY = b'*'
  * cdef bytes RESPONSE_STATUS = b'+'
  */
-  __Pyx_INCREF(__pyx_kp_b__85);
+  __Pyx_INCREF(__pyx_kp_b__82);
   __Pyx_XGOTREF(__pyx_v_4clib_RESPONSE_STRING);
-  __Pyx_DECREF_SET(__pyx_v_4clib_RESPONSE_STRING, __pyx_kp_b__85);
-  __Pyx_GIVEREF(__pyx_kp_b__85);
+  __Pyx_DECREF_SET(__pyx_v_4clib_RESPONSE_STRING, __pyx_kp_b__82);
+  __Pyx_GIVEREF(__pyx_kp_b__82);
 
   /* "extensions/lib/rparser.pyx":9
  * cdef bytes RESPONSE_INTEGER  = b':'
@@ -41827,10 +39936,10 @@ PyMODINIT_FUNC PyInit_clib(void)
  * cdef bytes RESPONSE_STATUS = b'+'
  * cdef bytes RESPONSE_ERROR = b'-'
  */
-  __Pyx_INCREF(__pyx_kp_b__86);
+  __Pyx_INCREF(__pyx_kp_b__83);
   __Pyx_XGOTREF(__pyx_v_4clib_RESPONSE_ARRAY);
-  __Pyx_DECREF_SET(__pyx_v_4clib_RESPONSE_ARRAY, __pyx_kp_b__86);
-  __Pyx_GIVEREF(__pyx_kp_b__86);
+  __Pyx_DECREF_SET(__pyx_v_4clib_RESPONSE_ARRAY, __pyx_kp_b__83);
+  __Pyx_GIVEREF(__pyx_kp_b__83);
 
   /* "extensions/lib/rparser.pyx":10
  * cdef bytes RESPONSE_STRING  = b'$'
@@ -41839,10 +39948,10 @@ PyMODINIT_FUNC PyInit_clib(void)
  * cdef bytes RESPONSE_ERROR = b'-'
  * cdef bytes nil = b'$-1\r\n'
  */
-  __Pyx_INCREF(__pyx_kp_b__87);
+  __Pyx_INCREF(__pyx_kp_b__84);
   __Pyx_XGOTREF(__pyx_v_4clib_RESPONSE_STATUS);
-  __Pyx_DECREF_SET(__pyx_v_4clib_RESPONSE_STATUS, __pyx_kp_b__87);
-  __Pyx_GIVEREF(__pyx_kp_b__87);
+  __Pyx_DECREF_SET(__pyx_v_4clib_RESPONSE_STATUS, __pyx_kp_b__84);
+  __Pyx_GIVEREF(__pyx_kp_b__84);
 
   /* "extensions/lib/rparser.pyx":11
  * cdef bytes RESPONSE_ARRAY = b'*'
@@ -41959,7 +40068,7 @@ PyMODINIT_FUNC PyInit_clib(void)
   __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_getLogger); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__88, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__85, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_LOGGER, __pyx_t_1) < 0) __PYX_ERR(1, 5, __pyx_L1_error)
@@ -42100,7 +40209,7 @@ PyMODINIT_FUNC PyInit_clib(void)
  * 
  *     cdef readonly:
  */
-  if (PyDict_SetItem((PyObject *)__pyx_ptype_4clib_ProtocolConsumer->tp_dict, __pyx_n_s_ONE_TIME_EVENTS, __pyx_tuple__89) < 0) __PYX_ERR(0, 136, __pyx_L1_error)
+  if (PyDict_SetItem((PyObject *)__pyx_ptype_4clib_ProtocolConsumer->tp_dict, __pyx_n_s_ONE_TIME_EVENTS, __pyx_tuple__86) < 0) __PYX_ERR(0, 136, __pyx_L1_error)
   PyType_Modified(__pyx_ptype_4clib_ProtocolConsumer);
 
   /* "extensions/lib/wsgi.pyx":1

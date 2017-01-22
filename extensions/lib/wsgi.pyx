@@ -102,7 +102,8 @@ cdef class WsgiProtocol:
 
         if header in HOP_HEADERS:
             if header == CONNECTION:
-                if self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0' or header_value == 'close':
+                if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'
+                        or header_value != 'keep-alive'):
                     self.headers[header] = header_value
             else:
                 self.headers[header] = header_value
@@ -202,73 +203,17 @@ cdef class WsgiProtocol:
             if not buffer:
                 buffer = bytearray()
             if self.chunked:
-                http_chunks_l(buffer, data)
+                http_chunks(buffer, data)
             else:
                 buffer.extend(data)
 
         elif force and self.chunked:
             if not buffer:
                 buffer = bytearray()
-            http_chunks_l(buffer, data, True)
+            http_chunks(buffer, data, True)
 
         if buffer:
             return self.connection.write(buffer)
-
-    cpdef object write_list(self, bytes data, object force=False):
-        cdef list chunks = None
-        cdef dict env = self.environ
-        cdef object proto = self.protocol
-        cdef object tosend
-
-        if not self.headers_sent:
-            self.headers_sent = self.get_headers()
-            chunks = [('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)]
-            for k, v in self.headers_sent.items():
-                chunks.append(('%s: %s\r\n' % (k, v)).encode(CHARSET))
-            chunks.append(CRLF)
-            proto.event('on_headers').fire(data=chunks)
-
-        if data:
-            if not chunks:
-                chunks = []
-            if self.chunked:
-                http_chunks_l(chunks, data)
-            else:
-                chunks.append(data)
-
-        elif force and self.chunked:
-            if not chunks:
-                chunks = []
-            http_chunks_l(chunks, data, True)
-
-        if chunks:
-            return self.connection.write(b''.join(chunks))
-
-    cpdef object write_plus(self, bytes data, object force=False):
-        cdef bytes chunks = b''
-        cdef dict env = self.environ
-        cdef object proto = self.protocol
-        cdef object tosend
-
-        if not self.headers_sent:
-            self.headers_sent = self.get_headers()
-            chunks = ('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET)
-            for k, v in self.headers_sent.items():
-                chunks += ('%s: %s\r\n' % (k, v)).encode(CHARSET)
-            chunks += b'\r\n'
-            proto.event('on_headers').fire(data=chunks)
-
-        if data:
-            if self.chunked:
-                chunks = http_chunks(chunks, data)
-            else:
-                chunks += data
-
-        elif force and self.chunked:
-            chunks = http_chunks(chunks, data, True)
-
-        if chunks:
-            return self.connection.write(chunks)
 
     cdef get_headers(self):
         cdef object headers = self.headers
@@ -283,27 +228,24 @@ cdef class WsgiProtocol:
             # we are sending headers but the start_response was not called
             raise RuntimeError('Headers not set.')
 
-        if chunked and (
-                content_length or
+        if (content_length or
                 self.status == '200 Connection established' or
                 has_empty_content(status) or
                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
             chunked = False
-            headers.pop(TRANSFER_ENCODING)
+            headers.pop(TRANSFER_ENCODING, None)
         elif not chunked and not content_length:
             chunked = True
             headers[TRANSFER_ENCODING] = 'chunked'
 
         if not self.keep_alive:
             headers[CONNECTION] = 'close'
-        elif 'upgrade' in headers.get(CONNECTION, ''):
-            headers[CONNECTION] = 'upgrade'
 
         self.chunked = chunked
         return headers
 
 
-cdef void chunk_encoding_l(list chunks, bytes chunk):
+cdef void chunk_encoding(bytearray chunks, bytes chunk):
     '''Write a chunk::
 
         chunk-size(hex) CRLF
@@ -311,44 +253,20 @@ cdef void chunk_encoding_l(list chunks, bytes chunk):
 
     If the size is 0, this is the last chunk, and an extra CRLF is appended.
     '''
-    chunks.append(("%X\r\n" % len(chunk)).encode('utf-8'))
-    chunks.append(chunk)
-    chunks.append(CRLF)
+    chunks.extend(("%X\r\n" % len(chunk)).encode('utf-8'))
+    chunks.extend(chunk)
+    chunks.extend(CRLF)
 
 
-cdef void http_chunks_l(list chunks, bytes data, object finish=False):
+cdef void http_chunks(bytearray chunks, bytes data, object finish=False):
     cdef bytes chunk
     while len(data) >= MAX_CHUNK_SIZE:
         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
-        chunk_encoding_l(chunks, chunk)
+        chunk_encoding(chunks, chunk)
     if data:
-        chunk_encoding_l(chunks, data)
+        chunk_encoding(chunks, data)
     if finish:
-        chunk_encoding_l(chunks, data)
-
-
-cdef bytes chunk_encoding(bytes total, bytes chunk):
-    '''Write a chunk::
-
-        chunk-size(hex) CRLF
-        chunk-data CRLF
-
-    If the size is 0, this is the last chunk, and an extra CRLF is appended.
-    '''
-    cdef bytes le = ("%X\r\n" % len(chunk)).encode('utf-8')
-    return total + le + chunk
-
-
-cdef bytes http_chunks(bytes chunks, bytes data, object finish=False):
-    cdef bytes chunk
-    while len(data) >= MAX_CHUNK_SIZE:
-        chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
-        chunks = chunk_encoding(chunks, chunk)
-    if data:
-        chunks = chunk_encoding(chunks, data)
-    if finish:
-        chunks = chunk_encoding(chunks, b'')
-    return chunks
+        chunk_encoding(chunks, data)
 
 
 cpdef fast_http_date(int timestamp):

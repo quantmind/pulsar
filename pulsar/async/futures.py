@@ -101,7 +101,7 @@ def task_callback(callback):
     return _task_callback
 
 
-def maybe_async(value, loop=None):
+def maybe_async(value, *, loop=None):
     '''Handle a possible asynchronous ``value``.
 
     Return an :ref:`asynchronous instance <tutorials-coroutine>`

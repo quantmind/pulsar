@@ -171,7 +171,8 @@ cdef class ProtocolConsumer(EventHandler):
         pass
 
     cpdef void _finished(self, object _, object exc=None):
-        self.connection._current_consumer = None
+        if self.connection._current_consumer is self:
+            self.connection._current_consumer = None
 
     cpdef object get(self, str attr):
         return getattr(self, attr, None)
