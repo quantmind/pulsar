@@ -429,7 +429,7 @@ class Protocol(PulsarProtocol, asyncio.Protocol):
                 self.fire_event('before_write')
                 t.write(data)
                 self.fire_event('after_write')
-            return self._write_waiter or ()
+            return self._write_waiter
         else:
             raise ConnectionResetError('No Transport')
 
