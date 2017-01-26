@@ -233,7 +233,7 @@ def render_error(request, exc):
         doc = HtmlDocument(title=response.status)
         doc.head.embedded_css.append(error_css)
         doc.body.append(Html('div', msg, cn='pulsar-error'))
-        return doc.render(request)
+        return doc.to_bytes(request)
     elif content_type in JSON_CONTENT_TYPES:
         return json.dumps({'status': response.status_code,
                            'message': msg})

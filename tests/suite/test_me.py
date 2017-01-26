@@ -4,7 +4,6 @@ import asyncio
 
 import pulsar
 from pulsar.api import send, CommandError, get_actor
-from pulsar.async.futures import multi_async
 from pulsar.apps.test import TestSuite
 from pulsar.apps.test.plugins import profile
 from pulsar.utils.version import get_version
@@ -35,7 +34,7 @@ class TestTestWorker(unittest.TestCase):
                                      'vcghdvchdgcvshcd', 'ping')
 
     async def test_multiple_execute(self):
-        m = await multi_async((
+        m = await asyncio.gather((
             send('arbiter', 'run', wait, 1.2),
             send('arbiter', 'ping'),
             send('arbiter', 'echo', 'ciao!'),

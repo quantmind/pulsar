@@ -517,13 +517,13 @@ class CacheControl:
             if etag:
                 headers['etag'] = '"%s"' % etag
             if self.private:
-                headers.add_header('cache-control', 'private')
+                headers.add('cache-control', 'private')
             else:
-                headers.add_header('cache-control', 'public')
+                headers.add('cache-control', 'public')
             if self.must_revalidate:
-                headers.add_header('cache-control', 'must-revalidate')
+                headers.add('cache-control', 'must-revalidate')
             elif self.proxy_revalidate:
-                headers.add_header('cache-control', 'proxy-revalidate')
+                headers.add('cache-control', 'proxy-revalidate')
         else:
             headers['cache-control'] = 'no-cache'
 

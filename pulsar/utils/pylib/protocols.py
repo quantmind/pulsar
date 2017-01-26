@@ -251,29 +251,15 @@ class Producer(EventHandler):
     """An Abstract :class:`.EventHandler` class for all producers of
     socket (client and servers)
     """
-    protocol_factory = None
-    """A callable producing protocols.
-
-    The signature of the protocol factory callable must be::
-
-        protocol_factory(session, producer, **params)
-    """
-
-    def __init__(self, *, loop=None, protocol_factory=None, name=None,
-                 max_requests=None, logger=None):
-        self.logger = logger or LOGGER
-        self._loop = loop or asyncio.get_event_loop()
-        self.protocol_factory = protocol_factory or self.protocol_factory
-        self._name = name or self.__class__.__name__
-        self._requests_processed = 0
+    def __init__(self, protocol_factory, loop=None, name=None,
+                 keep_alive=0, logger=None):
+        self.protocol_factory = protocol_factory
+        self.requests_processed = 0
         self.sessions = 0
-        self._max_requests = max_requests
-
-    @property
-    def requests_processed(self):
-        """Total number of requests processed.
-        """
-        return self._requests_processed
+        self.keep_alive = keep_alive
+        self.logger = logger or LOGGER
+        self.name = name or self.__class__.__name__
+        self._loop = loop or asyncio.get_event_loop()
 
     def create_protocol(self, **kw):
         """Create a new protocol via the :meth:`protocol_factory`

@@ -19,8 +19,8 @@ from ..utils import autoreload
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, EventLoopPolicy
 from .threads import Thread
-from .mailbox import MailboxClient, MailboxProtocol, ProxyMailbox, create_aid
-from .futures import ensure_future, add_errback, chain_future, create_future
+from .mailbox import MailboxClient, MailboxConnection, ProxyMailbox, create_aid
+from .futures import ensure_future, chain_future, create_future
 from .protocols import TcpServer
 from .actor import Actor
 from .consts import (ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY,
@@ -66,6 +66,7 @@ class Concurrency:
     managed_actors = None
     registered = None
     actor_class = Actor
+    _periodic_task = None
 
     @classmethod
     def make(cls, kind, cfg, name, aid, **kw):
@@ -176,29 +177,22 @@ class Concurrency:
         loop.call_soon_threadsafe(self.hand_shake, actor)
         return client
 
-    def periodic_task(self, actor, **kw):
-        '''Implement the :ref:`actor period task <actor-periodic-task>`.
+    async def periodic_task(self, actor, **kw):
+        while True:
+            if actor.is_running():
+                if actor.cfg.debug:
+                    actor.logger.debug('notify monitor')
+                # if an error occurs, shut down the actor
+                try:
+                    await actor.send('monitor', 'notify', actor.info())
+                except Exception as exc:
+                    actor.stop(exc=exc)
+                actor.event('periodic_task').fire()
+                next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
+            else:
+                next = 0
 
-        This is an internal method called periodically by the
-        :attr:`.Actor._loop` to ping the actor monitor.
-        If successful return a :class:`~asyncio.Future` called
-        back with the acknowledgement from the monitor.
-        '''
-        actor.next_periodic_task = None
-        ack = None
-        if actor.is_running():
-            if actor.cfg.debug:
-                actor.logger.debug('notify monitor')
-            # if an error occurs, shut down the actor
-            ack = actor.send('monitor', 'notify', actor.info())
-            add_errback(ack, actor.stop)
-            actor.event('periodic_task').fire()
-            next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
-        else:
-            next = 0
-        actor.next_periodic_task = actor._loop.call_later(
-            min(next, MAX_NOTIFY), self.periodic_task, actor)
-        return ack
+            await asyncio.sleep(min(next, MAX_NOTIFY))
 
     def stop(self, actor, exc=None, exit_code=None):
         '''Gracefully stop the ``actor``.
@@ -255,7 +249,9 @@ class Concurrency:
     def _switch_to_run(self, actor, exc=None):
         if exc is None and actor.state < ACTOR_STATES.RUN:
             actor.state = ACTOR_STATES.RUN
-            self.periodic_task(actor)
+            self._periodic_task = actor._loop.create_task(
+                self.periodic_task(actor)
+            )
         elif exc:
             actor.stop(exc)
 
@@ -456,26 +452,19 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
     def create_mailbox(self, actor, loop):
         raise NotImplementedError
 
-    def periodic_task(self, monitor, **kw):
-        '''Override the :meth:`.Concurrency.periodic_task` to implement
-        the :class:`.Monitor` :ref:`periodic task <actor-periodic-task>`.'''
-        interval = 0
-        monitor.next_periodic_task = None
-        if monitor.started():
-            interval = MONITOR_TASK_PERIOD
-            self.manage_actors(monitor)
-            #
-            if monitor.is_running():
-                self.spawn_actors(monitor)
-                self.stop_actors(monitor)
-            elif monitor.cfg.debug:
-                monitor.logger.debug('still stopping')
-            #
-            monitor.event('periodic_task').fire()
-        #
-        if not monitor.closed():
-            monitor.next_periodic_task = monitor._loop.call_later(
-                interval, self.periodic_task, monitor)
+    async def periodic_task(self, monitor, **kw):
+        while not monitor.closed():
+            interval = 0
+            if monitor.started():
+                interval = MONITOR_TASK_PERIOD
+                self.manage_actors(monitor)
+                if monitor.is_running():
+                    self.spawn_actors(monitor)
+                    self.stop_actors(monitor)
+                elif monitor.cfg.debug:
+                    monitor.logger.debug('still stopping')
+                monitor.event('periodic_task').fire()
+            await asyncio.sleep(interval)
 
     def _stop_actor(self, actor, finished=False):
         # remove all workers from this monitor
@@ -486,8 +475,8 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
             if actor.cfg.debug:
                 actor.logger.debug('monitor is now stopping')
             actor.state = ACTOR_STATES.CLOSE
-            if actor.next_periodic_task:
-                actor.next_periodic_task.cancel()
+            if self._periodic_task:
+                self._periodic_task.cancel()
             self.stop(actor)
 
         return chain_future(self._close_actors(actor), callback=_cleanup,
@@ -556,7 +545,8 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         '''Override :meth:`.Concurrency.create_mailbox` to create the
         mailbox server.
         '''
-        mailbox = TcpServer(MailboxProtocol, address=('127.0.0.1', 0),
+        mailbox = TcpServer(MailboxConnection.create,
+                            address=('127.0.0.1', 0),
                             loop=loop, name='mailbox')
         # when the mailbox stop, close the event loop too
         mailbox.event('stop').bind(lambda _, **kw: loop.stop())
@@ -565,32 +555,32 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         )
         return mailbox
 
-    def periodic_task(self, actor, **kw):
-        '''Override the :meth:`.Concurrency.periodic_task` to implement
-        the :class:`.Arbiter` :ref:`periodic task <actor-periodic-task>`.'''
-        interval = 0
-        actor.next_periodic_task = None
-        #
-        if actor.started():
-            # managed actors job
-            self.manage_actors(actor)
-            for m in list(self.monitors.values()):
-                if m.closed():
-                    actor._remove_actor(m)
-
-            interval = MONITOR_TASK_PERIOD
-            if not actor.is_running() and actor.cfg.debug:
-                actor.logger.debug('still stopping')
+    async def periodic_task(self, actor, **kw):
+        """Override the :meth:`.Concurrency.periodic_task` to implement
+        the :class:`.Arbiter` :ref:`periodic task <actor-periodic-task>`.
+        """
+        while True:
+            interval = 0
             #
-            actor.event('periodic_task').fire()
+            if actor.started():
+                # managed actors job
+                self.manage_actors(actor)
+                for m in list(self.monitors.values()):
+                    if m.closed():
+                        actor._remove_actor(m)
 
-        if not actor.closed():
-            actor.next_periodic_task = actor._loop.call_later(
-                interval, self.periodic_task, actor)
+                interval = MONITOR_TASK_PERIOD
+                if not actor.is_running() and actor.cfg.debug:
+                    actor.logger.debug('still stopping')
+                #
+                actor.event('periodic_task').fire()
 
-        if actor.cfg.reload and autoreload.check_changes():
-            # reload changes
-            actor.stop(exit_code=autoreload.EXIT_CODE)
+            if actor.cfg.reload and autoreload.check_changes():
+                # reload changes
+                actor.stop(exit_code=autoreload.EXIT_CODE)
+
+            if not actor.closed():
+                await asyncio.sleep(interval)
 
     def _stop_actor(self, actor, finished=False):
         # remove all actors and monitors

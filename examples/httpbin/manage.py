@@ -100,7 +100,7 @@ class BaseRouter(wsgi.Router):
         return dict(headers)
 
     def pulsar_info(self, request):
-        return request.get('pulsar.connection').info()
+        return request.cache.connection.info()
 
 
 class HttpBin(BaseRouter):
@@ -123,7 +123,7 @@ class HttpBin(BaseRouter):
         html.head.links.append('httpbin.css')
         html.head.links.append('favicon.ico', rel="icon", type='image/x-icon')
         html.head.scripts.append('httpbin.js')
-        ul = ul.render(request)
+        ul = ul.to_string(request)
         templ = asset('template.html')
         body = templ % (title, JAPANESE, CHINESE, version, pyversion, ul)
         html.body.append(body)

@@ -52,12 +52,6 @@ Chain Future
 .. autofunction:: chain_future
 
 
-
-Multi Async
-~~~~~~~~~~~~~~~~~~~~~~~~
-.. autofunction:: multi_async
-
-
 Async While
 ~~~~~~~~~~~~~~~~~~
 .. autofunction:: async_while

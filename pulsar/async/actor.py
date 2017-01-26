@@ -168,11 +168,6 @@ class Actor(EventHandler, Coverage):
         Current state description string. One of ``initial``, ``running``,
         ``stopping``, ``closed`` and ``terminated``.
 
-    .. attribute:: next_periodic_task
-
-        The :class:`asyncio.Handle` for the next
-        :ref:`actor periodic task <actor-periodic-task>`.
-
     .. attribute:: stream
 
         A ``stream`` handler to write information messages without using
@@ -183,7 +178,6 @@ class Actor(EventHandler, Coverage):
     mailbox = None
     monitor = None
     start_event = None
-    next_periodic_task = None
 
     def __init__(self, impl):
         self.state = ACTOR_STATES.INITIAL

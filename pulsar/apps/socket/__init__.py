@@ -121,7 +121,7 @@ try:
 except ImportError:     # pragma    nocover
     ssl = None
 
-from pulsar import DEFAULT_PORT
+from pulsar import DEFAULT_PORT, SERVER_SOFTWARE
 from ...utils.internet import parse_address
 from ...utils.system import platform
 from ...utils.exceptions import ImproperlyConfigured
@@ -209,7 +209,7 @@ class SocketServer(Application):
         The socket address, available once the application has started.
     '''
     name = 'socket'
-    cfg = Config(apps=['socket'])
+    cfg = Config(apps=['socket'], server_software=SERVER_SOFTWARE)
 
     def protocol_factory(self):
         '''Factory of :class:`.ProtocolConsumer` used by the server.

@@ -57,8 +57,6 @@ WSGI Server
 """
 from functools import partial
 
-import pulsar
-from pulsar.api import Config
 from pulsar.apps.socket import SocketServer, Connection
 
 from .html import HtmlVisitor
@@ -141,7 +139,6 @@ class WSGIServer(SocketServer):
     '''A WSGI :class:`.SocketServer`.
     '''
     name = 'wsgi'
-    cfg = Config(apps=['socket'], server_software=pulsar.SERVER_SOFTWARE)
 
     def server_factory(self, *args, **kw):
         server = super().server_factory(*args, **kw)

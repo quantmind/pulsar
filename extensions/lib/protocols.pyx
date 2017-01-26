@@ -1,3 +1,4 @@
+import logging
 from time import time
 import asyncio
 from socket import SOL_SOCKET, SO_KEEPALIVE
@@ -6,6 +7,7 @@ from clib cimport EventHandler
 
 cdef object dummyRequest = object()
 cdef double TIME_INTERVAL = 0.5
+cdef PROTOCOL_LOGGER = logging.getLogger('pulsar.protocols')
 
 
 cdef class Producer(EventHandler):
@@ -13,15 +15,18 @@ cdef class Producer(EventHandler):
         object protocol_factory, _loop
         int sessions
         str name
-    cdef public int requests_processed, keep_alive
+    cdef public:
+        int requests_processed, keep_alive
+        object logger
 
     def __init__(self, object protocol_factory, object loop=None,
-                 str name=None, int keep_alive=0):
+                 str name=None, int keep_alive=0, logger=None):
         self.protocol_factory = protocol_factory
         self.requests_processed = 0
         self.sessions = 0
         self.keep_alive = keep_alive
         self.name = name or self.__class__.__name__
+        self.logger = logger or PROTOCOL_LOGGER
         self._loop = loop or asyncio.get_event_loop()
         self._time()
 
@@ -51,6 +56,8 @@ cdef class Protocol(EventHandler):
 
     cdef public int processed
     cdef ProtocolConsumer _current_consumer
+
+    ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
 
     def __init__(self, object consumer_factory, Producer producer):
         self.consumer_factory = consumer_factory
@@ -99,6 +106,11 @@ cdef class Protocol(EventHandler):
             pass
         # let everyone know we have a connection with endpoint
         self.event('connection_made').fire()
+
+    def connection_lost(self, _, exc=None):
+        """Fires the ``connection_lost`` event.
+        """
+        self.event('connection_lost').fire()
 
     cpdef void data_received(self, bytes data):
         """Delegates handling of data to the :meth:`current_consumer`.

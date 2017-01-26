@@ -15,22 +15,7 @@ CLOSE_TIMEOUT = 3
 
 
 class PulsarProtocol(Protocol, FlowControl, Timeout):
-    """A mixin class for both :class:`.Protocol` and
-    :class:`.DatagramProtocol`.
-
-    A :class:`PulsarProtocol` is an :class:`.EventHandler` which has
-    two :ref:`one time events <one-time-event>`:
-
-    * ``connection_made``
-    * ``connection_lost``
-    """
-    ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
-
-    _transport = None
-    _address = None
     _closed = None
-    _data_received_count = 0
-    last_change = None
 
     def __init__(self, consumer_factory, producer, limit=None, **kw):
         super().__init__(consumer_factory, producer)
@@ -59,16 +44,16 @@ class PulsarProtocol(Protocol, FlowControl, Timeout):
         if not self._closed:
             closed = False
             event = self.event('connection_lost')
-            if self._transport:
+            if self.transport:
                 if self._loop.get_debug():
                     self.logger.debug('Closing connection %s', self)
-                if self._transport.can_write_eof():
+                if self.transport.can_write_eof():
                     try:
-                        self._transport.write_eof()
+                        self.transport.write_eof()
                     except Exception:
                         pass
                 try:
-                    self._transport.close()
+                    self.transport.close()
                     closed = self._loop.create_task(
                         self._close(event.waiter())
                     )
@@ -81,13 +66,8 @@ class PulsarProtocol(Protocol, FlowControl, Timeout):
     def abort(self):
         """Abort by aborting the :attr:`transport`
         """
-        if self._transport:
-            self._transport.abort()
-        self.event('connection_lost').fire()
-
-    def connection_lost(self, _, exc=None):
-        """Fires the ``connection_lost`` event.
-        """
+        if self.transport:
+            self.transport.abort()
         self.event('connection_lost').fire()
 
     def eof_received(self):
@@ -95,9 +75,9 @@ class PulsarProtocol(Protocol, FlowControl, Timeout):
         """
 
     def info(self):
-        info = {'connection': {'session': self._session}}
-        if self._producer:
-            info.update(self._producer.info())
+        info = {'connection': {'session': self.session}}
+        if self.producer:
+            info.update(self.producer.info())
         return info
 
     async def _close(self, waiter):
@@ -134,8 +114,8 @@ class Connection(PulsarProtocol, asyncio.Protocol):
     def info(self):
         info = super().info()
         c = info['connection']
-        c['request_processed'] = self._processed
-        c['data_processed_count'] = self._data_received_count
+        c['request_processed'] = self.processed
+        c['data_processed_count'] = self.data_received_count
         c['timeout'] = self.timeout
         return info
 
@@ -254,11 +234,11 @@ class TcpServer(Producer):
         up = int(self._loop.time() - self._started) if self._started else 0
         server = {'uptime_in_seconds': up,
                   'sockets': sockets,
-                  'max_requests': self._max_requests,
+                  'max_requests': self.max_requests,
                   'keep_alive': self.keep_alive}
         clients = {'processed_clients': self.sessions,
                    'connected_clients': len(self._concurrent_connections),
-                   'requests_processed': self._requests_processed}
+                   'requests_processed': self.requests_processed}
         if self._server:
             for sock in self._server.sockets:
                 sockets.append({
@@ -384,8 +364,8 @@ class DatagramServer(Producer):
         up = int(self._loop.time() - self._started) if self._started else 0
         server = {'uptime_in_seconds': up,
                   'sockets': sockets,
-                  'max_requests': self._max_requests}
-        clients = {'requests_processed': self._requests_processed}
+                  'max_requests': self.max_requests}
+        clients = {'requests_processed': self.requests_processed}
         if self._transports:
             for transport in self._transports:
                 sock = transport.get_extra_info('socket')

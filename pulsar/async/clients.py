@@ -10,7 +10,7 @@ from .futures import AsyncObject, Bench
 from .protocols import Producer
 
 
-logger = logging.getLogger('pulsar.pool')
+logger = logging.getLogger('pulsar.clients')
 
 
 class Pool(AsyncObject):
@@ -250,8 +250,8 @@ class ClientMixin:
 
 
 class AbstractClient(Producer, ClientMixin):
-    '''A :class:`.Producer` for a client connections.
-    '''
+    """A :class:`.Producer` for client connections.
+    """
     def connect(self):
         '''Abstract method for creating a connection.
         '''

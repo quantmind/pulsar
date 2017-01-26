@@ -2,11 +2,11 @@
 import unittest
 import asyncio
 
-from pulsar.api import send, HAS_C_EXTENSIONS
+from pulsar.api import send
 from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
 
-from examples.websocket.manage import server, frame_parser
+from examples.websocket.manage import server
 
 
 class Echo(WS):
@@ -32,14 +32,13 @@ class Echo(WS):
 
 
 class TestWebSocket(unittest.TestCase):
-    pyparser = False
     app_cfg = None
     concurrency = 'process'
 
     @classmethod
     async def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__,
-                   concurrency=cls.concurrency, pyparser=cls.pyparser)
+                   concurrency=cls.concurrency)
         cls.app_cfg = await send('arbiter', 'run', s)
         addr = cls.app_cfg.addresses[0]
         cls.uri = 'http://{0}:{1}'.format(*addr)
@@ -51,12 +50,7 @@ class TestWebSocket(unittest.TestCase):
         if cls.app_cfg is not None:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    def _frame_parser(self, **params):
-        params['pyparser'] = self.pyparser
-        return frame_parser(**params)
-
     def http(self, **params):
-        params['frame_parser'] = self._frame_parser
         return HttpClient(**params)
 
     def test_hybikey(self):
@@ -145,8 +139,3 @@ class TestWebSocket(unittest.TestCase):
         ws.write('data')
         message = await handler.get()
         self.assertTrue(message)
-
-
-@unittest.skipUnless(HAS_C_EXTENSIONS, "Requires C extensions")
-class TestWebSocketPyParser(TestWebSocket):
-    pyparser = True
