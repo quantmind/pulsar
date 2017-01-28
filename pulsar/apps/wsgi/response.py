@@ -100,7 +100,7 @@ http://jython.xhaus.com/http-compression-in-python-and-jython
     def available(self, environ, response):
         # It's not worth compressing non-OK or really short responses
         try:
-            if response.status_code == 200 and not response.is_streamed:
+            if response.status_code == 200 and not response.is_streamed():
                 if response.length() < self.min_length:
                     return False
                 headers = response.headers
@@ -124,9 +124,8 @@ http://jython.xhaus.com/http-compression-in-python-and-jython
 
     def execute(self, environ, response):
         headers = response.headers
-        headers.add_header('Vary', 'Accept-Encoding')
-        content = b''.join(response.content)
-        response.content = (self.compress_string(content),)
+        headers.add('Vary', 'Accept-Encoding')
+        response.content = self.compress_string(b''.join(response.content))
         response.headers['Content-Encoding'] = 'gzip'
 
     def compress_string(self, s):

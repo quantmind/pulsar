@@ -52,6 +52,7 @@ from http.cookies import SimpleCookie
 
 from pulsar.api import chain_future, HttpException, create_future
 from pulsar.utils.lib import WsgiResponse, wsgi_cached
+from pulsar.utils.system import json
 from pulsar.utils.httpurl import (
     REDIRECT_CODES, ENCODE_URL_METHODS,
     remove_double_slash, iri_to_uri, is_absolute_uri, parse_options_header
@@ -402,6 +403,17 @@ class WsgiRequest:
             if not ct and response_content_types:
                 raise HttpException(status=415, msg=request_content_types)
             self.response.content_type = ct
+
+    def json_response(self, data):
+        ct = 'application/json'
+        content_types = self.content_types
+        if not content_types or ct in content_types:
+            response = self.response
+            response.content_type = ct
+            response.content = json.dumps(data)
+            return response
+        else:
+            raise HttpException(status=415, msg=content_types)
 
 
 set_wsgi_request_class(WsgiRequest)

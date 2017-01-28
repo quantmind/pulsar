@@ -1,31 +1,20 @@
-from urllib.parse import urlparse
+import os
 
-from . import parser
 
-try:
-    import httptools
-    hasextensions = True
-except ImportError:
-    httptools = None
-    hasextensions = False
+if os.environ.get('PULSARPY', 'no') == 'no':
+    try:
+        import httptools
+        hasextensions = True
+        from httptools import (
+            HttpResponseParser, HttpRequestParser, HttpParserUpgrade,
+            parse_url
+        )
+    except ImportError:
+        hasextensions = False
+        from .parser import (
+            HttpRequestParser, HttpResponseParser, HttpParserUpgrade,
+            parse_url
+        )
 
 
 CHARSET = 'ISO-8859-1'
-HttpResponseParser = None
-HttpRequestParser = None
-parse_url = None
-
-
-def setDefaultHttpParsers(best=True):   # pragma    nocover
-    global HttpRequestParser, HttpResponseParser, parse_url
-    if best and hasextensions:
-        HttpRequestParser = httptools.HttpRequestParser
-        HttpResponseParser = httptools.HttpResponseParser
-        parse_url = httptools.parse_url
-    else:
-        HttpRequestParser = parser.HttpRequestParser
-        HttpResponseParser = parser.HttpResponseParser
-        parse_url = urlparse
-
-
-setDefaultHttpParsers()

@@ -116,7 +116,6 @@ from collections import Mapping
 from ...utils.exceptions import HttpException
 from ...utils.slugify import slugify
 from ...utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
-from ...utils.system import json
 
 from .html import html_visitor, newline
 
@@ -134,15 +133,6 @@ def stream_to_string(stream):
             yield value
         else:
             yield str(value)
-
-
-def stream_mapping(value, request):
-    result = {}
-    for key, value in value.items():
-        if isinstance(value, String):
-            value = value.render(request)
-        result[key] = value
-    return result
 
 
 def attr_iter(attrs):
@@ -345,44 +335,6 @@ class String:
         a :class:`.String` **always** returns a :class:`~asyncio.Future`.
         '''
         return self.to_bytes(request).decode(self.charset)
-
-
-class Json(String):
-    '''An :class:`String` which renders into a json string.
-
-    The :attr:`String.content_type` attribute is set to
-    ``application/json``.
-
-    .. attribute:: as_list
-
-        If ``True``, the content is always a list of objects.
-        Default ``False``.
-
-    .. attribute:: parameters
-
-        Additional dictionary of parameters passed during initialisation.
-    '''
-    _default_content_type = 'application/json'
-
-    def _setup(self, as_list=False, **params):
-        self.as_list = as_list
-        super()._setup(**params)
-
-    def stream(self, request):
-        if self._children:
-            for child in self._children:
-                if isinstance(child, String):
-                    yield from child.stream(request)
-                elif isinstance(child, Mapping):
-                    yield stream_mapping(child, request)
-                else:
-                    yield child
-
-    def to_string(self, stream):
-        stream = stream
-        if len(stream) == 1 and not self.as_list:
-            stream = stream[0]
-        return json.dumps(stream, ensure_ascii=self.charset == 'ascii')
 
 
 def html_factory(tag, **defaults):

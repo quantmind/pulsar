@@ -91,6 +91,19 @@ cdef class WsgiResponse:
             self._cookies = SimpleCookie()
         return self._cookies
 
+    cpdef object is_streamed(self):
+        """Check if the response is streamed.
+        A streamed response is an iterable with no length information.
+        In this case streamed means that there is no information about
+        the number of iterations.
+        This is usually `True` if a generator is passed to the response object.
+        """
+        try:
+            len(self._content)
+        except TypeError:
+            return True
+        return False
+
     cpdef object start(self, object start_response):
         return start_response(self.status, self.get_headers())
 
@@ -121,6 +134,9 @@ cdef class WsgiResponse:
         """
         if hasattr(self._content, 'close'):
             self._content.close()
+
+    cpdef int length(self):
+        return reduce(count_len, self._content, 0)
 
     cdef object get_headers(self):
         """The list of headers for this response

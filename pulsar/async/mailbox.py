@@ -53,6 +53,7 @@ Client
 import socket
 import pickle
 import asyncio
+import logging
 from collections import namedtuple
 
 from ..utils.exceptions import ProtocolError, CommandError
@@ -62,12 +63,13 @@ from ..utils.string import gen_unique_id
 from ..utils.lib import ProtocolConsumer
 
 from .protocols import PulsarProtocol
-from .access import get_actor, isawaitable
+from .access import get_actor
 from .proxy import actor_identity, get_proxy, get_command, ActorProxy
 from .clients import AbstractClient
 
 
 CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
+LOGGER = logging.getLogger('pulsar.mailbox')
 
 
 def create_aid():
@@ -81,8 +83,10 @@ async def command_in_context(command, caller, target, args, kwargs,
         raise CommandError('unknown %s' % command)
     request = CommandRequest(target, caller, connection)
     result = cmnd(request, args, kwargs)
-    if isawaitable(result):
+    try:
         result = await result
+    except TypeError:
+        pass
     return result
 
 
@@ -125,7 +129,7 @@ class MessageConsumer(ProtocolConsumer):
 
     def feed_data(self, data):
         msg = self.connection.parser.decode(data)
-        if msg:
+        while msg:
             try:
                 message = pickle.loads(msg.body)
             except Exception:
@@ -134,6 +138,7 @@ class MessageConsumer(ProtocolConsumer):
                 )
             else:
                 self.messages.put_nowait(message)
+            msg = self.connection.parser.decode()
 
     async def _process_messages(self):
         actor = get_actor()
@@ -142,41 +147,44 @@ class MessageConsumer(ProtocolConsumer):
             message = await self.messages.get()
             command = message.get('command')
             ack = message.get('ack')
-            try:
-                logger.debug('Got message %s', command)
-                if command == 'callback':
-                    if not ack:
-                        raise ProtocolError('A callback without id')
+            if command == 'callback':
+                if not ack:
+                    logger.error('A callback without id')
+                else:
+                    logger.debug('Callback from "%s"', ack)
                     pending = self.connection.pending_responses.pop(ack)
                     pending.set_result(message.get('result'))
-                else:
-                    target = actor.get_actor(message['target'])
-                    if target is None:
+                continue
+
+            try:
+                logger.debug('Got message "%s"', command)
+                target = actor.get_actor(message['target'])
+                if target is None:
+                    raise CommandError(
+                        'cannot execute "%s", unknown actor '
+                        '"%s"' % (command, message['target']))
+                # Get the caller proxy without throwing
+                caller = get_proxy(actor.get_actor(message['sender']),
+                                   safe=True)
+                if isinstance(target, ActorProxy):
+                    # route the message to the actor proxy
+                    if caller is None:
                         raise CommandError(
-                            'cannot execute "%s", unknown actor '
-                            '"%s"' % (command, message['target']))
-                    # Get the caller proxy without throwing
-                    caller = get_proxy(actor.get_actor(message['sender']),
-                                       safe=True)
-                    if isinstance(target, ActorProxy):
-                        # route the message to the actor proxy
-                        if caller is None:
-                            raise CommandError(
-                                "'%s' got message from unknown '%s'"
-                                % (actor, message['sender']))
-                        result = await actor.send(target, command,
-                                                  *message['args'],
-                                                  **message['kwargs'])
-                    else:
-                        result = await command_in_context(command, caller,
-                                                          target,
-                                                          message['args'],
-                                                          message['kwargs'],
-                                                          self)
+                            "'%s' got message from unknown '%s'"
+                            % (actor, message['sender']))
+                    result = await actor.send(target, command,
+                                              *message['args'],
+                                              **message['kwargs'])
+                else:
+                    result = await command_in_context(command, caller,
+                                                      target,
+                                                      message['args'],
+                                                      message['kwargs'],
+                                                      self)
             except CommandError as exc:
                 logger.warning('Command error: %s' % exc)
                 result = None
-            except Exception as exc:
+            except Exception:
                 logger.exception('Unhandled exception')
                 result = None
             if ack:
@@ -247,7 +255,8 @@ class MailboxClient(AbstractClient):
     """
     def __init__(self, address, actor, loop):
         super().__init__(MailboxConnection.create, loop=loop,
-                         name='%s-mailbox' % actor)
+                         name='%s-mailbox' % actor,
+                         logger=LOGGER)
         self.address = address
         self._connection = None
 

@@ -33,8 +33,7 @@ from pulsar.api import HttpRedirect, HttpException
 from pulsar.utils.httpurl import ENCODE_URL_METHODS, ENCODE_BODY_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
-from pulsar.apps.wsgi import (route, Html, Json, HtmlDocument, GZipMiddleware,
-                              String)
+from pulsar.apps.wsgi import route, Html, HtmlDocument, GZipMiddleware, String
 from pulsar.utils.system import json
 
 from multidict import CIMultiDict, MultiDict
@@ -58,13 +57,10 @@ def asset(name, mode='r'):
 class BaseRouter(wsgi.Router):
     ########################################################################
     #    INTERNALS
-    def bind_server_event(self, request, event, handler):
-        consumer = request.environ['pulsar.connection'].current_consumer()
-        consumer.bind_event(event, handler)
 
     def info_data_response(self, request, **params):
         data = self.info_data(request, **params)
-        return Json(data).http_response(request)
+        return request.json_response(data)
 
     def info_data(self, request, **params):
         headers = self.getheaders(request)
@@ -185,7 +181,7 @@ class HttpBin(BaseRouter):
     def cookies(self, request):
         cookies = request.cookies
         d = dict(((c.key, c.value) for c in cookies.values()))
-        return Json({'cookies': d}).http_response(request)
+        return request.json_response({'cookies': d})
 
     @route('cookies/set/<name>/<value>', title='Sets a simple cookie',
            defaults={'name': 'package', 'value': 'pulsar'})
@@ -210,18 +206,19 @@ class HttpBin(BaseRouter):
         class Gen:
             headers = None
 
-            def __call__(self, server, **kw):
-                self.headers = server.headers
+            def __call__(self, server, data=None):
+                self.headers = bytes(data)
 
             def generate(self):
                 # yield a byte so that headers are sent
                 yield b''
                 # we must have the headers now
-                yield json.dumps(dict(self.headers))
+                yield self.headers
         gen = Gen()
-        self.bind_server_event(request, 'on_headers', gen)
+        request.cache.connection.current_consumer().event(
+            'on_headers').bind(gen)
         request.response.content = gen.generate()
-        request.response.content_type = 'application/json'
+        request.response.content_type = 'text/plain'
         return request.response
 
     @route('basic-auth/<username>/<password>',
@@ -230,8 +227,8 @@ class HttpBin(BaseRouter):
     def challenge_auth(self, request):
         auth = request.get('http.authorization')
         if auth and auth.authenticated(request.environ, **request.urlargs):
-            return Json({'authenticated': True,
-                         'username': auth.username}).http_response(request)
+            return request.json_response({'authenticated': True,
+                                          'username': auth.username})
         raise wsgi.HttpAuthenticate('basic')
 
     @route('digest-auth/<username>/<password>/<qop>',
@@ -242,8 +239,8 @@ class HttpBin(BaseRouter):
     def challenge_digest_auth(self, request):
         auth = request.get('http.authorization')
         if auth and auth.authenticated(request.environ, **request.urlargs):
-            return Json({'authenticated': True,
-                         'username': auth.username}).http_response(request)
+            return request.json_response({'authenticated': True,
+                                          'username': auth.username})
         raise wsgi.HttpAuthenticate('digest', qop=[request.urlargs['qop']])
 
     @route('stream/<int(min=1):m>/<int(min=1):n>',
@@ -302,13 +299,13 @@ class HttpBin(BaseRouter):
             CHINESE,
             HINDI
         ]
-        return Json(data).http_response(request)
+        return request.json_response(data)
 
     ########################################################################
     #    BENCHMARK ROUTES
     @route()
     def json(self, request):
-        return Json({'message': "Hello, World!"}).http_response(request)
+        return request.json_response({'message': "Hello, World!"})
 
     @route()
     def plaintext(self, request):
@@ -332,7 +329,7 @@ class Upload(BaseRouter):
         await request.data_and_files(stream=partial(self.stream, request))
         data['args'] = dict(data['args'])
         data['files'] = dict(data['files'])
-        return Json(data).http_response(request)
+        return request.json_response(data)
 
     def stream(self, request, part):
         if request.cache.current_data is not part:

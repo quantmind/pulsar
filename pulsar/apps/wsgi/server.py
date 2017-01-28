@@ -104,11 +104,16 @@ class HttpServerResponse(ProtocolConsumer):
         self.create_parser = http.HttpRequestParser
         self.cfg = producer.cfg
         wsgi = WsgiProtocol(self, producer.cfg, FileWrapper)
-        self.feed_data = wsgi.parser.feed_data
         return wsgi
 
     ########################################################################
     #    INTERNALS
+    def feed_data(self, data):
+        try:
+            self.request.parser.feed_data(data)
+        except http.HttpParserUpgrade:
+            pass
+
     async def _response(self):
         wsgi = self.request
         producer = self.producer
