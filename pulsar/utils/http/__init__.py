@@ -3,12 +3,11 @@ import os
 
 if os.environ.get('PULSARPY', 'no') == 'no':
     try:
-        import httptools
-        hasextensions = True
         from httptools import (
             HttpResponseParser, HttpRequestParser, HttpParserUpgrade,
             parse_url
         )
+        hasextensions = True
     except ImportError:
         hasextensions = False
         from .parser import (
