@@ -1,43 +1,35 @@
 import sys
 from urllib.parse import unquote
 
-import cython
 from multidict import istr, CIMultiDict
 
 from wsgi cimport _http_date
 
 
-@cython.internal
-cdef class Headers:
+class Headers:
 
-    cdef void x_forwarded_protocol(self, dict environ, str value):
+    def X_FORWARDED_PROTOCOL(self, dict environ, str value):
         if value == "ssl":
             environ['wsgi.url_scheme'] = 'https'
 
-
-    cdef void x_forwarded_proto(self, dict environ, str value):
+    def X_FORWARDED_PROTO(self, dict environ, str value):
         if value in TLS_SCHEMES:
             environ['wsgi.url_scheme'] = 'https'
 
-
-    cdef void x_forwarded_ssl(self, dict environ, str value):
+    def X_FORWARDED_SSL(self, dict environ, str value):
         if value == "on":
             environ['wsgi.url_scheme'] = 'https'
 
-
-    cdef void script_name(self, dict environ, str value):
+    def SCRIPT_NAME(self, dict environ, str value):
         environ['SCRIPT_NAME'] = value
 
-
-    cdef object content_type(self, dict environ, str value):
+    def CONTENT_TYPE(self, dict environ, str value):
         environ['CONTENT_TYPE'] = value
         return True
 
-
-    cdef object content_length(self, dict environ, str value):
+    def CONTENT_LENGTH(self, dict environ, str value):
         environ['CONTENT_LENGTH'] = value
         return True
-
 
 
 cdef class WsgiProtocol:
@@ -53,6 +45,8 @@ cdef class WsgiProtocol:
         cdef object connection = protocol.connection
         cdef object server_address = connection.transport.get_extra_info('sockname')
         self.environ = {
+            'wsgi.input': protocol.body_reader,
+            'wsgi.async': True,
             'wsgi.timestamp': _current_time_,
             'wsgi.errors': sys.stderr,
             'wsgi.version': (1, 0),
@@ -95,6 +89,7 @@ cdef class WsgiProtocol:
     cpdef void on_header(self, bytes name, bytes value):
         cdef object header = istr(name.decode(CHARSET))
         cdef str header_value = value.decode(CHARSET)
+        cdef str header_env = header.upper().replace('-', '_')
         cdef object hnd
 
         if 'SERVER_PROTOCOL' not in self.environ:
@@ -108,10 +103,11 @@ cdef class WsgiProtocol:
             else:
                 self.headers[header] = header_value
         else:
-            hnd = getattr(self.header_wsgi, header, None)
+            hnd = getattr(self.header_wsgi, header_env, None)
             if hnd and hnd(self.environ, header_value):
                 return
-        self.environ['HTTP_%s' % header.upper().replace('-', '_')] = header_value
+
+        self.environ['HTTP_%s' % header_env] = header_value
 
     cpdef void on_headers_complete(self):
         cdef str forward = self.headers.get(X_FORWARDED_FOR)
@@ -145,8 +141,8 @@ cdef class WsgiProtocol:
         cdef object proto = self.protocol
         if not proto.body_reader.reader:
             proto.body_reader.initialise(
-                self.request_headers, self.parser, self.connection.transport,
-                self.cfg.stream_buffer, loop=proto._loop
+                self.headers, self.connection.transport,
+                self.cfg.stream_buffer
             )
         proto.body_reader.feed_data(body)
 

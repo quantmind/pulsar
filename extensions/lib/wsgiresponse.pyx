@@ -176,7 +176,7 @@ cdef class WsgiResponse:
         if (self.status_code < 400 and self.can_store_cookies and
                 self._cookies):
             for c in self.cookies.values():
-                headers.add_header(SET_COOKIE, c.OutputString())
+                headers.add(SET_COOKIE, c.OutputString())
         return headers.items()
 
 

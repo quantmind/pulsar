@@ -73,7 +73,7 @@ class BaseRouter(wsgi.Router):
             args, files = request.data_and_files()
             jfiles = MultiDict()
             if files:
-                for name, parts in files.lists():
+                for name, parts in files.items():
                     for part in parts:
                         try:
                             part = part.string()
@@ -332,7 +332,7 @@ class Upload(BaseRouter):
         return request.json_response(data)
 
     def stream(self, request, part):
-        if request.cache.current_data is not part:
+        if request.cache.get('current_data') is not part:
             request.cache.current_data = part
             request.cache.current_data_buffer = []
 

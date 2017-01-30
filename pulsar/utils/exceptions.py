@@ -136,12 +136,8 @@ class HttpException(PulsarException):
         self.content_type = content_type
         if not isinstance(headers, CIMultiDict):
             headers = CIMultiDict(headers or ())
-        self._headers = headers
+        self.headers = headers
         super().__init__(msg)
-
-    @property
-    def headers(self):
-        return list(self._headers)
 
 
 @httperror

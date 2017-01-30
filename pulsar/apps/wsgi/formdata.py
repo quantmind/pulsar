@@ -35,9 +35,8 @@ def http_protocol(parser):
 class HttpBodyReader:
     reader = None
 
-    def initialise(self, headers, parser, transport, limit, **kw):
+    def initialise(self, headers, transport, limit, **kw):
         self.headers = headers
-        self.parser = parser
         self.limit = limit
         self.reader = asyncio.StreamReader(**kw)
         self.reader.set_transport(transport)
@@ -49,49 +48,60 @@ class HttpBodyReader:
         if self.reader:
             self.reader.feed_eof()
 
-    def waiting_expect(self):
+    def fail(self):
+        if self.reader and self._waiting_expect():
+            raise HttpException(status=417)
+
+    def read(self, n=-1):
+        if self.reader:
+            self._can_continue()
+            return self.reader.read(n=n)
+        else:
+            return b''
+
+    async def readline(self):
+        if self.reader:
+            self._can_continue()
+            try:
+                line = await self.reader.readuntil(b'\n')
+            except asyncio.streams.LimitOverrunError as exc:
+                line = await self.read(exc.consumed) + await self.readline()
+                if len(line) > self.limit:
+                    raise_large_body_error(self.limit)
+            return line
+        else:
+            return b''
+
+    def readexactly(self, n):
+        if self.reader:
+            self._can_continue()
+            return self.reader.readexactly(n)
+        else:
+            return b''
+
+    def _waiting_expect(self):
         '''``True`` when the client is waiting for 100 Continue.
         '''
         if self._expect_sent is None:
             if (not self.reader.at_eof() and
-                    self.headers.has('expect', '100-continue')):
+                    self.headers.get('expect', '').lower() == '100-continue'):
                 return True
             self._expect_sent = ''
         return False
 
-    def can_continue(self):
-        if self.waiting_expect():
-            if self.parser.get_version() < (1, 1):
+    def _can_continue(self):
+        if self._waiting_expect():
+            protocol = self.request.get('SERVER_PROTOCOL')
+            if protocol == 'HTTP/1.0':
                 raise HttpException(status=417)
             else:
-                msg = '%s 100 Continue\r\n\r\n' % http_protocol(self.parser)
+                msg = '%s 100 Continue\r\n\r\n' % protocol
                 self._expect_sent = msg
                 self.reader._transport.write(msg.encode(CHARSET))
 
-    def fail(self):
-        if self.waiting_expect():
-            raise HttpException(status=417)
 
-    def read(self, n=-1):
-        self.can_continue()
-        return self.reader.read(n=n)
-
-    async def readline(self):
-        try:
-            line = await self.reader.readuntil(b'\n')
-        except asyncio.streams.LimitOverrunError as exc:
-            line = await self.read(exc.consumed) + await self.readline()
-            if len(line) > self.limit:
-                raise_large_body_error(self.limit)
-        return line
-
-    def readexactly(self, n):
-        self.can_continue()
-        return self.reader.readexactly(n)
-
-
-def parse_form_data(environ, stream=None, **kw):
-    '''Parse form data from an environ dict and return a (forms, files) tuple.
+def parse_form_data(request, stream=None, **kw):
+    '''Parse form data from an request and return a (forms, files) tuple.
 
     Both tuple values are dictionaries with the form-field name as a key
     (unicode) and lists as values (multiple values per key are possible).
@@ -100,17 +110,16 @@ def parse_form_data(environ, stream=None, **kw):
     because the form-field was a file-upload or the value is to big to fit
     into memory limits.
 
-    :parameter environ: A WSGI environment dict.
+    :parameter request: Request object (WSGI environ wrapper).
     :parameter stream: Optional callable accepting one parameter only, the
         instance of :class:`FormDecoder` being parsed. If provided, the
         callable is invoked when data or partial data has been successfully
         parsed.
     '''
-    method = environ.get('REQUEST_METHOD', 'GET').upper()
-    if method not in ENCODE_BODY_METHODS:
+    if request.method not in ENCODE_BODY_METHODS:
         raise HttpException(status=422)
 
-    content_type = environ.get('CONTENT_TYPE')
+    content_type = request.get('CONTENT_TYPE')
     if content_type:
         content_type, options = parse_options_header(content_type)
         options.update(kw)
@@ -118,29 +127,29 @@ def parse_form_data(environ, stream=None, **kw):
         options = kw
 
     if content_type == 'multipart/form-data':
-        decoder = MultipartDecoder(environ, options, stream)
+        decoder = MultipartDecoder(request, options, stream)
     elif content_type in FORM_ENCODED_TYPES:
-        decoder = UrlEncodedDecoder(environ, options, stream)
+        decoder = UrlEncodedDecoder(request, options, stream)
     elif content_type in JSON_CONTENT_TYPES:
-        decoder = JsonDecoder(environ, options, stream)
+        decoder = JsonDecoder(request, options, stream)
     else:
-        decoder = BytesDecoder(environ, options, stream)
+        decoder = BytesDecoder(request, options, stream)
 
     return decoder.parse()
 
 
 class FormDecoder:
 
-    def __init__(self, environ, options, stream):
-        self.environ = environ
+    def __init__(self, request, options, stream):
+        self.request = request
         self.options = options
         self.stream = stream
-        self.limit = environ['pulsar.cfg'].stream_buffer
+        self.limit = request.cache.cfg.stream_buffer
         self.result = (MultiDict(), MultiDict())
 
     @property
     def content_length(self):
-        return int(self.environ.get('CONTENT_LENGTH', -1))
+        return int(self.request.get('CONTENT_LENGTH', -1))
 
     @property
     def charset(self):
@@ -158,7 +167,7 @@ class MultipartDecoder(FormDecoder):
         if not valid_boundary(boundary):
             raise HttpException("Invalid boundary for multipart/form-data",
                                 status=422)
-        inp = self.environ.get('wsgi.input') or BytesIO()
+        inp = self.request.get('wsgi.input') or BytesIO()
         self.buffer = bytearray()
 
         if isinstance(inp, HttpBodyReader):
@@ -201,7 +210,7 @@ class MultipartDecoder(FormDecoder):
             if current:
                 current.done()
 
-        self.environ['wsgi.input'] = BytesIO(self.buffer)
+        self.request.environ['wsgi.input'] = BytesIO(self.buffer)
         return self.result
 
 
@@ -210,7 +219,7 @@ class BytesDecoder(FormDecoder):
     def parse(self, mem_limit=None, **kw):
         if self.content_length > self.limit:
             raise_large_body_error(self.limit)
-        inp = self.environ.get('wsgi.input') or BytesIO()
+        inp = self.request.get('wsgi.input') or BytesIO()
         data = inp.read()
 
         if isawaitable(data):
@@ -223,7 +232,7 @@ class BytesDecoder(FormDecoder):
         return self._ready(chunk)
 
     def _ready(self, data):
-        self.environ['wsgi.input'] = BytesIO(data)
+        self.request.environ['wsgi.input'] = BytesIO(data)
         self.result = (data, None)
         return self.result
 
@@ -231,7 +240,7 @@ class BytesDecoder(FormDecoder):
 class UrlEncodedDecoder(BytesDecoder):
 
     def _ready(self, data):
-        self.environ['wsgi.input'] = BytesIO(data)
+        self.request.environ['wsgi.input'] = BytesIO(data)
         charset = self.charset
         data = parse_qs(data.decode(charset), keep_blank_values=True)
         forms = self.result[0]
@@ -244,7 +253,7 @@ class UrlEncodedDecoder(BytesDecoder):
 class JsonDecoder(BytesDecoder):
 
     def _ready(self, data):
-        self.environ['wsgi.input'] = BytesIO(data)
+        self.request.environ['wsgi.input'] = BytesIO(data)
         try:
             self.result = (json.loads(data.decode(self.charset)), None)
         except Exception as exc:

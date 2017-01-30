@@ -251,6 +251,10 @@ class WsgiRequest:
         """The request method (uppercase)."""
         return self.environ['REQUEST_METHOD']
 
+    @property
+    def input(self):
+        return self.environ.get('wsgi.input')
+
     @wsgi_cached
     def encoding(self):
         return self.content_type_options[1].get('charset', 'utf-8')
@@ -282,7 +286,7 @@ class WsgiRequest:
         if self.method in ENCODE_URL_METHODS:
             value = {}, None
         else:
-            value = self.cache.data_and_files
+            value = self.cache.get('data_and_files')
 
         if not value:
             return self._data_and_files(data, files, stream)
@@ -300,15 +304,15 @@ class WsgiRequest:
         """
         return self.data_and_files(files=False)
 
-    def _data_and_files(self, data=True, files=True, stream=None, future=None):
-        if future is None:
-            data_files = parse_form_data(self.environ, stream=stream)
+    def _data_and_files(self, data=True, files=True, stream=None, result=None):
+        if result is None:
+            data_files = parse_form_data(self, stream=stream)
             if isawaitable(data_files):
                 return chain_future(
                     data_files,
                     partial(self._data_and_files, data, files, stream))
         else:
-            data_files = future
+            data_files = result
 
         self.cache.data_and_files = data_files
         return self.data_and_files(data, files, stream)

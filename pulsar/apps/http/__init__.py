@@ -590,21 +590,24 @@ class HttpResponse(ProtocolConsumer):
             return request.history
 
     @property
-    def is_error(self):
-        if self.status_code:
-            return not is_succesful(self.status_code)
-        else:
-            return self.done()
-
-    @property
     def ok(self):
-        return not self.is_error
+        if self.status_code:
+            return is_succesful(self.status_code)
+        else:
+            return not self.done()
 
     @property
     def cookies(self):
         """Dictionary of cookies set by the server or ``None``.
         """
         return self._cookies
+
+    @property
+    def encoding(self):
+        ct = self.headers.get('content-type')
+        if ct:
+            ct, options = parse_options_header(ct)
+            return options.get('charset')
 
     @property
     def raw(self):
@@ -628,10 +631,9 @@ class HttpResponse(ProtocolConsumer):
                 l[key] = link
         return l
 
-    def get_status(self):
-        code = self.status_code
-        if code:
-            return '%d %s' % (code, responses.get(code, 'Unknown'))
+    @property
+    def reason(self):
+        return responses.get(self.status_code)
 
     @property
     def text(self):
@@ -639,17 +641,12 @@ class HttpResponse(ProtocolConsumer):
         """
         data = self.content
         if data is not None:
-            ct = self.headers.get('content-type')
-            charset = None
-            if ct:
-                ct, options = parse_options_header(ct)
-                charset = options.get('charset')
-            return data.decode(charset or 'utf-8')
+            return data.decode(self.encoding or 'utf-8')
 
     def json(self):
         """Decode content as a JSON object.
         """
-        return _json.loads(self.text())
+        return _json.loads(self.text)
 
     def decode_content(self):
         """Return the best possible representation of the response body.
@@ -659,9 +656,9 @@ class HttpResponse(ProtocolConsumer):
             ct, options = parse_options_header(ct)
             charset = options.get('charset')
             if ct in JSON_CONTENT_TYPES:
-                return self.json(charset)
+                return self.json()
             elif ct.startswith('text/'):
-                return self.text(charset)
+                return self.text
             elif ct == FORM_URL_ENCODED:
                 return parse_qsl(self.content.decode(charset),
                                  keep_blank_values=True)
@@ -670,7 +667,7 @@ class HttpResponse(ProtocolConsumer):
     def raise_for_status(self):
         """Raises stored :class:`HTTPError` or :class:`URLError`, if occurred.
         """
-        if self.is_error:
+        if not self.ok:
             if self.status_code:
                 raise HttpRequestException(response=self)
             else:
@@ -830,7 +827,7 @@ class HttpClient(AbstractClient):
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
-            dheaders.override(headers)
+            dheaders.update(headers)
         self.headers = dheaders
         self.tunnel_headers = self.DEFAULT_TUNNEL_HEADERS.copy()
         self.proxies = dict(proxies or ())
@@ -1008,7 +1005,7 @@ class HttpClient(AbstractClient):
         # :attr:`headers` with *headers*. Can handle websocket requests.
         d = self.headers.copy()
         if headers:
-            d.override(headers)
+            d.update(headers)
         return d
 
     def _ssl_context(self, verify=True, cert_reqs=None,

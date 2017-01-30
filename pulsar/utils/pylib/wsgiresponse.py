@@ -236,7 +236,7 @@ class WsgiResponse:
         if (self.status_code < 400 and self._can_store_cookies and
                 self._cookies):
             for c in self.cookies.values():
-                headers.add_header('set-cookie', c.OutputString())
+                headers.add('set-cookie', c.OutputString())
         return headers.items()
 
     def has_header(self, header):
