@@ -11,16 +11,19 @@ from ..httpurl import has_empty_content
 
 
 PULSAR_CACHE = 'pulsar.cache'
+nocache = object()
 
 
-def cached_property(method):
+def wsgi_cached(method):
     name = method.__name__
 
     def _(self):
         cache = self.environ[PULSAR_CACHE]
-        if name not in cache:
-            cache[name] = method(self)
-        return cache[name]
+        value = getattr(cache, name, nocache)
+        if value is nocache:
+            setattr(cache, name, method(self))
+            value = getattr(cache, name)
+        return value
 
     return property(_, doc=method.__doc__)
 

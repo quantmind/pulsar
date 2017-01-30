@@ -11,15 +11,13 @@ class AbortEvent(Exception):
 
 
 class Event:
-    """Abstract event handler
-    """
-    __slots__ = ('name', '_handlers', '_waiter', '_self')
-    onetime = False
+    __slots__ = ('name', '_onetime', '_handlers', '_waiter', '_self')
 
-    def __init__(self, name, o):
+    def __init__(self, name, o, onetime):
         self.name = name
-        self._handlers = None
+        self._onetime = onetime
         self._self = o
+        self._handlers = None
         self._waiter = None
 
     def __repr__(self):
@@ -27,28 +25,30 @@ class Event:
 
     __str__ = __repr__
 
-    @property
     def handlers(self):
-        if self._handlers is None:
-            self._handlers = []
         return self._handlers
 
-    def bind(self, callback, *callbacks):
+    def onetime(self):
+        return bool(self._onetime)
+
+    def fired(self):
+        return self._self is None
+
+    def bind(self, callback):
         """Bind a ``callback`` to this event.
         """
-        handlers = self.handlers
-        if callback not in handlers:
-            handlers.append(callback)
-        if callbacks:
-            for callback in callbacks:
-                if callback not in handlers:
-                    handlers.append(callback)
-        return self
+        handlers = self._handlers
+        if self._self is None:
+            raise RuntimeError('%s already fired, cannot add callbacks' % self)
+        if handlers is None:
+            handlers = []
+            self._handlers = handlers
+        handlers.append(callback)
 
     def clear(self):
         self._handlers = None
 
-    def remove_callback(self, callback):
+    def unbind(self, callback):
         """Remove a callback from the list
         """
         handlers = self._handlers
@@ -56,42 +56,36 @@ class Event:
             filtered_callbacks = [f for f in handlers if f != callback]
             removed_count = len(handlers) - len(filtered_callbacks)
             if removed_count:
-                self.clear()
-                self._handlers.extend(filtered_callbacks)
+                self._handlers = filtered_callbacks
             return removed_count
+        return 0
 
-    def fire(self, **kw):
-        if self._handlers:
-            o = self._self
-            for hnd in self._handlers:
-                try:
-                    hnd(o, **kw)
-                except Exception:
-                    self.logger.exception('Exception while firing %s', self)
-
-
-class OneTime(Event):
-    '''An :class:`AbstractEvent` which can be fired once only.
-
-    This event handler is a subclass of :class:`.Future`.
-    Implemented mainly for the one time events of the :class:`EventHandler`.
-    '''
-    onetime = True
-
-    def fire(self, **kw):
+    def fire(self, exc=None, data=None):
         o = self._self
+
         if o is not None:
-            if self._handlers:
-                self._handlers, handlers = None, self._handlers
-                for hnd in handlers:
-                    hnd(o, **kw)
+            handlers = self._handlers
+            if self._onetime:
+                self._handlers = None
+                self._self = None
+
+            if handlers:
+                if exc is not None:
+                    for hnd in handlers:
+                        hnd(o, exc=exc)
+                elif data is not None:
+                    for hnd in handlers:
+                        hnd(o, data=data)
+                else:
+                    for hnd in handlers:
+                        hnd(o)
+
             if self._waiter:
-                exc = kw.get('exc')
                 if exc:
                     self._waiter.set_exception(exc)
                 else:
                     self._waiter.set_result(o)
-            self._self = None
+                self._waiter = None
 
     def waiter(self):
         if not self._waiter:
@@ -116,16 +110,20 @@ class EventHandler:
         events = self._events
         if events is None:
             ot = self.ONE_TIME_EVENTS or ()
-            self._events = events = dict(((n, OneTime(n, self)) for n in ot))
+            self._events = events = dict(((n, Event(n, self, 1)) for n in ot))
         if name not in events:
-            events[name] = Event(name, self)
+            events[name] = Event(name, self, 0)
         return events[name]
+
+    def fire_event(self, name, exc=None, data=None):
+        if self._events and name in self._events:
+            self._events[name].fire(exc=exc, data=data)
 
     def bind_events(self, events):
         '''Register all known events found in ``events`` key-valued parameters.
         '''
         evs = self._events
-        if evs:
+        if evs and events:
             for event in evs.values():
                 if event.name in events:
                     event.bind(events[event.name])
@@ -139,7 +137,7 @@ class EventHandler:
         events = self._events
         if events and other._events:
             for name, event in other._events.items():
-                if not event.onetime and event._handlers:
+                if not event.onetime() and event._handlers:
                     ev = events.get(name)
                     # If the event is available add it
                     if ev:

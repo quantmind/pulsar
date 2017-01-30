@@ -1,6 +1,8 @@
 import os
 
-if os.environ.get('PULSARPY', 'no') == 'no':
+if os.environ.get('PULSARPY', 'no') == 'yes':
+    HAS_C_EXTENSIONS = False
+else:
     HAS_C_EXTENSIONS = True
     try:
         from .clib import (
@@ -11,19 +13,16 @@ if os.environ.get('PULSARPY', 'no') == 'no':
     except ImportError:
         HAS_C_EXTENSIONS = False
 
-else:
-    HAS_C_EXTENSIONS = False
-
 
 if not HAS_C_EXTENSIONS:
 
-    from .pylib.events import EventHandler, AbortEvent    # noqa
-    from .pylib.protocols import  ProtocolConsumer, Protocol, Producer  # noqa
-    from .pylib.wsgi import WsgiProtocol    # noqa
-    from .pylib.wsgiresponse import WsgiResponse, wsgi_cached   # noqa
-    from .pylib.redisparser import RedisParser  # noqa
-    from .pylib.websocket import FrameParser    # noqa
-    from wsgiref.handlers import format_date_time as http_date  # noqa
+    from .pylib.events import EventHandler, AbortEvent
+    from .pylib.protocols import  ProtocolConsumer, Protocol, Producer
+    from .pylib.wsgi import WsgiProtocol
+    from .pylib.wsgiresponse import WsgiResponse, wsgi_cached
+    from .pylib.redisparser import RedisParser
+    from .pylib.websocket import FrameParser
+    from wsgiref.handlers import format_date_time as http_date
 
 
 __all__ = [

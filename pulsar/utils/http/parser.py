@@ -2,6 +2,7 @@ import re
 import sys
 import zlib
 from enum import Enum
+from urllib.parse import urlparse
 
 from ..exceptions import ProtocolError
 
@@ -39,6 +40,10 @@ class ParserType(Enum):
 
 def passthrough(*args):
     pass
+
+
+def parse_url(url):
+    return urlparse(url)
 
 
 class HttpParser:
@@ -359,3 +364,27 @@ class HttpResponseParser(HttpParser):
 
     def get_status_code(self):
         return self._status_code
+
+
+class HttpParserError(Exception):
+    pass
+
+
+class HttpParserCallbackError(HttpParserError):
+    pass
+
+
+class HttpParserInvalidStatusError(HttpParserError):
+    pass
+
+
+class HttpParserInvalidMethodError(HttpParserError):
+    pass
+
+
+class HttpParserInvalidURLError(HttpParserError):
+    pass
+
+
+class HttpParserUpgrade(Exception):
+    pass

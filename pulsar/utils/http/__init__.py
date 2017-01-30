@@ -1,7 +1,7 @@
 import os
 
 
-if os.environ.get('PULSARPY', 'no') == 'no':
+if os.environ.get('PULSARPY', 'no') != 'yes':
     try:
         from httptools import (
             HttpResponseParser, HttpRequestParser, HttpParserUpgrade,
@@ -10,10 +10,16 @@ if os.environ.get('PULSARPY', 'no') == 'no':
         hasextensions = True
     except ImportError:
         hasextensions = False
-        from .parser import (
-            HttpRequestParser, HttpResponseParser, HttpParserUpgrade,
-            parse_url
-        )
+
+else:
+    hasextensions = False
+
+
+if not hasextensions:
+    from .parser import (   # noqa
+        HttpRequestParser, HttpResponseParser, HttpParserUpgrade,
+        parse_url
+    )
 
 
 CHARSET = 'ISO-8859-1'

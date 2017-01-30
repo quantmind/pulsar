@@ -31,7 +31,7 @@ cdef class EventHandler:
             self._events[name] = event
         return self._events[name]
 
-    cpdef void fire_event(self, str name, exc=None, data=None):
+    cpdef fire_event(self, str name, exc=None, data=None):
         if self._events and name in self._events:
             self._events[name].fire(exc=exc, data=data)
 
@@ -83,16 +83,16 @@ cdef class Event:
         return bool(self._onetime)
 
     cpdef object fired(self):
-        return self._self == None
+        return self._self is None
 
     cpdef list handlers(self):
         return self._handlers
 
-    cpdef void bind(self, object callback):
+    cpdef bind(self, object callback):
         """Bind a ``callback`` to this event.
         """
         cdef list handlers = self._handlers
-        if self._self == None:
+        if self._self is None:
             raise RuntimeError('%s already fired, cannot add callbacks' % self)
         if handlers is None:
             handlers = []
@@ -116,7 +116,7 @@ cdef class Event:
             return removed_count
         return 0
 
-    cpdef void fire(self, exc=None, data=None):
+    cpdef fire(self, exc=None, data=None):
         cdef object o = self._self
         cdef list handlers
 

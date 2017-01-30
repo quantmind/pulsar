@@ -23,10 +23,10 @@ cdef class Event:
     cpdef object onetime(self)
     cpdef object fired(self)
     cpdef list handlers(self)
-    cpdef void bind(self, object callback)
+    cpdef bind(self, object callback)
     cpdef void clear(self)
     cpdef int unbind(self, object callback)
-    cpdef void fire(self, exc=?, data=?)
+    cpdef fire(self, exc=?, data=?)
     cpdef object waiter(self)
 
 
@@ -35,4 +35,4 @@ cdef class EventHandler:
     cpdef Event event(self, str name)
     cpdef void copy_many_times_events(self, EventHandler other)
     cpdef void bind_events(self, dict events)
-    cpdef void fire_event(self, str name, exc=?, data=?)
+    cpdef fire_event(self, str name, exc=?, data=?)
