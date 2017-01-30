@@ -56,7 +56,7 @@ import asyncio
 import logging
 from collections import namedtuple
 
-from ..utils.exceptions import ProtocolError, CommandError
+from ..utils.exceptions import CommandError
 from ..utils.internet import nice_address
 from ..utils.websocket import frame_parser
 from ..utils.string import gen_unique_id
@@ -212,8 +212,9 @@ class MailboxConnection(PulsarProtocol):
         connection.parser = frame_parser(kind=2)
         return connection
 
-    def request(self, command, sender, target, args, kwargs):
+    def send(self, command, sender, target, args, kwargs):
         """Used by the server to send messages to the client.
+        Returns a future.
         """
         command = get_command(command)
         data = {'command': command.__name__,
@@ -235,7 +236,9 @@ class MailboxConnection(PulsarProtocol):
             waiter.set_exception(exc)
             if ack:
                 self.pending_responses.pop(ack, None)
-
+        else:
+            if not ack:
+                waiter.set_result(None)
         return waiter
 
     def write(self, msg):
@@ -255,8 +258,7 @@ class MailboxClient(AbstractClient):
     """
     def __init__(self, address, actor, loop):
         super().__init__(MailboxConnection.create, loop=loop,
-                         name='%s-mailbox' % actor,
-                         logger=LOGGER)
+                         name='%s-mailbox' % actor, logger=LOGGER)
         self.address = address
         self._connection = None
 
@@ -266,12 +268,11 @@ class MailboxClient(AbstractClient):
     def __repr__(self):
         return '%s %s' % (self.name, nice_address(self.address))
 
-    async def request(self, command, sender, target, args, kwargs):
-        # the request method
+    async def send(self, command, sender, target, args, kwargs):
         if self._connection is None:
             self._connection = await self.connect()
             self._connection.event('connection_lost').bind(self._lost)
-        response = await self._connection.request(
+        response = await self._connection.send(
             command, sender, target, args, kwargs
         )
         return response

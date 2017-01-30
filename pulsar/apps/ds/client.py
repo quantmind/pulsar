@@ -144,8 +144,8 @@ class PulsarStoreClient(Connection, ClientMixin):
         self.patterns = set()
         self.watched_keys = None
         self.password = b''
-        self.bind_event('connection_lost',
-                        partial(self.store._remove_connection, self))
+        self.event('connection_lost').bind(
+            partial(self.store._remove_connection, self))
 
     # Client Mixin Implementation
     def reply_ok(self):

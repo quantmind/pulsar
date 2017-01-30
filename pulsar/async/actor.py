@@ -283,9 +283,9 @@ class Actor(EventHandler, Coverage):
                 return command_in_context(action, self, actor, args, kwargs)
             elif isinstance(actor, ActorProxyMonitor):
                 mailbox = actor.mailbox
-        if hasattr(mailbox, 'request'):
+        if hasattr(mailbox, 'send'):
             # if not mailbox.closed:
-            return mailbox.request(action, self, target, args, kwargs)
+            return mailbox.send(action, self, target, args, kwargs)
         else:
             raise CommandError('Cannot execute "%s" in %s. Unknown actor %s.'
                                % (action, self, target))

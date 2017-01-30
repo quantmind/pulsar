@@ -74,7 +74,7 @@ class HTTPDigestAuth(Auth):
                 self.encode(request.method, request.full_url)
         else:
             # add post request handler
-            response.bind_event('post_request', self.handle_401)
+            response.event('post_request').bind(self.handle_401)
         return response
 
     def __repr__(self):

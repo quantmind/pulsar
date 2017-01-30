@@ -46,11 +46,10 @@ async def start_request(request, conn):
     if request.auth:
         response.event('pre_request').bind(request.auth)
 
+    response.start(request)
     if request.stream:
-        response.start(request)
         await response.event('on_headers').waiter()
     else:
-        response.start(request)
         await response.event('post_request').waiter()
 
     if hasattr(response.request_again, '__call__'):
@@ -180,7 +179,7 @@ class WebSocket:
                 headers['Sec-WebSocket-Version'] = str(max(SUPPORTED_VERSIONS))
             if 'Sec-WebSocket-Key' not in headers:
                 headers['Sec-WebSocket-Key'] = self.websocket_key
-            response.bind_event('on_headers', self.on_headers)
+            response.event('on_headers').bind(self.on_headers)
 
     @noerror
     def on_headers(self, response, exc=None):

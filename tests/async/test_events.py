@@ -15,14 +15,13 @@ class TestFailure(unittest.TestCase):
         h.event('finish').fire()
         self.assertTrue(h.event('finish').fired())
 
-    async def test_one_time_error(self):
+    def test_one_time_error(self):
         h = Handler()
-        h.bind_event('finish', lambda f, exc=None: 'OK'+4)
-        result = await h.fire_event('finish', 3)
-        self.assertTrue(h.event('finish').done())
-        self.assertEqual(result, 3)
+        h.event('finish').bind(lambda f, exc=None: 'OK'+4)
+        with self.assertRaises(TypeError):
+            h.event('finish').fire()
 
-    async def test_bind_events(self):
+    def test_bind_events(self):
         h = Handler()
         h.bind_events(foo=3, bla=6)
         self.assertFalse(h.events['start'].handlers)
@@ -31,8 +30,8 @@ class TestFailure(unittest.TestCase):
                       finish=lambda r, exc=None: r+1)
         self.assertTrue(h.events['start'].handlers)
         self.assertTrue(h.events['finish'].handlers)
-        result = await h.fire_event('start', 2)
-        self.assertEqual(result, 2)
+        h.fire_event('start')
+        self.assertTrue(h.event('start').fired())
 
     def test_remove_callback(self):
         h = Handler()
@@ -40,7 +39,7 @@ class TestFailure(unittest.TestCase):
         def cbk(_, **kw):
             return kw
 
-        h.bind_event('many', cbk)
+        h.event('many').bind(cbk)
         self.assertTrue(h.event('many'))
         self.assertEqual(h.remove_callback('bla', cbk), None)
         self.assertEqual(h.remove_callback('many', cbk), 1)

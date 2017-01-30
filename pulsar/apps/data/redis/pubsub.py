@@ -94,7 +94,7 @@ class RedisPubSub(PubSub):
             protocol_factory = partial(PubsubProtocol, self,
                                        producer=self.store)
             self._connection = await self.store.connect(protocol_factory)
-            self._connection.bind_event('connection_lost', self._conn_lost)
+            self._connection.event('connection_lost').bind(self._conn_lost)
         result = await self._connection.execute(*args)
         return result
 
@@ -110,7 +110,7 @@ class RedisChannels(Channels, PubSubClient):
         assert pubsub.protocol, "protocol required for channels"
         super().__init__(pubsub.store, **kw)
         self.pubsub = pubsub
-        self.pubsub.bind_event('connection_lost', self._connection_lost)
+        self.pubsub.event('connection_lost').bind(self._connection_lost)
         self.pubsub.add_client(self)
 
     def lock(self, name, **kwargs):

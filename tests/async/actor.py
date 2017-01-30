@@ -1,6 +1,5 @@
-import pulsar
 from pulsar.apps.test import ActorTestMixin
-from pulsar.api import send, async_while
+from pulsar.api import send, async_while, get_actor
 
 from tests.async import (add, get_test, spawn_actor_from_actor, close_mailbox,
                          wait_for_stop, check_environ)
@@ -32,7 +31,7 @@ class ActorTest(ActorTestMixin):
         '''Test start and stop for a standard actor on the arbiter domain.'''
         proxy = await self.spawn_actor(
             name='simple-actor-on-%s' % self.concurrency)
-        arbiter = pulsar.get_actor()
+        arbiter = get_actor()
         proxy_monitor = arbiter.get_actor(proxy.aid)
         self.assertEqual(proxy_monitor, proxy)
         self.assertEqual(await send(proxy, 'ping'), 'pong')
@@ -47,7 +46,7 @@ class ActorTest(ActorTestMixin):
     async def test_spawn_from_actor(self):
         proxy = await self.spawn_actor(
             name='spawning-actor-%s' % self.concurrency)
-        arbiter = pulsar.get_actor()
+        arbiter = get_actor()
         self.assertTrue(repr(proxy).startswith('spawning-actor-'))
         self.assertEqual(proxy, proxy.proxy)
         proxy_monitor = arbiter.get_actor(proxy.aid)
@@ -71,7 +70,7 @@ class ActorTest(ActorTestMixin):
     async def test_config_command(self):
         proxy = await self.spawn_actor(
             name='actor-test-config-%s' % self.concurrency)
-        arbiter = pulsar.get_actor()
+        arbiter = get_actor()
         proxy_monitor = arbiter.get_actor(proxy.aid)
         result = await send(proxy, 'config', 'khjkh', 'name')
         self.assertEqual(result, None)

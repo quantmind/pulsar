@@ -10,7 +10,7 @@ from .populate import populate, random_string
 from .result import Plugin, TestStream, TestRunner, TestResult
 from .plugins.base import WrapTest, TestPlugin, validate_plugin_list
 from .loader import TestLoader
-from .utils import (sequential, ActorTestMixin, AsyncAssert, check_server,
+from .utils import (sequential, ActorTestMixin, check_server,
                     test_timeout, dont_run_with_thread, TestFailure,
                     skipUnless)
 from .wsgi import HttpTestClient
@@ -29,7 +29,6 @@ __all__ = ['populate',
            'TestPlugin',
            'sequential',
            'ActorTestMixin',
-           'AsyncAssert',
            'TestFailure',
            'check_server',
            'test_timeout',

@@ -24,6 +24,8 @@ except ImportError:     # pragma    nocover
 
 from multidict import CIMultiDict
 
+from async_timeout import timeout as async_timeout
+
 import pulsar
 from pulsar.api import (
     AbortEvent, AbstractClient, Pool, Connection,
@@ -210,11 +212,11 @@ class HttpTunnel(RequestBase):
         tunnel_status = getattr(connection, '_tunnel_status', 0)
         if not tunnel_status:
             connection._tunnel_status = 1
-            response.bind_event('pre_request', handler)
+            response.event('pre_request').bind(handler)
         elif tunnel_status == 1:
             connection._tunnel_status = 2
             response._request = self
-            response.bind_event('on_headers', handler.on_headers)
+            response.event('on_headers').bind(handler.on_headers)
 
 
 class HttpRequest(RequestBase):
@@ -342,7 +344,7 @@ class HttpRequest(RequestBase):
     def new_parser(self, protocol):
         protocol.headers = CIMultiDict()
         parser = self.client.http_parser(protocol)
-        protocol.data_received = parser.feed_data
+        protocol.feed_data = parser.feed_data
         return parser
 
     def is_chunked(self):
@@ -566,9 +568,6 @@ class HttpResponse(ProtocolConsumer):
     request_again = None
     ONE_TIME_EVENTS = ('pre_request', 'on_headers', 'post_request')
 
-    def __init__(self, *, loop=None):
-        self._loop = loop
-
     def __repr__(self):
         return '<Response [%s]>' % (self.status_code or 'None')
     __str__ = __repr__
@@ -685,11 +684,11 @@ class HttpResponse(ProtocolConsumer):
         return self.headers
 
     # #####################################################################
-    # #    PROTOCOL IMPLEMENTATION
+    # #    PROTOCOL CONSUMER IMPLEMENTATION
     def start_request(self):
-        request = self._request
+        request = self.request
         self.parser = request.new_parser(self)
-        self.transport.write(request.encode())
+        self.connection.transport.write(request.encode())
         if request.headers.get('expect') != '100-continue':
             self.write_body()
 
@@ -719,10 +718,10 @@ class HttpResponse(ProtocolConsumer):
             self.content += body
 
     def on_message_complete(self):
-        self.finished()
+        self.fire_event('post_request')
 
     def write_body(self):
-        self.request.write_body(self.transport)
+        self.request.write_body(self.connection.transport)
 
 
 class HttpClient(AbstractClient):
@@ -916,7 +915,7 @@ class HttpClient(AbstractClient):
         kwargs.setdefault('allow_redirects', True)
         return self.request('DELETE', url, **kwargs)
 
-    def request(self, method, url, timeout=None, **params):
+    def request(self, method, url, **params):
         """Constructs and sends a request to a remote server.
 
         It returns a :class:`.Future` which results in a
@@ -933,10 +932,6 @@ class HttpClient(AbstractClient):
         :rtype: a :class:`.Future`
         """
         response = self._request(method, url, **params)
-        if timeout is None:
-            timeout = self.timeout
-        if timeout:
-            response = asyncio.wait_for(response, timeout, loop=self._loop)
         if not self._loop.is_running():
             return self._loop.run_until_complete(response)
         else:
@@ -959,49 +954,54 @@ class HttpClient(AbstractClient):
         await self.close()
 
     # INTERNALS
-    async def _request(self, method, url, **params):
-        nparams = params.copy()
-        nparams.update(((name, getattr(self, name)) for name in
-                        self.request_parameters if name not in params))
-        request = HttpRequest(self, url, method, params, **nparams)
-        pool = self.connection_pools.get(request.key)
-        if pool is None:
-            host, port = request.address
-            connector = partial(self.create_connection,
-                                (host, port),
-                                ssl=request.ssl)
-            pool = self.connection_pool(connector, pool_size=self.pool_size,
-                                        loop=self._loop)
-            self.connection_pools[request.key] = pool
-        try:
-            conn = await pool.connect()
-        except BaseSSLError as e:
-            raise SSLError(str(e), response=self) from None
-        except ConnectionRefusedError as e:
-            raise HttpConnectionError(str(e), response=self) from None
+    async def _request(self, method, url, timeout=None, **params):
+        if timeout is None:
+            timeout = self.timeout
 
-        with conn:
+        with async_timeout(timeout, loop=self._loop):
+            nparams = params.copy()
+            nparams.update(((name, getattr(self, name)) for name in
+                            self.request_parameters if name not in params))
+            request = HttpRequest(self, url, method, params, **nparams)
+            pool = self.connection_pools.get(request.key)
+            if pool is None:
+                host, port = request.address
+                connector = partial(self.create_connection,
+                                    (host, port),
+                                    ssl=request.ssl)
+                pool = self.connection_pool(
+                    connector, pool_size=self.pool_size, loop=self._loop
+                )
+                self.connection_pools[request.key] = pool
             try:
-                response = await start_request(request, conn)
-                status_code = response.status_code
-            except AbortEvent:
-                response = None
-                status_code = None
+                conn = await pool.connect()
+            except BaseSSLError as e:
+                raise SSLError(str(e), response=self) from None
+            except ConnectionRefusedError as e:
+                raise HttpConnectionError(str(e), response=self) from None
 
-            if (not status_code or
-                    not keep_alive(response.version, response.headers) or
-                    status_code == 101 or
-                    # if response is done stream is not relevant
-                    (response.request.stream and not
-                     response.event('post_request').fired()) or
-                    self.close_connections):
-                conn.detach()
+            with conn:
+                try:
+                    response = await start_request(request, conn)
+                    status_code = response.status_code
+                except AbortEvent:
+                    response = None
+                    status_code = None
 
-        # Handle a possible redirect
-        if response and isinstance(response.request_again, tuple):
-            method, url, params = response.request_again
-            response = await self._request(method, url, **params)
-        return response
+                if (not status_code or
+                        not keep_alive(response.version, response.headers) or
+                        status_code == 101 or
+                        # if response is done stream is not relevant
+                        (response.request.stream and not
+                         response.event('post_request').fired()) or
+                        self.close_connections):
+                    conn.detach()
+
+            # Handle a possible redirect
+            if response and isinstance(response.request_again, tuple):
+                method, url, params = response.request_again
+                response = await self._request(method, url, **params)
+            return response
 
     def get_headers(self, request, headers):
         # Returns a :class:`Header` obtained from combining

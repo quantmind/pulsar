@@ -103,7 +103,7 @@ cdef class WsgiProtocol:
         if header in HOP_HEADERS:
             if header == CONNECTION:
                 if (self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'
-                        or header_value != 'keep-alive'):
+                        or header_value.lower() != 'keep-alive'):
                     self.headers[header] = header_value
             else:
                 self.headers[header] = header_value

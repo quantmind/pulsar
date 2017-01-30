@@ -55,6 +55,7 @@ cdef class Protocol(EventHandler):
         Producer producer
 
     cdef public int processed
+
     cdef ProtocolConsumer _current_consumer
 
     ONE_TIME_EVENTS = ('connection_made', 'connection_lost')
@@ -100,10 +101,11 @@ cdef class Protocol(EventHandler):
             addr = self.transport.get_extra_info('sockname')
         self.address = addr
         sock = transport.get_extra_info('socket')
-        try:
-            sock.setsockopt(SOL_SOCKET, SO_KEEPALIVE, 1)
-        except (OSError, NameError):
-            pass
+        if sock:
+            try:
+                sock.setsockopt(SOL_SOCKET, SO_KEEPALIVE, 1)
+            except (OSError, NameError):
+                pass
         # let everyone know we have a connection with endpoint
         self.event('connection_made').fire()
 
@@ -134,6 +136,10 @@ cdef class Protocol(EventHandler):
         self.last_change = _current_time_
         return self.last_change
 
+    cpdef void finished_consumer(self, ProtocolConsumer consumer):
+        if self._current_consumer is consumer:
+            self._current_consumer = None
+
     # Callbacks
     cpdef void _build_consumer(self, _, exc=None):
         self._current_consumer = None
@@ -155,11 +161,10 @@ cdef class ProtocolConsumer(EventHandler):
     cdef public:
         dict cache
 
-    def __cinit__(self, EventHandler connection):
+    def __cinit__(self, Protocol connection):
         self.connection = connection
         self.producer = connection.producer
         self._loop = connection._loop
-        connection._current_consumer = self
 
     cpdef void start(self, object request=None):
         self.connection.processed += 1
@@ -183,8 +188,7 @@ cdef class ProtocolConsumer(EventHandler):
         pass
 
     cpdef void _finished(self, object _, object exc=None):
-        if self.connection._current_consumer is self:
-            self.connection._current_consumer = None
+        self.connection.finished_consumer(self)
 
     cpdef object get(self, str attr):
         return getattr(self, attr, None)

@@ -208,7 +208,7 @@ class StreamTunnel(ProtocolConsumer):
 
     def connection_made(self, connection):
         self.logger.debug('Tunnel connection %s made', connection)
-        connection.bind_event('connection_lost', self._close_tunnel)
+        connection.event('connection_lost').bind(self._close_tunnel)
         if self.http_request:
             self.start(self.http_request)
 

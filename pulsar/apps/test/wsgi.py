@@ -3,17 +3,20 @@
 from asyncio import Transport
 
 from pulsar.apps import http
-import pulsar.utils.http as httpp
+from pulsar.utils.http import HttpRequestParser
+from pulsar.api import Protocol
 from pulsar.apps.wsgi import HttpServerResponse
+
 
 __all__ = ['HttpTestClient']
 
 
 class DummyTransport(Transport):
 
-    @property
-    def transport(self):
-        return self
+    def __init__(self, connection, address, ssl):
+        super().__init__()
+        self.connection = connection
+        self._extra['sockname'] = address
 
     def close(self):
         pass
@@ -21,8 +24,19 @@ class DummyTransport(Transport):
     def abort(self):
         pass
 
+    def write(self, chunk):
+        consumer = self.connection.current_consumer()
+        server_side = consumer.server_side
+        if server_side:
+            server_side.data_received(chunk)
+        else:
+            consumer.message += chunk
+            assert consumer.in_parser.execute(chunk, len(chunk)) == len(chunk)
+            if consumer.in_parser.is_message_complete():
+                consumer.finished()
 
-class DummyConnection(DummyTransport):
+
+class DummyConnection(Protocol):
     """A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
 
     .. attribute:: client
@@ -33,13 +47,11 @@ class DummyConnection(DummyTransport):
 
         The *server* connection for this :attr:`client`
     """
-    def __init__(self, producer, address, ssl=None):
-        super().__init__()
-        self.address = address
-        self.ssl = ssl
-        self._producer = producer
-        self._processed = 0
-        self._current_consumer = None
+    @classmethod
+    def create(cls, producer, address, ssl=None):
+        connection = DummyConnection(cls.consumer_factory, producer)
+        connection.connection_made(DummyTransport(connection, address, ssl))
+        return connection
 
     def __enter__(self):
         return self
@@ -47,46 +59,23 @@ class DummyConnection(DummyTransport):
     def __exit__(self, type, value, traceback):
         pass
 
-    @property
-    def _loop(self):
-        return self._producer._loop
-
     def detach(self, discard=True):
         pass
 
-    def current_consumer(self):
-        consumer = http.HttpResponse(self._loop)
-        consumer._connection = self
+    @classmethod
+    def consumer_factory(cls, connection):
+        consumer = http.HttpResponse(connection)
         consumer.server_side = None
+        producer = consumer.producer
 
-        if self._producer.wsgi:
-            server_side = HttpServerResponse(
-                self._producer.wsgi, self._producer.test.cfg, loop=self._loop
-            )
-            server_side._connection = DummyServerConnection(
-                server_side, consumer, self.address
-            )
-            consumer.server_side = server_side
-
+        if producer.wsgi:
+            consumer.server_side = server.current_consumer()
         else:
             consumer.server_side = None
             consumer.message = b''
-            consumer.in_parser = httpp.HttpRequestParser(self)
+            consumer.in_parser = HttpRequestParser(self)
 
-        consumer.connection_made(self)
-        self._current_consumer = consumer
         return consumer
-
-    def write(self, chunk):
-        consumer = self._current_consumer
-        server_side = consumer.server_side
-        if server_side:
-            server_side.data_received(chunk)
-        else:
-            consumer.message += chunk
-            assert consumer.in_parser.execute(chunk, len(chunk)) == len(chunk)
-            if consumer.in_parser.is_message_complete():
-                consumer.finished()
 
 
 class DummyServerConnection(DummyTransport):
@@ -127,7 +116,7 @@ class HttpTestClient(http.HttpClient):
         super().__init__(**kwargs)
 
     async def create_connection(self, address, ssl=None):
-        return DummyConnection(self, address)
+        return DummyConnection.create(self, address)
 
     def get_headers(self, request, headers):
         headers = super().get_headers(request, headers)

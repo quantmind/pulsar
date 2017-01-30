@@ -7,7 +7,7 @@ from async_timeout import timeout
 from pulsar.api import HaltServer
 
 from .utils import (TestFailure, skip_test, skip_reason,
-                    expecting_failure, AsyncAssert, get_test_timeout)
+                    expecting_failure, get_test_timeout)
 
 
 class AbortTests(Exception):
@@ -71,7 +71,6 @@ class Runner:
 
         test_cls.tag = tag
         test_cls.cfg = self.cfg
-        test_cls.wait = AsyncAssert(test_cls)
         try:
             all_tests = self.runner.loadTestsFromTestCase(test_cls)
         except Exception:

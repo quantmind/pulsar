@@ -144,7 +144,7 @@ class TestHttpClientBase:
         self.assertEqual(pool.in_use, 0)
         self.assertEqual(http.sessions, 1)
         self.assertEqual(http.requests_processed, processed)
-        self.assertEqual(response._connection._processed, processed)
+        self.assertEqual(response.connection.processed, processed)
 
     def _check_server(self, response):
         self.assertEqual(response.headers['server'], SERVER_SOFTWARE)

@@ -17,3 +17,13 @@ if os.environ.get('PULSARPY', 'no') == 'no':
 
 
 CHARSET = 'ISO-8859-1'
+
+
+__all__ = [
+    'HttpResponseParser',
+    'HttpRequestParser',
+    'HttpParserUpgrade',
+    'parse_url',
+    'hasextensions',
+    'CHARSET'
+]

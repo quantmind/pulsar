@@ -110,47 +110,6 @@ def get_test_timeout(o, timeout):
     return max(val, timeout)
 
 
-class AsyncAssert:
-    '''A `descriptor`_ added by the test application to all python
-    :class:`~unittest.TestCase` loaded.
-
-    It can be used to invoke the same ``assertXXX`` methods available in
-    the :class:`~unittest.TestCase` in an asynchronous fashion.
-
-    The descriptor is available via the ``async`` attribute.
-    For example::
-
-        class MyTest(unittest.TestCase):
-
-            async def test1(self):
-                await self.wait.assertEqual(3, Future().callback(3))
-                ...
-
-
-    .. _descriptor: http://users.rcn.com/python/download/Descriptor.htm
-    '''
-    def __init__(self, test):
-        self.test = test
-
-    def __get__(self, instance, instance_type=None):
-        if instance is not None:
-            return AsyncAssert(instance)
-        else:
-            return self
-
-    async def assertRaises(self, error, callable, *args, **kwargs):
-        try:
-            await callable(*args, **kwargs)
-        except error:
-            return
-        except Exception:   # pragma    nocover
-            raise self.test.failureException('%s not raised by %s'
-                                             % (error, callable))
-        else:   # pragma    nocover
-            raise self.test.failureException('%s not raised by %s'
-                                             % (error, callable))
-
-
 class ActorTestMixin:
     '''A mixin for :class:`~unittest.TestCase`.
 

@@ -69,7 +69,7 @@ Optionally, it is possible to pass one additional parameter::
 
     >> o.fire_event('start', 'hello')
 
-Adding event callbacks is done via the :meth:`~.EventHandler.bind_event`
+Adding event callbacks is done via the :meth:`~.Event.bind`
 method. The method accept two parameters, the event name and a callable
 accepting one parameters, the caller which fires the event or the
 optional positional parameter passed to the :meth:`~.EventHandler.fire_event`
@@ -78,4 +78,4 @@ method mentioned above::
     def start_handler(result):
         ...
 
-    o.bind_event('start', start_handler)
+    o.event('start').bind(start_handler)

@@ -2,7 +2,7 @@ from .utils.exceptions import (
     PulsarException, ImproperlyConfigured, HttpException, HttpRedirect,
     BadRequest, Http401, Http404, HttpConnectionError, HttpGone,
     HttpRequestException, MethodNotAllowed, PermissionDenied, HaltServer,
-    SSLError, ProtocolError, LockError, CommandError
+    SSLError, ProtocolError, LockError, CommandError, CommandNotFound
 )
 from .utils.config import Config, Setting
 from .utils.lib import (
@@ -11,7 +11,7 @@ from .utils.lib import (
 
 from .async.access import get_actor, create_future, cfg_value, ensure_future
 from .async.actor import is_actor, send, spawn, get_stream
-from .async.proxy import command
+from .async.proxy import command, get_proxy
 from .async.lock import Lock, LockBase
 from .async.protocols import (
     Connection, DatagramProtocol, TcpServer, DatagramServer
@@ -54,6 +54,7 @@ __all__ = [
     'arbiter',
     'get_stream',
     'command',
+    'get_proxy',
     'AsyncObject',
     #
     # Async Clients
@@ -89,5 +90,6 @@ __all__ = [
     'SSLError',
     'ProtocolError',
     'LockError',
-    'CommandError'
+    'CommandError',
+    'CommandNotFound'
 ]

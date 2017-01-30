@@ -342,7 +342,7 @@ Adding event handlers can be done at sessions level::
         if not exc:
             print('got headers!')
 
-    sessions.bind_event('on_headers', myheader_handler)
+    sessions.event('on_headers').bind(myheader_handler)
 
 or at request level::
 
