@@ -1,7 +1,7 @@
-import os
+from ..lib import HAS_C_EXTENSIONS
 
 
-if os.environ.get('PULSARPY', 'no') != 'yes':
+if HAS_C_EXTENSIONS:
     try:
         from httptools import (
             HttpResponseParser, HttpRequestParser, HttpParserUpgrade,

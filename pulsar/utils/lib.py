@@ -15,14 +15,12 @@ else:
 
 
 if not HAS_C_EXTENSIONS:
-
-    from .pylib.events import EventHandler, AbortEvent
-    from .pylib.protocols import  ProtocolConsumer, Protocol, Producer
-    from .pylib.wsgi import WsgiProtocol
-    from .pylib.wsgiresponse import WsgiResponse, wsgi_cached
-    from .pylib.redisparser import RedisParser
-    from .pylib.websocket import FrameParser
-    from wsgiref.handlers import format_date_time as http_date
+    from .pylib.protocols import  ProtocolConsumer, Protocol, Producer  # noqa
+    from .pylib.events import EventHandler, AbortEvent          # noqa
+    from .pylib.wsgi import WsgiProtocol, http_date             # noqa
+    from .pylib.wsgiresponse import WsgiResponse, wsgi_cached   # noqa
+    from .pylib.redisparser import RedisParser                  # noqa
+    from .pylib.websocket import FrameParser                    # noqa
 
 
 __all__ = [

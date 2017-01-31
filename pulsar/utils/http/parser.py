@@ -3,6 +3,7 @@ import sys
 import zlib
 from enum import Enum
 from urllib.parse import urlparse
+from collections import namedtuple
 
 from ..exceptions import ProtocolError
 
@@ -20,19 +21,11 @@ INVALID_CHUNK = 2
 CHARSET = 'ISO-8859-1'
 
 
-class InvalidRequestLine(ProtocolError):
-    """error raised when first line is invalid """
+ParsedUrl = namedtuple('ParsedUrl',
+                       'schema host port path query fragment userinfo')
 
 
-class InvalidHeader(ProtocolError):
-    """error raised on invalid header """
-
-
-class InvalidChunkSize(ProtocolError):
-    """error raised when we parse an invalid chunk size """
-
-
-class HttpParserError(Exception):
+class HttpParserError(ProtocolError):
     pass
 
 
@@ -62,43 +55,54 @@ class ParserType(Enum):
     HTTP_BOTH = 2
 
 
+class F(Enum):
+    CHUNKED = 1 << 0
+    CONNECTION_KEEP_ALIVE = 1 << 1
+    CONNECTION_CLOSE = 1 << 2
+    CONNECTION_UPGRADE = 1 << 3
+    TRAILING = 1 << 4
+    UPGRADE = 1 << 5
+    SKIPBODY = 1 << 6
+    CONTENTLENGTH = 1 << 7
+
+
 def passthrough(*args):
     pass
 
 
 def parse_url(url):
-    return urlparse(url)
+    p = urlparse(url)
+    host_port = p.netloc.split(b':', 1)
+    host = host_port[0]
+    port = int(host_port[1]) if len(host_port) == 2 else None
+    return ParsedUrl(p.scheme, host, port, p.path,
+                     p.query, p.fragment, p.params)
 
 
 class HttpParser:
     """A python HTTP parser.
-
-    Original code from https://github.com/benoitc/http-parser
-
-    2011 (c) Benoit Chesneau <benoitc@e-engura.org>
     """
-    def __init__(self, protocol, kind=ParserType.HTTP_BOTH):
+    status = None
+    status_code = None
+    reason = None
+    method = None
+    version_minor = None
+    version_major = None
+    version = None
+    content_length = sys.maxsize
+
+    def __init__(self, protocol, type=ParserType.HTTP_BOTH):
         # errors vars
         self.errno = None
         self.errstr = ""
-        # protected variables
-        self._buf = []
-        self._version = None
-        self._method = None
-        self._status_code = None
-        self._kind = kind
-        self._chunked = False
-        self._trailers = None
-        self._partial_body = False
-        self._clen = None
-        self._clen_rest = None
+        self.type = type
+        self.buf = bytearray()
+        self.flags = 0
+        #
         # private variables
-        self.__on_firstline = False
-        self.__on_headers_complete = False
+        self._position = 0
+        self._clen_rest = self.content_length
         # protocol callbacks
-        self._on_url = getattr(
-            protocol, 'on_url', passthrough
-        )
         self._on_header = getattr(protocol, 'on_header', passthrough)
         self._on_headers_complete = getattr(
             protocol, 'on_headers_complete', passthrough
@@ -112,25 +116,37 @@ class HttpParser:
         self._on_body = getattr(
             protocol, 'on_body', passthrough
         )
-        self.__on_message_complete = False
-
-    @property
-    def kind(self):
-        return self._kind
 
     def get_http_version(self):
-        return self._version
+        return self.version
 
-    def recv_body(self):
-        """ return last chunk of the parsed body"""
-        body = b''.join(self._body)
-        self._body = []
-        self._partial_body = False
-        return body
+    def should_keep_alive(self):
+        if self.version_major > 0 and self.version_minor > 0:
+            if self.flags & F.CONNECTION_CLOSE.value:
+                return False
+        elif self.flags & F.CONNECTION_KEEP_ALIVE.value:
+            return False
+        return not self.http_message_needs_eof()
+
+    def http_message_needs_eof(self):
+        if self.type == ParserType.HTTP_REQUEST:
+            return False
+
+        if (self.status_code // 100 == 1 or
+                self.status_code == 204 or
+                self.status_code == 304 or
+                self.flags & F.SKIPBODY.value):
+            return False
+
+        if (self.flags & F.CHUNKED.value or
+                self.content_length != sys.maxsize):
+            return False
+
+        return True
 
     def is_headers_complete(self):
         """ return True if all headers have been parsed. """
-        return self.__on_headers_complete
+        return self._position > 1
 
     def is_partial_body(self):
         """ return True if a chunk of body have been parsed """
@@ -138,7 +154,7 @@ class HttpParser:
 
     def is_message_complete(self):
         """ return True if the parsing is done (we get EOF) """
-        return self.__on_message_complete
+        return self._position > 2
 
     def is_chunked(self):
         """ return True if Transfer-Encoding header value is chunked"""
@@ -147,48 +163,26 @@ class HttpParser:
     def feed_data(self, data):
         # end of body can be passed manually by putting a length of 0
         if not data:
-            if not self.__on_message_complete:
-                self.__on_message_complete = True
+            if not self.is_message_complete():
+                self._position = 3
                 self._on_message_complete()
             return
         #
         # start to parse
-        nb_parsed = 0
+        self.buf.extend(data)
         while True:
-            if not self.__on_firstline:
-                idx = data.find(b'\r\n')
+            if not self._position:
+                idx = self.buf.find(b'\r\n')
                 if idx < 0:
-                    self._buf.append(data)
-                    return len(data)
+                    break
                 else:
-                    self.__on_firstline = True
-                    self._buf.append(data[:idx])
-                    first_line = b''.join(self._buf)
-                    rest = data[idx+2:]
-                    data = b''
-                    if self._parse_firstline(first_line):
-                        nb_parsed = nb_parsed + idx + 2
-                        self._buf = [rest]
-                    else:
-                        return nb_parsed
-            elif not self.__on_headers_complete:
-                if data:
-                    self._buf.append(data)
-                    data = b''
-                try:
-                    to_parse = b''.join(self._buf)
-                    ret = self._parse_headers(to_parse)
-                    if ret is False:
-                        return
-                    nb_parsed = nb_parsed + (len(to_parse) - ret)
-                except InvalidHeader as e:
-                    self.errno = INVALID_HEADER
-                    self.errstr = str(e)
-                    return nb_parsed
-            elif not self.__on_message_complete:
-                if data:
-                    self._buf.append(data)
-                    data = b''
+                    self._position = 1
+                    self.parse_first_line(bytes(self.buf[:idx]))
+                    self.buf = self.buf[idx+2:]
+            elif not self.is_headers_complete():
+                if not self._parse_headers():
+                    break
+            elif not self.is_message_complete():
                 ret = self._parse_body()
                 if ret is None:
                     return
@@ -197,75 +191,18 @@ class HttpParser:
                 elif ret == 0:
                     self.__on_message_complete = True
                     self._on_message_complete()
-                    return
-                else:
-                    nb_parsed = ret
-            else:
-                return 0
+                    break
 
-    def _parse_firstline(self, line):
-        try:
-            if self.kind == 2:  # auto detect
-                try:
-                    self._parse_request_line(line)
-                except InvalidRequestLine:
-                    self._parse_response_line(line)
-            elif self.kind == ParserType.HTTP_RESPONSE:
-                self._parse_response_line(line)
-            else:
-                self._parse_request_line(line)
-        except InvalidRequestLine as e:
-            self.errno = BAD_FIRST_LINE
-            self.errstr = str(e)
-            return False
-        return True
-
-    def _parse_response_line(self, line):
-        bits = line.split(None, 1)
-        if len(bits) != 2:
-            raise InvalidRequestLine(line)
-
-        # version
-        matchv = VERSION_RE.match(bits[0])
-        if matchv is None:
-            raise InvalidRequestLine("Invalid HTTP version: %s" % bits[0])
-        self._version = '%s.%s' % (int(matchv.group(1)), int(matchv.group(2)))
-
-        # status
-        matchs = STATUS_RE.match(bits[1])
-        if matchs is None:
-            raise InvalidRequestLine("Invalid status %" % bits[1])
-
-        self._status = bits[1]
-        self._status_code = int(matchs.group(1))
-        self._reason = matchs.group(2)
-
-    def _parse_request_line(self, line):
-        bits = line.split(None, 2)
-        if len(bits) != 3:
-            raise InvalidRequestLine(line)
-        # Method
-        if not METHOD_RE.match(bits[0]):
-            raise InvalidRequestLine("invalid Method: %s" % bits[0])
-        self._method = bits[0].upper()
-        # URI
-        self._on_url(bits[1])
-        # Version
-        match = VERSION_RE.match(bits[2])
-        if match is None:
-            raise InvalidRequestLine("Invalid HTTP version: %s" % bits[2])
-        self._version = '%s.%s' % (int(match.group(1)), int(match.group(2)))
-
-    def _parse_headers(self, data):
+    def _parse_headers(self):
         while True:
-            idx = data.find(b'\r\n')
-            if idx < 0:  # we don't have a header
-                self._buf = [data]
+            idx = self.buf.find(b'\r\n')
+            if idx < 0:
                 return False
-            elif not idx:
+            chunk = bytes(self.buf[:idx])
+            self.buf = self.buf[idx+2:]
+            if not idx:
                 break
-            chunk = data[:idx]
-            data = data[idx+2:]
+
             if chunk.find(b':') < 0:
                 continue
             name, value = chunk.split(b':', 1)
@@ -273,26 +210,31 @@ class HttpParser:
             name = name.rstrip(b" \t").strip()
             self._on_header(name, value)
             name = name.lower()
-            if name == b'content-length':
+            if name == b'connection':
+                self._connection(value)
+            elif name == b'content-length':
                 try:
-                    self._clen = int(value)
+                    self.content_length = int(value)
                 except ValueError:
                     continue
-                if self._clen < 0:  # ignore nonsensical negative lengths
-                    self._clen = None
+                if self.content_length < 0:  # ignore negative lengths
+                    self.content_length = sys.maxsize
             elif name == b'transfer-encoding':
-                self._chunked = value.lower() == b'chunked'
+                if value.lower() == b'chunked':
+                    self.flags |= F.CHUNKED.value
         #
-        if self._clen is None:
-            self._clen_rest = sys.maxsize
-        else:
-            self._clen_rest = self._clen
-
-        rest = data[idx+2:]
-        self._buf = [rest]
-        self.__on_headers_complete = True
+        self._clen_rest = self.content_length
+        self._position = 2
         self._on_headers_complete()
-        return len(rest)
+
+    def _connection(self, value):
+        value = value.lower()
+        if value == 'keep-alive':
+            self.flags |= F.CONNECTION_KEEP_ALIVE.value
+        elif value == 'close':
+            self.flags |= F.CONNECTION_CLOSE.value
+        elif value == 'upgrade':
+            self.flags |= F.CONNECTION_UPGRADE.value
 
     def _parse_body(self):
         data = b''.join(self._buf)
@@ -314,12 +256,7 @@ class HttpParser:
                     self._on_message_complete()
             return
         else:
-            try:
-                size, rest = self._parse_chunk_size(data)
-            except InvalidChunkSize as e:
-                self.errno = INVALID_CHUNK
-                self.errstr = "invalid chunk size [%s]" % str(e)
-                return -1
+            size, rest = self._parse_chunk_size(data)
             if size == 0:
                 return size
             if size is None or len(rest) < size + 2:
@@ -343,7 +280,8 @@ class HttpParser:
         try:
             chunk_size = int(chunk_size, 16)
         except ValueError:
-            raise InvalidChunkSize(chunk_size)
+            raise HttpParserError(
+                'Invalid chunk size %s' % chunk_size) from None
         if chunk_size == 0:
             self._parse_trailers(rest_chunk)
             return 0, None
@@ -374,18 +312,59 @@ class HttpRequestParser(HttpParser):
 
     def __init__(self, protocol):
         super().__init__(protocol, ParserType.HTTP_REQUEST)
-        self._proto_on_url = getattr(protocol, 'on_url', None)
+        self._on_url = getattr(protocol, 'on_url', passthrough)
 
     def get_method(self):
-        return self._method
+        return self.method
+
+    def parse_first_line(self, line):
+        bits = line.split(None, 2)
+        if len(bits) != 3:
+            raise HttpParserError(line)
+        # Method
+        if not METHOD_RE.match(bits[0]):
+            raise HttpParserInvalidMethodError("invalid Method: %s" % bits[0])
+        self.method = bits[0].upper()
+        # URI
+        self._on_url(bits[1])
+        # Version
+        matchv = VERSION_RE.match(bits[2])
+        if matchv is None:
+            raise HttpParserError(
+                "Invalid HTTP version: %s" % bits[2]
+            )
+        self.version_major = int(matchv.group(1))
+        self.version_minor = int(matchv.group(2))
+        self.version = '%s.%s' % (self.version_major, self.version_minor)
 
 
 class HttpResponseParser(HttpParser):
 
     def __init__(self, protocol):
         super().__init__(protocol, ParserType.HTTP_RESPONSE)
-        self._proto_on_status = getattr(protocol, 'on_status', None)
+        self._on_status = getattr(protocol, 'on_status', passthrough)
 
     def get_status_code(self):
-        return self._status_code
+        return self.status_code
 
+    def parse_first_line(self, line):
+        bits = line.split(None, 1)
+        if len(bits) != 2:
+            raise HttpParserError(line)
+
+        # version
+        matchv = VERSION_RE.match(bits[0])
+        if matchv is None:
+            raise HttpParserError("Invalid HTTP version: %s" % bits[0])
+        # status
+        matchs = STATUS_RE.match(bits[1])
+        if matchs is None:
+            raise HttpParserInvalidStatusError("Invalid status %" % bits[1])
+
+        self._on_status(bits[1])
+        self.version_major = int(matchv.group(1))
+        self.version_minor = int(matchv.group(2))
+        self.version = '%s.%s' % (self.version_major, self.version_minor)
+        self.status = bits[1]
+        self.status_code = int(matchs.group(1))
+        self.reason = matchs.group(2)
