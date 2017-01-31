@@ -32,6 +32,30 @@ class InvalidChunkSize(ProtocolError):
     """error raised when we parse an invalid chunk size """
 
 
+class HttpParserError(Exception):
+    pass
+
+
+class HttpParserCallbackError(HttpParserError):
+    pass
+
+
+class HttpParserInvalidStatusError(HttpParserError):
+    pass
+
+
+class HttpParserInvalidMethodError(HttpParserError):
+    pass
+
+
+class HttpParserInvalidURLError(HttpParserError):
+    pass
+
+
+class HttpParserUpgrade(Exception):
+    pass
+
+
 class ParserType(Enum):
     HTTP_REQUEST = 0
     HTTP_RESPONSE = 1
@@ -365,26 +389,3 @@ class HttpResponseParser(HttpParser):
     def get_status_code(self):
         return self._status_code
 
-
-class HttpParserError(Exception):
-    pass
-
-
-class HttpParserCallbackError(HttpParserError):
-    pass
-
-
-class HttpParserInvalidStatusError(HttpParserError):
-    pass
-
-
-class HttpParserInvalidMethodError(HttpParserError):
-    pass
-
-
-class HttpParserInvalidURLError(HttpParserError):
-    pass
-
-
-class HttpParserUpgrade(Exception):
-    pass

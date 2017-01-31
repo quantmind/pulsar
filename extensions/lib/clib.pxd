@@ -32,7 +32,8 @@ cdef class Event:
 
 cdef class EventHandler:
     cdef dict _events
+    cpdef dict events(self)
     cpdef Event event(self, str name)
-    cpdef void copy_many_times_events(self, EventHandler other)
-    cpdef void bind_events(self, dict events)
+    cpdef copy_many_times_events(self, EventHandler other)
+    cpdef bind_events(self, dict events)
     cpdef fire_event(self, str name, exc=?, data=?)

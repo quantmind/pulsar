@@ -13,45 +13,46 @@ class AbortEvent(Exception):
 cdef class EventHandler:
     ONE_TIME_EVENTS = None
 
-    @property
-    def events(self):
+    cpdef dict events(self):
+        if self._events is None:
+            self._events = {}
+            for n in self.ONE_TIME_EVENTS or ():
+                self._events[n] = Event(n, self, 1)
         return self._events
 
     cpdef Event event(self, str name):
         """Returns the :event at ``name``.
         """
+        cdef dict events = self.events()
         if name is None:
             raise ValueError('event name must be a string')
-        if self._events is None:
-            self._events = {}
-            for n in self.ONE_TIME_EVENTS or ():
-                self._events[n] = Event(n, self, 1)
-        if name not in self._events:
+        if name not in events:
             event = Event(name, self, 0)
-            self._events[name] = event
-        return self._events[name]
+            events[name] = event
+        return events[name]
 
     cpdef fire_event(self, str name, exc=None, data=None):
-        if self._events and name in self._events:
-            self._events[name].fire(exc=exc, data=data)
+        cdef dict events = self.events()
+        if name in events:
+            events[name].fire(exc=exc, data=data)
 
-    cpdef void bind_events(self, dict events):
+    cpdef bind_events(self, dict events):
         '''Register all known events found in ``events`` key-valued parameters.
         '''
-        cdef dict evs = self._events
+        cdef dict evs = self.events()
         if evs and events:
             for event in evs.values():
                 if event.name in events:
                     event.bind(events[event.name])
 
-    cpdef void copy_many_times_events(self, EventHandler other):
+    cpdef copy_many_times_events(self, EventHandler other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.
 
         All many times events of ``other`` are copied to this handler
         provided the events handlers already exist.
         '''
-        cdef dict events = self._events
-        cdef dict other_events = other.events if other else None
+        cdef dict events = self.events()
+        cdef dict other_events = other.events() if other else None
         cdef str name
         cdef Event event
         cdef list handlers

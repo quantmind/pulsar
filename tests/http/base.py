@@ -444,7 +444,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def after_test_redirect_1(self, response):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection._processed, 2)
+        self.assertEqual(response.connection.processed, 2)
 
     async def test_redirect_6(self):
         http = self.client()
@@ -458,7 +458,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def after_test_redirect_6(self, response):
         redirect = response.history[-1]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection._processed, 7)
+        self.assertEqual(response.connection.processed, 7)
 
     @no_tls
     async def test_large_response(self):

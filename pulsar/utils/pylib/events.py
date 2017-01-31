@@ -102,15 +102,18 @@ class EventHandler:
     ONE_TIME_EVENTS = None
     _events = None
 
+    def events(self):
+        if self._events is None:
+            ot = self.ONE_TIME_EVENTS or ()
+            self._events = dict(((n, Event(n, self, 1)) for n in ot))
+        return self._events
+
     def event(self, name):
         '''Returns the :class:`Event` at ``name``.
 
         If no event is registered for ``name`` returns nothing.
         '''
-        events = self._events
-        if events is None:
-            ot = self.ONE_TIME_EVENTS or ()
-            self._events = events = dict(((n, Event(n, self, 1)) for n in ot))
+        events = self.events()
         if name not in events:
             events[name] = Event(name, self, 0)
         return events[name]
