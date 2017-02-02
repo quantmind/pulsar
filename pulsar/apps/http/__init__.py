@@ -45,7 +45,7 @@ from pulsar.utils.httpurl import (
 
 from .plugins import (handle_cookies, WebSocket, Redirect,
                       Tunneling, TooManyRedirects, start_request,
-                      keep_alive)
+                      keep_alive, InfoHeaders)
 
 from .auth import Auth, HTTPBasicAuth, HTTPDigestAuth
 from .oauth import OAuth1, OAuth2
@@ -678,7 +678,7 @@ class HttpResponse(ProtocolConsumer):
 
         Return :attr:`headers`.
         """
-        return self.headers
+        return InfoHeaders(self.headers)
 
     # #####################################################################
     # #    PROTOCOL CONSUMER IMPLEMENTATION

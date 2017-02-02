@@ -5,7 +5,7 @@ if HAS_C_EXTENSIONS:
     try:
         from httptools import (
             HttpResponseParser, HttpRequestParser, HttpParserUpgrade,
-            parse_url
+            HttpParserError, parse_url
         )
         hasextensions = True
     except ImportError:
@@ -18,7 +18,7 @@ else:
 if not hasextensions:
     from .parser import (   # noqa
         HttpRequestParser, HttpResponseParser, HttpParserUpgrade,
-        parse_url
+        HttpParserError, parse_url
     )
 
 
@@ -29,6 +29,7 @@ __all__ = [
     'HttpResponseParser',
     'HttpRequestParser',
     'HttpParserUpgrade',
+    'HttpParserError',
     'parse_url',
     'hasextensions',
     'CHARSET'

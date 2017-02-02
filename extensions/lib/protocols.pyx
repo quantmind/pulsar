@@ -91,7 +91,7 @@ cdef class Protocol(EventHandler):
             self._current_consumer.event('post_request').bind(self._build_consumer)
 
     # Asyncio Protocol API
-    cpdef void connection_made(self, object transport):
+    cpdef connection_made(self, object transport):
         """Sets the :attr:`transport`, fire the ``connection_made`` event
         and adds a :attr:`timeout` for idle connections.
         """
@@ -114,7 +114,7 @@ cdef class Protocol(EventHandler):
         """
         self.event('connection_lost').fire()
 
-    cpdef void data_received(self, bytes data):
+    cpdef data_received(self, bytes data):
         """Delegates handling of data to the :meth:`current_consumer`.
 
         Once done set a timeout for idle connections when a

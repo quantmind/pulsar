@@ -267,3 +267,13 @@ async def ssl_transport(loop, rawsock, connection, sslcontext, hostname):
             sock=rawsock,
             server_hostname=hostname
         )
+
+
+class InfoHeaders:
+    __slots__ = ('headers',)
+
+    def __init__(self, headers):
+        self.headers = headers
+
+    def get_all(self, key, default=None):
+        return self.headers.getall(key, default)

@@ -2,8 +2,9 @@ import unittest
 
 from multidict import CIMultiDict
 
-from pulsar.utils import http
-from pulsar.utils.http.parser import HttpRequestParser, HttpResponseParser
+from pulsar.utils.http import (
+    HttpRequestParser, HttpResponseParser, HttpParserError
+)
 
 
 class Protocol:
@@ -45,8 +46,7 @@ class TestPythonHttpParser(unittest.TestCase):
 
     def test_client_200_OK_no_headers(self):
         p = self.response()
-        data = b'HTTP/1.1 200 OK\r\n\r\n'
-        p.parser.feed_data(data)
+        p.parser.feed_data(b'HTTP/1.1 200 OK\r\n\r\n')
         self.assertTrue(p.headers_complete)
         self.assertFalse(p.message_complete)
 
@@ -87,52 +87,46 @@ class TestPythonHttpParser(unittest.TestCase):
         self.assertEqual(p.headers['connection'], 'keep-alive')
 
     def testBadFirstLine(self):
-        p = self.parser()
-        self.assertFalse(p.is_headers_complete())
+        p = self.request()
         data = b'GET HTTP/1.1\r\n\r\n'
-        self.assertNotEqual(p.feed_data(data, len(data)), len(data))
-        p = self.parser()
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
+        p = self.request()
         data = b'get /foo HTTP/1.1\r\n\r\n'
-        self.assertNotEqual(p.feed_data(data, len(data)), len(data))
-        p = self.parser()
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
+        p = self.request()
         data = b'GET /foo FTP/1.1\r\n\r\n'
-        self.assertNotEqual(p.feed_data(data, len(data)), len(data))
-        p = self.parser()
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
+        p = self.request()
         data = b'GET get/ HTTP/1-x\r\n'
-        self.assertNotEqual(p.feed_data(data, len(data)), len(data))
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
 
     def testPartialFirstLine(self):
-        p = self.parser()
-        data = b'GET /get H'
-        self.assertEqual(p.feed_data(data, len(data)), len(data))
-        self.assertFalse(p.is_headers_complete())
-        data = b'TTP/1.1\r\n\r\n'
-        p.feed_data(data, len(data))
-        self.assertTrue(p.is_headers_complete())
-        self.assertTrue(p.is_message_complete())
-        self.assertFalse(p.get_headers())
+        p = self.request()
+        p.parser.feed_data(b'GET /get H')
+        self.assertFalse(p.headers_complete)
+        p.parser.feed_data(b'TTP/1.1\r\n')
+        self.assertEqual(p.url, b'/get')
+        self.assertFalse(p.headers_complete)
+        p.parser.feed_data(b'\r\n')
+        self.assertTrue(p.headers_complete)
+        self.assertTrue(p.message_complete)
+        self.assertFalse(p.headers)
 
     def testBadHeader(self):
-        p = self.parser()
+        p = self.request()
         data = b'GET /get HTTP/1.1\r\nbla\0: bar\r\n\r\n'
-        self.assertNotEqual(p.feed_data(data, len(data)), len(data))
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
         #
-        p = self.parser()
+        p = self.request()
         data = b'GET /test HTTP/1.1\r\nfoo\r\n\r\n'
-        self.assertEqual(p.feed_data(data, len(data)), len(data))
-        self.assertTrue(p.is_headers_complete())
-        self.assertTrue(p.is_message_begin())
-        self.assertTrue(p.is_message_complete())
-        headers = p.get_headers()
-        self.assertEqual(len(headers), 0)
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
 
     def testHeaderOnly(self):
-        p = self.parser()
+        p = self.request()
         data = b'GET /test HTTP/1.1\r\nHost: 0.0.0.0=5000\r\n\r\n'
-        p.feed_data(data, len(data))
-        self.assertTrue(p.is_headers_complete())
-        self.assertTrue(p.is_message_begin())
-        self.assertTrue(p.is_message_complete())
+        p.parser.feed_data(data)
+        self.assertTrue(p.headers_complete)
+        self.assertTrue(p.message_complete)
 
     def test_server_content_length(self):
         p = self.request()
@@ -152,33 +146,17 @@ class TestPythonHttpParser(unittest.TestCase):
         self.assertEqual(p.body, b'ciao')
 
     def test_double_header(self):
-        p = self.parser()
-        data = b'GET /test HTTP/1.1\r\n'
-        p.feed_data(data, len(data))
-        data = b'Accept: */*\r\n'
-        p.feed_data(data)
-        data = b'Accept: jpeg\r\n\r\n'
-        p.feed_data(data, len(data))
-        self.assertTrue(p.is_headers_complete())
-        self.assertTrue(p.is_message_begin())
-        self.assertTrue(p.is_message_complete())
-        headers = p.get_headers()
-        self.assertEqual(len(headers), 1)
-        self.assertEqual(headers.get('Accept'), '*/*, jpeg')
+        p = self.request()
+        p.parser.feed_data(b'GET /test HTTP/1.1\r\n')
+        self.assertFalse(p.headers_complete)
+        p.parser.feed_data(b'Accept: */*\r\n')
+        self.assertFalse(p.headers_complete)
+        p.parser.feed_data(b'Accept: jpeg\r\n\r\n')
+        self.assertTrue(p.headers_complete)
+        self.assertEqual(len(p.headers), 2)
+        self.assertEqual(p.headers.getall('Accept'), ['*/*', 'jpeg'])
 
     def test_connect(self):
-        p = self.parser()
+        p = self.response()
         data = b'HTTP/1.1 200 Connection established\r\n\r\n'
         p.feed_data(data)
-
-
-@unittest.skipUnless(http.hasextensions, 'Requires C extensions')
-class TestCHttpParser(TestPythonHttpParser):
-
-    @classmethod
-    def request(cls, **kwargs):
-        return Protocol(http.HttpRequestParser, **kwargs)
-
-    @classmethod
-    def response(cls, **kwargs):
-        return Protocol(http.HttpResponseParser, **kwargs)

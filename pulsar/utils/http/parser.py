@@ -1,6 +1,5 @@
 import re
 import sys
-import zlib
 from enum import Enum
 from urllib.parse import urlparse
 from collections import namedtuple
@@ -183,15 +182,8 @@ class HttpParser:
                 if not self._parse_headers():
                     break
             elif not self.is_message_complete():
-                ret = self._parse_body()
-                if ret is None:
-                    return
-                elif ret < 0:
-                    return ret
-                elif ret == 0:
-                    self.__on_message_complete = True
-                    self._on_message_complete()
-                    break
+                self._parse_body()
+                break
 
     def _parse_headers(self):
         while True:
@@ -226,6 +218,7 @@ class HttpParser:
         self._clen_rest = self.content_length
         self._position = 2
         self._on_headers_complete()
+        return True
 
     def _connection(self, value):
         value = value.lower()
@@ -237,75 +230,43 @@ class HttpParser:
             self.flags |= F.CONNECTION_UPGRADE.value
 
     def _parse_body(self):
-        data = b''.join(self._buf)
         #
-        if not self._chunked:
-            #
-            if not data and self._clen is None:
-                if not self._status:    # message complete only for servers
-                    self.__on_message_complete = True
-                    self._on_message_complete()
-            else:
-                if self._clen_rest is not None:
-                    self._clen_rest -= len(data)
-                if data:
-                    self._on_body(data)
-                self._buf = []
-                if self._clen_rest <= 0:
-                    self.__on_message_complete = True
-                    self._on_message_complete()
-            return
-        else:
-            size, rest = self._parse_chunk_size(data)
-            if size == 0:
-                return size
-            if size is None or len(rest) < size + 2:
-                return None
-            body_part, rest = rest[:size], rest[size:]
-
-            # maybe decompress
-            body_part = self._decompress(body_part)
-            self._partial_body = True
-            self._body.append(body_part)
-            rest = rest[2:]
-            self._buf = [rest] if rest else []
-            return len(rest) + 2
-
-    def _parse_chunk_size(self, data):
-        idx = data.find(b'\r\n')
-        if idx < 0:
-            return None, None
-        line, rest_chunk = data[:idx], data[idx+2:]
-        chunk_size = line.split(b';', 1)[0].strip()
-        try:
-            chunk_size = int(chunk_size, 16)
-        except ValueError:
-            raise HttpParserError(
-                'Invalid chunk size %s' % chunk_size) from None
-        if chunk_size == 0:
-            self._parse_trailers(rest_chunk)
-            return 0, None
-        return chunk_size, rest_chunk
-
-    def _parse_trailers(self, data):
-        idx = data.find(b'\r\n\r\n')
-        if data[:2] == b'\r\n':
-            self._trailers = self._parse_headers(data[:idx])
-
-    def _decompress(self, data):
-        deco = self.__decompress_obj
-        if deco is not None:
-            if not self.__decompress_first_try:
-                data = deco.decompress(data)
-            else:
+        if self.flags & F.CHUNKED.value:
+            while True:
+                idx = self.buf.find(b'\r\n')
+                if idx < 0:
+                    break
+                line = bytes(self.buf[:idx])
+                rest = self.buf[idx+2:]
+                size = line.split(b';', 1)[0].strip()
                 try:
-                    data = deco.decompress(data)
-                except zlib.error:
-                    self.__decompress_obj = zlib.decompressobj(-zlib.MAX_WBITS)
-                    deco = self.__decompress_obj
-                    data = deco.decompress(data)
-                self.__decompress_first_try = False
-        return data
+                    size = int(size, 16)
+                except ValueError:
+                    raise HttpParserError(
+                        'Invalid chunk size %s' % size) from None
+                if size == 0:
+                    self._parse_trailers()
+                elif len(rest) < size + 2:
+                    self._on_body(bytes(self.buf[:size]))
+                    self.buf = rest[size:]
+        else:
+            #
+            data = bytes(self.buf)
+            self.buf.clear()
+            size = min(len(data), self._clen_rest)
+            if size:
+                if self._clen_rest != sys.maxsize:
+                    self._clen_rest -= size
+                    self._on_body(data[:size])
+            if self.is_content_finished():
+                self._position = 3
+                self._on_message_complete()
+
+    def _parse_trailers(self):
+        idx = self.buf.find(b'\r\n\r\n')
+        if self.buf[:2] == b'\r\n':
+            self.buf = self.buf[:idx]
+            self._trailers = self._parse_headers()
 
 
 class HttpRequestParser(HttpParser):
@@ -336,6 +297,9 @@ class HttpRequestParser(HttpParser):
         self.version_major = int(matchv.group(1))
         self.version_minor = int(matchv.group(2))
         self.version = '%s.%s' % (self.version_major, self.version_minor)
+
+    def is_content_finished(self):
+        return not self._clen_rest or self._clen_rest == sys.maxsize
 
 
 class HttpResponseParser(HttpParser):
@@ -368,3 +332,6 @@ class HttpResponseParser(HttpParser):
         self.status = bits[1]
         self.status_code = int(matchs.group(1))
         self.reason = matchs.group(2)
+
+    def is_content_finished(self):
+        return not self._clen_rest

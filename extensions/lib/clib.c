@@ -639,8 +639,8 @@ static const char *__pyx_f[] = {
   "extensions/lib/rparser.pyx",
   "extensions/lib/websocket.pyx",
   "extensions/lib/wsgi.pyx",
-  "extensions/lib/clib.pxd",
   "extensions/lib/websocket.pxd",
+  "extensions/lib/clib.pxd",
   "stringsource",
   "extensions/lib/clib.pyx",
   "extensions/lib/globals.pyx",
@@ -1438,8 +1438,8 @@ struct __pyx_vtabstruct_4clib_Protocol {
   struct __pyx_vtabstruct_4clib_EventHandler __pyx_base;
   struct __pyx_obj_4clib_ProtocolConsumer *(*current_consumer)(struct __pyx_obj_4clib_Protocol *, int __pyx_skip_dispatch);
   PyObject *(*upgrade)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch);
-  void (*connection_made)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch);
-  void (*data_received)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch);
+  PyObject *(*connection_made)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch);
+  PyObject *(*data_received)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch);
   int (*changed)(struct __pyx_obj_4clib_Protocol *, int __pyx_skip_dispatch);
   void (*finished_consumer)(struct __pyx_obj_4clib_Protocol *, struct __pyx_obj_4clib_ProtocolConsumer *, int __pyx_skip_dispatch);
   void (*_build_consumer)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_8Protocol__build_consumer *__pyx_optional_args);
@@ -2224,8 +2224,8 @@ static struct __pyx_obj_4clib_Protocol *__pyx_f_4clib_8Producer_create_protocol(
 static void __pyx_f_4clib_8Producer__time(struct __pyx_obj_4clib_Producer *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
 static struct __pyx_obj_4clib_ProtocolConsumer *__pyx_f_4clib_8Protocol_current_consumer(struct __pyx_obj_4clib_Protocol *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
 static PyObject *__pyx_f_4clib_8Protocol_upgrade(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_consumer_factory, int __pyx_skip_dispatch); /* proto*/
-static void __pyx_f_4clib_8Protocol_connection_made(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_transport, int __pyx_skip_dispatch); /* proto*/
-static void __pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch); /* proto*/
+static PyObject *__pyx_f_4clib_8Protocol_connection_made(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_transport, int __pyx_skip_dispatch); /* proto*/
+static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch); /* proto*/
 static int __pyx_f_4clib_8Protocol_changed(struct __pyx_obj_4clib_Protocol *__pyx_v_self, int __pyx_skip_dispatch); /* proto*/
 static void __pyx_f_4clib_8Protocol_finished_consumer(struct __pyx_obj_4clib_Protocol *__pyx_v_self, struct __pyx_obj_4clib_ProtocolConsumer *__pyx_v_consumer, int __pyx_skip_dispatch); /* proto*/
 static void __pyx_f_4clib_8Protocol__build_consumer(struct __pyx_obj_4clib_Protocol *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v__, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_8Protocol__build_consumer *__pyx_optional_args); /* proto*/
@@ -19456,15 +19456,16 @@ static PyObject *__pyx_pf_4clib_8Protocol_4upgrade(struct __pyx_obj_4clib_Protoc
 /* "extensions/lib/protocols.pyx":94
  * 
  *     # Asyncio Protocol API
- *     cpdef void connection_made(self, object transport):             # <<<<<<<<<<<<<<
+ *     cpdef connection_made(self, object transport):             # <<<<<<<<<<<<<<
  *         """Sets the :attr:`transport`, fire the ``connection_made`` event
  *         and adds a :attr:`timeout` for idle connections.
  */
 
 static PyObject *__pyx_pw_4clib_8Protocol_7connection_made(PyObject *__pyx_v_self, PyObject *__pyx_v_transport); /*proto*/
-static void __pyx_f_4clib_8Protocol_connection_made(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_transport, int __pyx_skip_dispatch) {
+static PyObject *__pyx_f_4clib_8Protocol_connection_made(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_transport, int __pyx_skip_dispatch) {
   PyObject *__pyx_v_addr = NULL;
   PyObject *__pyx_v_sock = NULL;
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
@@ -19486,6 +19487,7 @@ static void __pyx_f_4clib_8Protocol_connection_made(struct __pyx_obj_4clib_Proto
     __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_connection_made); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 94, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_8Protocol_7connection_made)) {
+      __Pyx_XDECREF(__pyx_r);
       __Pyx_INCREF(__pyx_t_1);
       __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -19530,7 +19532,8 @@ static void __pyx_f_4clib_8Protocol_connection_made(struct __pyx_obj_4clib_Proto
         }
       }
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_r = __pyx_t_2;
+      __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       goto __pyx_L0;
     }
@@ -19805,12 +19808,13 @@ static void __pyx_f_4clib_8Protocol_connection_made(struct __pyx_obj_4clib_Proto
   /* "extensions/lib/protocols.pyx":94
  * 
  *     # Asyncio Protocol API
- *     cpdef void connection_made(self, object transport):             # <<<<<<<<<<<<<<
+ *     cpdef connection_made(self, object transport):             # <<<<<<<<<<<<<<
  *         """Sets the :attr:`transport`, fire the ``connection_made`` event
  *         and adds a :attr:`timeout` for idle connections.
  */
 
   /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
@@ -19819,11 +19823,14 @@ static void __pyx_f_4clib_8Protocol_connection_made(struct __pyx_obj_4clib_Proto
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_12);
-  __Pyx_WriteUnraisable("clib.Protocol.connection_made", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_AddTraceback("clib.Protocol.connection_made", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_addr);
   __Pyx_XDECREF(__pyx_v_sock);
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
+  return __pyx_r;
 }
 
 /* Python wrapper */
@@ -19846,7 +19853,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_6connection_made(struct __pyx_obj_4cli
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("connection_made", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_void_to_None(__pyx_f_4clib_8Protocol_connection_made(__pyx_v_self, __pyx_v_transport, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 94, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_8Protocol_connection_made(__pyx_v_self, __pyx_v_transport, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 94, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -19945,7 +19952,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_8connection_lost(struct __pyx_obj_4cli
  *         """
  *         self.event('connection_lost').fire()             # <<<<<<<<<<<<<<
  * 
- *     cpdef void data_received(self, bytes data):
+ *     cpdef data_received(self, bytes data):
  */
   __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_Protocol *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_self), __pyx_n_s_connection_lost, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -19979,15 +19986,16 @@ static PyObject *__pyx_pf_4clib_8Protocol_8connection_lost(struct __pyx_obj_4cli
 /* "extensions/lib/protocols.pyx":117
  *         self.event('connection_lost').fire()
  * 
- *     cpdef void data_received(self, bytes data):             # <<<<<<<<<<<<<<
+ *     cpdef data_received(self, bytes data):             # <<<<<<<<<<<<<<
  *         """Delegates handling of data to the :meth:`current_consumer`.
  * 
  */
 
 static PyObject *__pyx_pw_4clib_8Protocol_11data_received(PyObject *__pyx_v_self, PyObject *__pyx_v_data); /*proto*/
-static void __pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch) {
+static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch) {
   PyObject *__pyx_v_toprocess = 0;
   struct __pyx_obj_4clib_ProtocolConsumer *__pyx_v_consumer = 0;
+  PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
@@ -20006,6 +20014,7 @@ static void __pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protoco
     __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_data_received); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 117, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_8Protocol_11data_received)) {
+      __Pyx_XDECREF(__pyx_r);
       __Pyx_INCREF(__pyx_t_1);
       __pyx_t_3 = __pyx_t_1; __pyx_t_4 = NULL;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -20050,7 +20059,8 @@ static void __pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protoco
         }
       }
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_r = __pyx_t_2;
+      __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       goto __pyx_L0;
     }
@@ -20168,12 +20178,13 @@ static void __pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protoco
   /* "extensions/lib/protocols.pyx":117
  *         self.event('connection_lost').fire()
  * 
- *     cpdef void data_received(self, bytes data):             # <<<<<<<<<<<<<<
+ *     cpdef data_received(self, bytes data):             # <<<<<<<<<<<<<<
  *         """Delegates handling of data to the :meth:`current_consumer`.
  * 
  */
 
   /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
@@ -20181,12 +20192,15 @@ static void __pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protoco
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_WriteUnraisable("clib.Protocol.data_received", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
+  __Pyx_AddTraceback("clib.Protocol.data_received", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_toprocess);
   __Pyx_XDECREF((PyObject *)__pyx_v_consumer);
   __Pyx_XDECREF(__pyx_v_data);
+  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
+  return __pyx_r;
 }
 
 /* Python wrapper */
@@ -20214,7 +20228,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_10data_received(struct __pyx_obj_4clib
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("data_received", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_void_to_None(__pyx_f_4clib_8Protocol_data_received(__pyx_v_self, __pyx_v_data, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 117, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_8Protocol_data_received(__pyx_v_self, __pyx_v_data, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 117, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -21670,12 +21684,12 @@ static void __pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_Protoc
     goto __pyx_L12_try_end;
     __pyx_L5_error:;
     __Pyx_PyThreadState_assign
-    __Pyx_XDECREF(((PyObject *)__pyx_t_7)); __pyx_t_7 = 0;
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_XDECREF(((PyObject *)__pyx_t_7)); __pyx_t_7 = 0;
     __Pyx_XDECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
 
     /* "extensions/lib/protocols.pyx":176
@@ -35769,6 +35783,171 @@ static PyObject *__pyx_pf_4clib_8set_cookie(CYTHON_UNUSED PyObject *__pyx_self, 
   return __pyx_r;
 }
 
+/* "websocket.pxd":7
+ * 
+ * 
+ * cdef inline bytes to_bytes(object value, str encoding):             # <<<<<<<<<<<<<<
+ *     if isinstance(value, bytes):
+ *         return value
+ */
+
+static CYTHON_INLINE PyObject *__pyx_f_9websocket_to_bytes(PyObject *__pyx_v_value, PyObject *__pyx_v_encoding) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  PyObject *__pyx_t_4 = NULL;
+  PyObject *__pyx_t_5 = NULL;
+  PyObject *__pyx_t_6 = NULL;
+  __Pyx_RefNannySetupContext("to_bytes", 0);
+
+  /* "websocket.pxd":8
+ * 
+ * cdef inline bytes to_bytes(object value, str encoding):
+ *     if isinstance(value, bytes):             # <<<<<<<<<<<<<<
+ *         return value
+ *     elif isinstance(value, str):
+ */
+  __pyx_t_1 = PyBytes_Check(__pyx_v_value); 
+  __pyx_t_2 = (__pyx_t_1 != 0);
+  if (__pyx_t_2) {
+
+    /* "websocket.pxd":9
+ * cdef inline bytes to_bytes(object value, str encoding):
+ *     if isinstance(value, bytes):
+ *         return value             # <<<<<<<<<<<<<<
+ *     elif isinstance(value, str):
+ *         return value.encode(encoding)
+ */
+    __Pyx_XDECREF(__pyx_r);
+    if (!(likely(PyBytes_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(6, 9, __pyx_L1_error)
+    __Pyx_INCREF(__pyx_v_value);
+    __pyx_r = ((PyObject*)__pyx_v_value);
+    goto __pyx_L0;
+
+    /* "websocket.pxd":8
+ * 
+ * cdef inline bytes to_bytes(object value, str encoding):
+ *     if isinstance(value, bytes):             # <<<<<<<<<<<<<<
+ *         return value
+ *     elif isinstance(value, str):
+ */
+  }
+
+  /* "websocket.pxd":10
+ *     if isinstance(value, bytes):
+ *         return value
+ *     elif isinstance(value, str):             # <<<<<<<<<<<<<<
+ *         return value.encode(encoding)
+ *     else:
+ */
+  __pyx_t_2 = PyString_Check(__pyx_v_value); 
+  __pyx_t_1 = (__pyx_t_2 != 0);
+  if (__pyx_t_1) {
+
+    /* "websocket.pxd":11
+ *         return value
+ *     elif isinstance(value, str):
+ *         return value.encode(encoding)             # <<<<<<<<<<<<<<
+ *     else:
+ *         raise TypeError('Requires bytes or string')
+ */
+    __Pyx_XDECREF(__pyx_r);
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_encode); if (unlikely(!__pyx_t_4)) __PYX_ERR(6, 11, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_5 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_4, function);
+      }
+    }
+    if (!__pyx_t_5) {
+      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_encoding); if (unlikely(!__pyx_t_3)) __PYX_ERR(6, 11, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_4)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_encoding};
+        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(6, 11, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_3);
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_encoding};
+        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(6, 11, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_3);
+      } else
+      #endif
+      {
+        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(6, 11, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_6);
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
+        __Pyx_INCREF(__pyx_v_encoding);
+        __Pyx_GIVEREF(__pyx_v_encoding);
+        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_encoding);
+        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(6, 11, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_3);
+        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(6, 11, __pyx_L1_error)
+    __pyx_r = ((PyObject*)__pyx_t_3);
+    __pyx_t_3 = 0;
+    goto __pyx_L0;
+
+    /* "websocket.pxd":10
+ *     if isinstance(value, bytes):
+ *         return value
+ *     elif isinstance(value, str):             # <<<<<<<<<<<<<<
+ *         return value.encode(encoding)
+ *     else:
+ */
+  }
+
+  /* "websocket.pxd":13
+ *         return value.encode(encoding)
+ *     else:
+ *         raise TypeError('Requires bytes or string')             # <<<<<<<<<<<<<<
+ */
+  /*else*/ {
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__54, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(6, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_Raise(__pyx_t_3, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __PYX_ERR(6, 13, __pyx_L1_error)
+  }
+
+  /* "websocket.pxd":7
+ * 
+ * 
+ * cdef inline bytes to_bytes(object value, str encoding):             # <<<<<<<<<<<<<<
+ *     if isinstance(value, bytes):
+ *         return value
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_4);
+  __Pyx_XDECREF(__pyx_t_5);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("websocket.to_bytes", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = 0;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
 /* "clib.pxd":8
  * cdef double clog2 = log(2.)
  * 
@@ -35847,7 +36026,7 @@ static CYTHON_INLINE double __pyx_f_4clib_Log2(double __pyx_v_x) {
   __pyx_t_1 = log(__pyx_v_x);
   if (unlikely(__pyx_v_4clib_clog2 == 0)) {
     PyErr_SetString(PyExc_ZeroDivisionError, "float division");
-    __PYX_ERR(6, 14, __pyx_L1_error)
+    __PYX_ERR(7, 14, __pyx_L1_error)
   }
   __pyx_r = (__pyx_t_1 / __pyx_v_4clib_clog2);
   goto __pyx_L0;
@@ -35865,171 +36044,6 @@ static CYTHON_INLINE double __pyx_f_4clib_Log2(double __pyx_v_x) {
   __Pyx_WriteUnraisable("clib.Log2", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
   __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "websocket.pxd":7
- * 
- * 
- * cdef inline bytes to_bytes(object value, str encoding):             # <<<<<<<<<<<<<<
- *     if isinstance(value, bytes):
- *         return value
- */
-
-static CYTHON_INLINE PyObject *__pyx_f_9websocket_to_bytes(PyObject *__pyx_v_value, PyObject *__pyx_v_encoding) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  int __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
-  PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  __Pyx_RefNannySetupContext("to_bytes", 0);
-
-  /* "websocket.pxd":8
- * 
- * cdef inline bytes to_bytes(object value, str encoding):
- *     if isinstance(value, bytes):             # <<<<<<<<<<<<<<
- *         return value
- *     elif isinstance(value, str):
- */
-  __pyx_t_1 = PyBytes_Check(__pyx_v_value); 
-  __pyx_t_2 = (__pyx_t_1 != 0);
-  if (__pyx_t_2) {
-
-    /* "websocket.pxd":9
- * cdef inline bytes to_bytes(object value, str encoding):
- *     if isinstance(value, bytes):
- *         return value             # <<<<<<<<<<<<<<
- *     elif isinstance(value, str):
- *         return value.encode(encoding)
- */
-    __Pyx_XDECREF(__pyx_r);
-    if (!(likely(PyBytes_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(7, 9, __pyx_L1_error)
-    __Pyx_INCREF(__pyx_v_value);
-    __pyx_r = ((PyObject*)__pyx_v_value);
-    goto __pyx_L0;
-
-    /* "websocket.pxd":8
- * 
- * cdef inline bytes to_bytes(object value, str encoding):
- *     if isinstance(value, bytes):             # <<<<<<<<<<<<<<
- *         return value
- *     elif isinstance(value, str):
- */
-  }
-
-  /* "websocket.pxd":10
- *     if isinstance(value, bytes):
- *         return value
- *     elif isinstance(value, str):             # <<<<<<<<<<<<<<
- *         return value.encode(encoding)
- *     else:
- */
-  __pyx_t_2 = PyString_Check(__pyx_v_value); 
-  __pyx_t_1 = (__pyx_t_2 != 0);
-  if (__pyx_t_1) {
-
-    /* "websocket.pxd":11
- *         return value
- *     elif isinstance(value, str):
- *         return value.encode(encoding)             # <<<<<<<<<<<<<<
- *     else:
- *         raise TypeError('Requires bytes or string')
- */
-    __Pyx_XDECREF(__pyx_r);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_value, __pyx_n_s_encode); if (unlikely(!__pyx_t_4)) __PYX_ERR(7, 11, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
-      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
-      if (likely(__pyx_t_5)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-        __Pyx_INCREF(__pyx_t_5);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_4, function);
-      }
-    }
-    if (!__pyx_t_5) {
-      __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_v_encoding); if (unlikely(!__pyx_t_3)) __PYX_ERR(7, 11, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-    } else {
-      #if CYTHON_FAST_PYCALL
-      if (PyFunction_Check(__pyx_t_4)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_encoding};
-        __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(7, 11, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_GOTREF(__pyx_t_3);
-      } else
-      #endif
-      #if CYTHON_FAST_PYCCALL
-      if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_encoding};
-        __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(7, 11, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_GOTREF(__pyx_t_3);
-      } else
-      #endif
-      {
-        __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(7, 11, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_6);
-        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __pyx_t_5 = NULL;
-        __Pyx_INCREF(__pyx_v_encoding);
-        __Pyx_GIVEREF(__pyx_v_encoding);
-        PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_v_encoding);
-        __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(7, 11, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_3);
-        __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      }
-    }
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (!(likely(PyBytes_CheckExact(__pyx_t_3))||((__pyx_t_3) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_3)->tp_name), 0))) __PYX_ERR(7, 11, __pyx_L1_error)
-    __pyx_r = ((PyObject*)__pyx_t_3);
-    __pyx_t_3 = 0;
-    goto __pyx_L0;
-
-    /* "websocket.pxd":10
- *     if isinstance(value, bytes):
- *         return value
- *     elif isinstance(value, str):             # <<<<<<<<<<<<<<
- *         return value.encode(encoding)
- *     else:
- */
-  }
-
-  /* "websocket.pxd":13
- *         return value.encode(encoding)
- *     else:
- *         raise TypeError('Requires bytes or string')             # <<<<<<<<<<<<<<
- */
-  /*else*/ {
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__54, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(7, 13, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_Raise(__pyx_t_3, 0, 0, 0);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __PYX_ERR(7, 13, __pyx_L1_error)
-  }
-
-  /* "websocket.pxd":7
- * 
- * 
- * cdef inline bytes to_bytes(object value, str encoding):             # <<<<<<<<<<<<<<
- *     if isinstance(value, bytes):
- *         return value
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_AddTraceback("websocket.to_bytes", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -40227,7 +40241,7 @@ static int __Pyx_InitCachedConstants(void) {
  *     else:
  *         raise TypeError('Requires bytes or string')             # <<<<<<<<<<<<<<
  */
-  __pyx_tuple__54 = PyTuple_Pack(1, __pyx_kp_s_Requires_bytes_or_string); if (unlikely(!__pyx_tuple__54)) __PYX_ERR(7, 13, __pyx_L1_error)
+  __pyx_tuple__54 = PyTuple_Pack(1, __pyx_kp_s_Requires_bytes_or_string); if (unlikely(!__pyx_tuple__54)) __PYX_ERR(6, 13, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__54);
   __Pyx_GIVEREF(__pyx_tuple__54);
 
@@ -40891,8 +40905,8 @@ PyMODINIT_FUNC PyInit_clib(void)
   __pyx_vtable_4clib_Protocol.__pyx_base = *__pyx_vtabptr_4clib_EventHandler;
   __pyx_vtable_4clib_Protocol.current_consumer = (struct __pyx_obj_4clib_ProtocolConsumer *(*)(struct __pyx_obj_4clib_Protocol *, int __pyx_skip_dispatch))__pyx_f_4clib_8Protocol_current_consumer;
   __pyx_vtable_4clib_Protocol.upgrade = (PyObject *(*)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch))__pyx_f_4clib_8Protocol_upgrade;
-  __pyx_vtable_4clib_Protocol.connection_made = (void (*)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch))__pyx_f_4clib_8Protocol_connection_made;
-  __pyx_vtable_4clib_Protocol.data_received = (void (*)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch))__pyx_f_4clib_8Protocol_data_received;
+  __pyx_vtable_4clib_Protocol.connection_made = (PyObject *(*)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch))__pyx_f_4clib_8Protocol_connection_made;
+  __pyx_vtable_4clib_Protocol.data_received = (PyObject *(*)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch))__pyx_f_4clib_8Protocol_data_received;
   __pyx_vtable_4clib_Protocol.changed = (int (*)(struct __pyx_obj_4clib_Protocol *, int __pyx_skip_dispatch))__pyx_f_4clib_8Protocol_changed;
   __pyx_vtable_4clib_Protocol.finished_consumer = (void (*)(struct __pyx_obj_4clib_Protocol *, struct __pyx_obj_4clib_ProtocolConsumer *, int __pyx_skip_dispatch))__pyx_f_4clib_8Protocol_finished_consumer;
   __pyx_vtable_4clib_Protocol._build_consumer = (void (*)(struct __pyx_obj_4clib_Protocol *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_8Protocol__build_consumer *__pyx_optional_args))__pyx_f_4clib_8Protocol__build_consumer;
