@@ -181,6 +181,9 @@ class HttpServerResponse(ProtocolConsumer):
                     self.event('post_request').fire()
                 except Exception:
                     if wsgi_request(environ).cache.get('handle_wsgi_error'):
+                        get_logger(environ).exception(
+                            'Exception while handling WSGI error'
+                        )
                         wsgi.keep_alive = False
                         self._write_headers()
                         self.connection.close()

@@ -115,6 +115,9 @@ cdef class WsgiProtocol:
         cdef str path_info
         cdef str script_name
 
+        if 'SERVER_PROTOCOL' not in self.environ:
+            self.environ['SERVER_PROTOCOL'] = "HTTP/%s" % self.parser.get_http_version()
+
         if self.environ['wsgi.url_scheme'] == 'https':
             self.environ['HTTPS'] = 'on'
         if forward:

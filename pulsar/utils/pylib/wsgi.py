@@ -140,6 +140,10 @@ class WsgiProtocol:
         self.environ['HTTP_%s' % header_env] = header_value
 
     def on_headers_complete(self):
+        if 'SERVER_PROTOCOL' not in self.environ:
+            self.environ['SERVER_PROTOCOL'] = (
+                "HTTP/%s" % self.parser.get_http_version())
+
         forward = self.headers.get(X_FORWARDED_FOR)
         client_address = self.client_address
 

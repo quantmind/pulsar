@@ -123,20 +123,21 @@ class WsgiResponse:
 
     @content.setter
     def content(self, content):
-        if not self._iterated:
-            if content is None:
-                content = ()
-            else:
-                if isinstance(content, str):
-                    if not self.encoding:   # use utf-8 if not set
-                        self.encoding = 'utf-8'
-                    content = content.encode(self.encoding)
+        self.set_content(content)
 
-                if isinstance(content, bytes):
-                    content = (content,)
-            self._content = content
-        else:
+    def set_content(self, content):
+        if self._iterated:
             raise RuntimeError('Cannot set content. Already iterated')
+        if content is None:
+            self._content = ()
+        elif isinstance(content, str):
+            if not self.encoding:  # use utf-8 if not set
+                self.encoding = 'utf-8'
+            self._content = content.encode(self.encoding),
+        elif isinstance(content, bytes):
+            self._content = content,
+        else:
+            self._content = content
 
     def _get_content_type(self):
         return self.headers.get('content-type')

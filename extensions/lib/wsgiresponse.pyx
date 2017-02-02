@@ -138,7 +138,7 @@ cdef class WsgiResponse:
     cpdef int length(self):
         return reduce(count_len, self._content, 0)
 
-    cdef object get_headers(self):
+    cpdef object get_headers(self):
         """The list of headers for this response
         """
         cdef headers = self.headers
