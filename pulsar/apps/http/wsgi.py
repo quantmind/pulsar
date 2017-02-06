@@ -15,7 +15,7 @@ __all__ = ['HttpWsgiClient']
 
 class DummyTransport(Transport):
 
-    def __init__(self, connection, address, ssl):
+    def __init__(self, connection, address, ssl=None):
         super().__init__()
         self.connection = connection
         self._extra['sockname'] = address
@@ -28,9 +28,8 @@ class DummyTransport(Transport):
 
     def write(self, chunk):
         consumer = self.connection.current_consumer()
-        server_side = consumer.server_side
-        if server_side:
-            server_side.feed_data(chunk)
+        if self.connection.other_side:
+            self.connection.other_side.data_received(chunk)
         else:
             consumer.message.extend(chunk)
             consumer.in_parser.feed_data(chunk)
@@ -38,7 +37,26 @@ class DummyTransport(Transport):
                 consumer.finished()
 
 
-class DummyConnection(Protocol):
+class DymmyConnection:
+    other_side = None
+
+    def write(self, data):
+        self.transport.write(data)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        pass
+
+    def detach(self, discard=True):
+        pass
+
+    def close(self):
+        pass
+
+
+class DummyClientConnection(Protocol, DymmyConnection):
     """A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
 
     .. attribute:: client
@@ -51,46 +69,35 @@ class DummyConnection(Protocol):
     """
     @classmethod
     def create(cls, producer, address, ssl=None):
-        connection = DummyConnection(cls.consumer_factory, producer)
+        connection = cls(cls.consumer_factory, producer)
         connection.connection_made(DummyTransport(connection, address, ssl))
         return connection
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        pass
-
-    def detach(self, discard=True):
-        pass
 
     @classmethod
     def consumer_factory(cls, connection):
         consumer = http.HttpResponse(connection)
-        consumer.server_side = None
-        producer = consumer.producer
 
-        if producer.wsgi:
-            consumer.server_side = HttpServerResponse(connection)
-            consumer.server_side.start()
+        if connection.producer.wsgi_callable:
+            connection.other_side = DummyServerConnection.create(connection)
         else:
-            consumer.server_side = None
             consumer.message = bytearray()
             consumer.in_parser = HttpRequestParser(consumer)
 
         return consumer
 
 
-class DummyServerConnection(DummyTransport):
+class DummyServerConnection(Protocol, DymmyConnection):
 
-    def __init__(self, server, response, address):
-        super().__init__({'sockname': ('127.0.0.1', 1234)})
-        self.address = address
-        self._current_consumer = server
-        self.response = response
-
-    def write(self, chunk):
-        self.response.data_received(chunk)
+    @classmethod
+    def create(cls, connection):
+        server_connection = cls(HttpServerResponse, connection.producer)
+        server_transport = DummyTransport(
+            server_connection,
+            connection.transport.get_extra_info('sockname')
+        )
+        server_connection.connection_made(server_transport)
+        server_connection.other_side = connection
+        return server_connection
 
 
 class DummyConnectionPool:
@@ -114,14 +121,14 @@ class HttpWsgiClient(http.HttpClient):
     server_software = 'Local/%s' % pulsar.SERVER_SOFTWARE
     connection_pool = DummyConnectionPool
 
-    def __init__(self, wsgi=None, **kwargs):
-        self.wsgi = wsgi
-        self.cfg = getattr(wsgi, 'cfg', None) or cfg()
+    def __init__(self, wsgi_callable=None, **kwargs):
+        self.wsgi_callable = wsgi_callable
+        self.cfg = getattr(wsgi_callable, 'cfg', None) or cfg()
         super().__init__(**kwargs)
         self.headers['X-Http-Local'] = 'local'
 
     async def create_connection(self, address, ssl=None):
-        return DummyConnection.create(self, address)
+        return DummyClientConnection.create(self, address)
 
     def get_headers(self, request, headers):
         headers = super().get_headers(request, headers)
