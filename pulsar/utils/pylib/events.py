@@ -131,6 +131,12 @@ class EventHandler:
                 if event.name in events:
                     event.bind(events[event.name])
 
+    def reset_event(self, name):
+        events = self.events()
+        if name in events:
+            event = events[name]
+            events[name] = Event(name, self, 1 if event.onetime() else 0)
+
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.
 

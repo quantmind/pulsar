@@ -232,15 +232,12 @@ class Tunneling:
         loop = connection._loop
         sock = connection.sock
         connection.transport.pause_reading()
-        # await asyncio.sleep(0.01)
-        # set a new connection_made event
-        connection.events['connection_made'] = OneTime(loop=loop)
-        connection._processed -= 1
-        connection.producer._requests_processed -= 1
+        connection.reset_event('connection_made')
+        connection_made = connection.event('connection_made').waiter()
         #
         url = urlparse(request.url)
         await ssl_transport(loop, sock, connection, request._ssl, url.netloc)
-        await connection.event('connection_made')
+        await connection_made
         response = await start_request(request, connection)
         return response
 

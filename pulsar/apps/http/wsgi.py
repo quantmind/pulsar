@@ -2,13 +2,15 @@
 """
 from asyncio import Transport
 
+import pulsar
 from pulsar.apps import http
 from pulsar.utils.http import HttpRequestParser
 from pulsar.api import Protocol
 from pulsar.apps.wsgi import HttpServerResponse
+from pulsar.async.access import cfg
 
 
-__all__ = ['HttpTestClient']
+__all__ = ['HttpWsgiClient']
 
 
 class DummyTransport(Transport):
@@ -28,10 +30,10 @@ class DummyTransport(Transport):
         consumer = self.connection.current_consumer()
         server_side = consumer.server_side
         if server_side:
-            server_side.data_received(chunk)
+            server_side.feed_data(chunk)
         else:
-            consumer.message += chunk
-            assert consumer.in_parser.execute(chunk, len(chunk)) == len(chunk)
+            consumer.message.extend(chunk)
+            consumer.in_parser.feed_data(chunk)
             if consumer.in_parser.is_message_complete():
                 consumer.finished()
 
@@ -69,11 +71,12 @@ class DummyConnection(Protocol):
         producer = consumer.producer
 
         if producer.wsgi:
-            consumer.server_side = server.current_consumer()
+            consumer.server_side = HttpServerResponse(connection)
+            consumer.server_side.start()
         else:
             consumer.server_side = None
-            consumer.message = b''
-            consumer.in_parser = HttpRequestParser(self)
+            consumer.message = bytearray()
+            consumer.in_parser = HttpRequestParser(consumer)
 
         return consumer
 
@@ -100,20 +103,22 @@ class DummyConnectionPool:
         return await self.connector()
 
 
-class HttpTestClient(http.HttpClient):
+class HttpWsgiClient(http.HttpClient):
     """A test client for http requests to a WSGI server handlers.
 
     .. attribute:: wsgi
 
         The WSGI server handler to test
     """
-    client_version = 'Pulsar-Http-Test-Client'
+    client_version = 'Pulsar-Http-Wsgi-Client'
+    server_software = 'Local/%s' % pulsar.SERVER_SOFTWARE
     connection_pool = DummyConnectionPool
 
-    def __init__(self, test=None, wsgi=None, **kwargs):
-        self.test = test
+    def __init__(self, wsgi=None, **kwargs):
         self.wsgi = wsgi
+        self.cfg = getattr(wsgi, 'cfg', None) or cfg()
         super().__init__(**kwargs)
+        self.headers['X-Http-Local'] = 'local'
 
     async def create_connection(self, address, ssl=None):
         return DummyConnection.create(self, address)

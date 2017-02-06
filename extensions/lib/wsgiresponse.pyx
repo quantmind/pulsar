@@ -179,6 +179,18 @@ cdef class WsgiResponse:
                 headers.add(SET_COOKIE, c.OutputString())
         return headers.items()
 
+    cpdef has_header(self, str header):
+        return header in self.headers
+
+    def __contains__(self, str header):
+        return header in self.headers
+
+    def __setitem__(self, str header, value):
+        self.headers[header] = value
+
+    def __getitem__(self, str header):
+        return self.headers[header]
+
 
 cdef int count_len(int a, object b):
     return a + len(b)

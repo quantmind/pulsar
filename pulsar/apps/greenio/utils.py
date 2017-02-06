@@ -1,6 +1,5 @@
 from functools import wraps
-
-from pulsar import isawaitable
+from inspect import isawaitable
 
 from greenlet import greenlet, getcurrent
 

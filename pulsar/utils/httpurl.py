@@ -526,6 +526,7 @@ class CacheControl:
                 headers.add('cache-control', 'proxy-revalidate')
         else:
             headers['cache-control'] = 'no-cache'
+        return headers
 
 
 def chunk_encoding(chunk):

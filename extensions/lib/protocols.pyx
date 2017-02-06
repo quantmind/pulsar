@@ -136,16 +136,16 @@ cdef class Protocol(EventHandler):
         self.last_change = _current_time_
         return self.last_change
 
-    cpdef void finished_consumer(self, ProtocolConsumer consumer):
+    cpdef finished_consumer(self, ProtocolConsumer consumer):
         if self._current_consumer is consumer:
             self._current_consumer = None
 
     # Callbacks
-    cpdef void _build_consumer(self, _, exc=None):
+    cpdef _build_consumer(self, _, exc=None):
         self._current_consumer = None
         self.current_consumer()
 
-    cpdef void _connection_lost(self, _, exc=None):
+    cpdef _connection_lost(self, _, exc=None):
         if self._current_consumer:
             self._current_consumer.event('post_request').fire(exc=exc)
 
@@ -166,7 +166,7 @@ cdef class ProtocolConsumer(EventHandler):
         self.producer = connection.producer
         self._loop = connection._loop
 
-    cpdef void start(self, object request=None):
+    cpdef start(self, object request=None):
         self.connection.processed += 1
         self.producer.requests_processed += 1
         self.event('post_request').bind(self._finished)
@@ -181,17 +181,20 @@ cdef class ProtocolConsumer(EventHandler):
     cpdef object create_request(self):
         return dummyRequest
 
-    cpdef void start_request(self):
+    cpdef start_request(self):
         pass
 
     cpdef feed_data(self, bytes data):
         pass
 
-    cpdef void _finished(self, object _, object exc=None):
+    cpdef _finished(self, object _, object exc=None):
         self.connection.finished_consumer(self)
 
     cpdef object get(self, str attr):
         return getattr(self, attr, None)
+
+    cpdef set(self, str attr, value):
+        return setattr(self, attr, value)
 
     cpdef object pop(self, str attr, object default=None):
         cdef object value = getattr(self, attr, default)

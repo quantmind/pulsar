@@ -2,7 +2,8 @@ from .utils.exceptions import (
     PulsarException, ImproperlyConfigured, HttpException, HttpRedirect,
     BadRequest, Http401, Http404, HttpConnectionError, HttpGone,
     HttpRequestException, MethodNotAllowed, PermissionDenied, HaltServer,
-    SSLError, ProtocolError, LockError, CommandError, CommandNotFound
+    SSLError, ProtocolError, LockError, CommandError, CommandNotFound,
+    Unsupported, UnprocessableEntity
 )
 from .utils.config import Config, Setting
 from .utils.lib import (
@@ -91,5 +92,7 @@ __all__ = [
     'ProtocolError',
     'LockError',
     'CommandError',
-    'CommandNotFound'
+    'CommandNotFound',
+    'Unsupported',
+    'UnprocessableEntity'
 ]
