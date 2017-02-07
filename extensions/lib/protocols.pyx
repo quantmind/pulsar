@@ -114,13 +114,12 @@ cdef class Protocol(EventHandler):
         """
         self.event('connection_lost').fire()
 
-    cpdef data_received(self, bytes data):
+    cpdef data_received(self, data):
         """Delegates handling of data to the :meth:`current_consumer`.
 
         Once done set a timeout for idle connections when a
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         """
-        cdef bytes toprocess
         cdef ProtocolConsumer consumer;
         self.data_received_count += 1
         while data:
@@ -184,7 +183,7 @@ cdef class ProtocolConsumer(EventHandler):
     cpdef start_request(self):
         pass
 
-    cpdef feed_data(self, bytes data):
+    cpdef feed_data(self, data):
         pass
 
     cpdef _finished(self, object _, object exc=None):

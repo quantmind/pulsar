@@ -5,7 +5,7 @@ from asyncio import Transport
 import pulsar
 from pulsar.apps import http
 from pulsar.utils.http import HttpRequestParser
-from pulsar.api import Protocol
+from pulsar.api import Protocol, Producer
 from pulsar.apps.wsgi import HttpServerResponse
 from pulsar.async.access import cfg
 
@@ -19,6 +19,9 @@ class DummyTransport(Transport):
         super().__init__()
         self.connection = connection
         self._extra['sockname'] = address
+
+    def can_write_eof(self):
+        return False
 
     def close(self):
         pass
@@ -78,7 +81,7 @@ class DummyClientConnection(Protocol, DymmyConnection):
         consumer = http.HttpResponse(connection)
 
         if connection.producer.wsgi_callable:
-            connection.other_side = DummyServerConnection.create(connection)
+            connection.other_side = WsgiProducer(connection).create_protocol()
         else:
             consumer.message = bytearray()
             consumer.in_parser = HttpRequestParser(consumer)
@@ -89,14 +92,15 @@ class DummyClientConnection(Protocol, DymmyConnection):
 class DummyServerConnection(Protocol, DymmyConnection):
 
     @classmethod
-    def create(cls, connection):
-        server_connection = cls(HttpServerResponse, connection.producer)
+    def create(cls, producer):
+        client_connection = producer.client_connection
+        server_connection = cls(HttpServerResponse, producer)
         server_transport = DummyTransport(
             server_connection,
-            connection.transport.get_extra_info('sockname')
+            client_connection.transport.get_extra_info('sockname')
         )
         server_connection.connection_made(server_transport)
-        server_connection.other_side = connection
+        server_connection.other_side = client_connection
         return server_connection
 
 
@@ -118,7 +122,6 @@ class HttpWsgiClient(http.HttpClient):
         The WSGI server handler to test
     """
     client_version = 'Pulsar-Http-Wsgi-Client'
-    server_software = 'Local/%s' % pulsar.SERVER_SOFTWARE
     connection_pool = DummyConnectionPool
 
     def __init__(self, wsgi_callable=None, **kwargs):
@@ -134,3 +137,16 @@ class HttpWsgiClient(http.HttpClient):
         headers = super().get_headers(request, headers)
         headers['X-Forwarded-Proto'] = request.key[0]
         return headers
+
+
+class WsgiProducer(Producer):
+    """Dummy producers of Server protocols
+    """
+    server_software = 'Local/%s' % pulsar.SERVER_SOFTWARE
+
+    def __init__(self, connection):
+        super().__init__(DummyServerConnection.create, loop=connection._loop)
+        self.client_connection = connection
+        self.cfg = connection.producer.cfg
+        self.wsgi_callable = connection.producer.wsgi_callable
+        self.keep_alive = self.cfg.http_keep_alive or 0

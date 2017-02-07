@@ -956,10 +956,12 @@ class Head(Html):
 class Body(Html):
     def __init__(self, **kwargs):
         super().__init__('body')
+        self.embedded_js = Embedded('script', type='text/javascript')
         self.scripts = Scripts(**kwargs)
 
     def stream(self, request):
         yield from super().stream(request)
+        yield from self.embedded_js.stream(request)
         yield from self.scripts.stream(request)
 
 

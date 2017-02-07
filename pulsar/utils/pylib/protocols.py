@@ -147,16 +147,16 @@ class Protocol(EventHandler):
         if not self._closed:
             closed = False
             event = self.event('connection_lost')
-            if self._transport:
+            if self.transport:
                 if self._loop.get_debug():
                     self.logger.debug('Closing connection %s', self)
-                if self._transport.can_write_eof():
+                if self.transport.can_write_eof():
                     try:
-                        self._transport.write_eof()
+                        self.transport.write_eof()
                     except Exception:
                         pass
                 try:
-                    self._transport.close()
+                    self.transport.close()
                     closed = self._loop.create_task(
                         self._close(event.waiter())
                     )
@@ -169,8 +169,8 @@ class Protocol(EventHandler):
     def abort(self):
         """Abort by aborting the :attr:`transport`
         """
-        if self._transport:
-            self._transport.abort()
+        if self.transport:
+            self.transport.abort()
         self.event('connection_lost').fire()
 
     def connection_made(self, transport):
@@ -289,6 +289,9 @@ class ProtocolConsumer(EventHandler):
 
     def get(self, attr):
         return getattr(self, attr, None)
+
+    def set(self, attr, value):
+        setattr(self, attr, value)
 
     def pop(self, attr, default=None):
         value = getattr(self, attr, default)

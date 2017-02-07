@@ -118,7 +118,7 @@ class HttpServerResponse(ProtocolConsumer):
         wsgi = self.request
         producer = self.producer
         wsgi_callable = producer.wsgi_callable
-        keep_alive = producer.keep_alive
+        keep_alive = producer.keep_alive or None
         environ = wsgi.environ
         exc_info = None
         response = None

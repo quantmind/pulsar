@@ -790,7 +790,7 @@ struct __pyx_opt_args_4clib_11FrameParser_decode {
   PyObject *data;
 };
 
-/* "extensions/lib/protocols.pyx":144
+/* "extensions/lib/protocols.pyx":143
  * 
  *     # Callbacks
  *     cpdef _build_consumer(self, _, exc=None):             # <<<<<<<<<<<<<<
@@ -802,7 +802,7 @@ struct __pyx_opt_args_4clib_8Protocol__build_consumer {
   PyObject *exc;
 };
 
-/* "extensions/lib/protocols.pyx":148
+/* "extensions/lib/protocols.pyx":147
  *         self.current_consumer()
  * 
  *     cpdef _connection_lost(self, _, exc=None):             # <<<<<<<<<<<<<<
@@ -814,7 +814,7 @@ struct __pyx_opt_args_4clib_8Protocol__connection_lost {
   PyObject *exc;
 };
 
-/* "extensions/lib/protocols.pyx":169
+/* "extensions/lib/protocols.pyx":168
  *         self._loop = connection._loop
  * 
  *     cpdef start(self, object request=None):             # <<<<<<<<<<<<<<
@@ -826,7 +826,7 @@ struct __pyx_opt_args_4clib_16ProtocolConsumer_start {
   PyObject *request;
 };
 
-/* "extensions/lib/protocols.pyx":190
+/* "extensions/lib/protocols.pyx":189
  *         pass
  * 
  *     cpdef _finished(self, object _, object exc=None):             # <<<<<<<<<<<<<<
@@ -838,7 +838,7 @@ struct __pyx_opt_args_4clib_16ProtocolConsumer__finished {
   PyObject *exc;
 };
 
-/* "extensions/lib/protocols.pyx":199
+/* "extensions/lib/protocols.pyx":198
  *         return setattr(self, attr, value)
  * 
  *     cpdef object pop(self, str attr, object default=None):             # <<<<<<<<<<<<<<
@@ -1089,7 +1089,7 @@ struct __pyx_obj_4clib_Protocol {
 };
 
 
-/* "extensions/lib/protocols.pyx":153
+/* "extensions/lib/protocols.pyx":152
  * 
  * 
  * cdef class ProtocolConsumer(EventHandler):             # <<<<<<<<<<<<<<
@@ -1450,7 +1450,7 @@ struct __pyx_vtabstruct_4clib_Protocol {
 static struct __pyx_vtabstruct_4clib_Protocol *__pyx_vtabptr_4clib_Protocol;
 
 
-/* "extensions/lib/protocols.pyx":153
+/* "extensions/lib/protocols.pyx":152
  * 
  * 
  * cdef class ProtocolConsumer(EventHandler):             # <<<<<<<<<<<<<<
@@ -20216,7 +20216,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_8connection_lost(struct __pyx_obj_4cli
  *         """
  *         self.event('connection_lost').fire()             # <<<<<<<<<<<<<<
  * 
- *     cpdef data_received(self, bytes data):
+ *     cpdef data_received(self, data):
  */
   __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_Protocol *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_self), __pyx_n_s_connection_lost, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -20250,15 +20250,15 @@ static PyObject *__pyx_pf_4clib_8Protocol_8connection_lost(struct __pyx_obj_4cli
 /* "extensions/lib/protocols.pyx":117
  *         self.event('connection_lost').fire()
  * 
- *     cpdef data_received(self, bytes data):             # <<<<<<<<<<<<<<
+ *     cpdef data_received(self, data):             # <<<<<<<<<<<<<<
  *         """Delegates handling of data to the :meth:`current_consumer`.
  * 
  */
 
 static PyObject *__pyx_pw_4clib_8Protocol_11data_received(PyObject *__pyx_v_self, PyObject *__pyx_v_data); /*proto*/
 static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Protocol *__pyx_v_self, PyObject *__pyx_v_data, int __pyx_skip_dispatch) {
-  PyObject *__pyx_v_toprocess = 0;
   struct __pyx_obj_4clib_ProtocolConsumer *__pyx_v_consumer = 0;
+  PyObject *__pyx_v_toprocess = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -20331,8 +20331,8 @@ static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Pr
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":125
- *         cdef bytes toprocess
+  /* "extensions/lib/protocols.pyx":124
+ *         """
  *         cdef ProtocolConsumer consumer;
  *         self.data_received_count += 1             # <<<<<<<<<<<<<<
  *         while data:
@@ -20340,7 +20340,7 @@ static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Pr
  */
   __pyx_v_self->data_received_count = (__pyx_v_self->data_received_count + 1);
 
-  /* "extensions/lib/protocols.pyx":126
+  /* "extensions/lib/protocols.pyx":125
  *         cdef ProtocolConsumer consumer;
  *         self.data_received_count += 1
  *         while data:             # <<<<<<<<<<<<<<
@@ -20348,44 +20348,44 @@ static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Pr
  *             if not consumer.request:
  */
   while (1) {
-    __pyx_t_6 = (__pyx_v_data != Py_None) && (PyBytes_GET_SIZE(__pyx_v_data) != 0);
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_data); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 125, __pyx_L1_error)
     if (!__pyx_t_6) break;
 
-    /* "extensions/lib/protocols.pyx":127
+    /* "extensions/lib/protocols.pyx":126
  *         self.data_received_count += 1
  *         while data:
  *             consumer = self.current_consumer()             # <<<<<<<<<<<<<<
  *             if not consumer.request:
  *                 consumer.start()
  */
-    __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_Protocol *)__pyx_v_self->__pyx_base.__pyx_vtab)->current_consumer(__pyx_v_self, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 127, __pyx_L1_error)
+    __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_Protocol *)__pyx_v_self->__pyx_base.__pyx_vtab)->current_consumer(__pyx_v_self, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_XDECREF_SET(__pyx_v_consumer, ((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_t_1));
     __pyx_t_1 = 0;
 
-    /* "extensions/lib/protocols.pyx":128
+    /* "extensions/lib/protocols.pyx":127
  *         while data:
  *             consumer = self.current_consumer()
  *             if not consumer.request:             # <<<<<<<<<<<<<<
  *                 consumer.start()
  *             toprocess = consumer.feed_data(data)
  */
-    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_consumer->request); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 128, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_consumer->request); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 127, __pyx_L1_error)
     __pyx_t_7 = ((!__pyx_t_6) != 0);
     if (__pyx_t_7) {
 
-      /* "extensions/lib/protocols.pyx":129
+      /* "extensions/lib/protocols.pyx":128
  *             consumer = self.current_consumer()
  *             if not consumer.request:
  *                 consumer.start()             # <<<<<<<<<<<<<<
  *             toprocess = consumer.feed_data(data)
  *             consumer.fire_event('data_processed', data=data, exc=None)
  */
-      __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_consumer->__pyx_base.__pyx_vtab)->start(__pyx_v_consumer, 0, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 129, __pyx_L1_error)
+      __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_consumer->__pyx_base.__pyx_vtab)->start(__pyx_v_consumer, 0, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 128, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "extensions/lib/protocols.pyx":128
+      /* "extensions/lib/protocols.pyx":127
  *         while data:
  *             consumer = self.current_consumer()
  *             if not consumer.request:             # <<<<<<<<<<<<<<
@@ -20394,20 +20394,19 @@ static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Pr
  */
     }
 
-    /* "extensions/lib/protocols.pyx":130
+    /* "extensions/lib/protocols.pyx":129
  *             if not consumer.request:
  *                 consumer.start()
  *             toprocess = consumer.feed_data(data)             # <<<<<<<<<<<<<<
  *             consumer.fire_event('data_processed', data=data, exc=None)
  *             data = toprocess
  */
-    __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_consumer->__pyx_base.__pyx_vtab)->feed_data(__pyx_v_consumer, __pyx_v_data, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
+    __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_consumer->__pyx_base.__pyx_vtab)->feed_data(__pyx_v_consumer, __pyx_v_data, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 129, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (!(likely(PyBytes_CheckExact(__pyx_t_1))||((__pyx_t_1) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "bytes", Py_TYPE(__pyx_t_1)->tp_name), 0))) __PYX_ERR(0, 130, __pyx_L1_error)
-    __Pyx_XDECREF_SET(__pyx_v_toprocess, ((PyObject*)__pyx_t_1));
+    __Pyx_XDECREF_SET(__pyx_v_toprocess, __pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "extensions/lib/protocols.pyx":131
+    /* "extensions/lib/protocols.pyx":130
  *                 consumer.start()
  *             toprocess = consumer.feed_data(data)
  *             consumer.fire_event('data_processed', data=data, exc=None)             # <<<<<<<<<<<<<<
@@ -20417,11 +20416,11 @@ static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Pr
     __pyx_t_8.__pyx_n = 2;
     __pyx_t_8.exc = Py_None;
     __pyx_t_8.data = __pyx_v_data;
-    __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_consumer->__pyx_base.__pyx_vtab)->__pyx_base.fire_event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_consumer), __pyx_n_s_data_processed, 0, &__pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 131, __pyx_L1_error)
+    __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_consumer->__pyx_base.__pyx_vtab)->__pyx_base.fire_event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_consumer), __pyx_n_s_data_processed, 0, &__pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "extensions/lib/protocols.pyx":132
+    /* "extensions/lib/protocols.pyx":131
  *             toprocess = consumer.feed_data(data)
  *             consumer.fire_event('data_processed', data=data, exc=None)
  *             data = toprocess             # <<<<<<<<<<<<<<
@@ -20432,7 +20431,7 @@ static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Pr
     __Pyx_DECREF_SET(__pyx_v_data, __pyx_v_toprocess);
   }
 
-  /* "extensions/lib/protocols.pyx":133
+  /* "extensions/lib/protocols.pyx":132
  *             consumer.fire_event('data_processed', data=data, exc=None)
  *             data = toprocess
  *         self.last_change = _current_time_             # <<<<<<<<<<<<<<
@@ -20444,7 +20443,7 @@ static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Pr
   /* "extensions/lib/protocols.pyx":117
  *         self.event('connection_lost').fire()
  * 
- *     cpdef data_received(self, bytes data):             # <<<<<<<<<<<<<<
+ *     cpdef data_received(self, data):             # <<<<<<<<<<<<<<
  *         """Delegates handling of data to the :meth:`current_consumer`.
  * 
  */
@@ -20461,8 +20460,8 @@ static PyObject *__pyx_f_4clib_8Protocol_data_received(struct __pyx_obj_4clib_Pr
   __Pyx_AddTraceback("clib.Protocol.data_received", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = 0;
   __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_toprocess);
   __Pyx_XDECREF((PyObject *)__pyx_v_consumer);
+  __Pyx_XDECREF(__pyx_v_toprocess);
   __Pyx_XDECREF(__pyx_v_data);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -20476,14 +20475,9 @@ static PyObject *__pyx_pw_4clib_8Protocol_11data_received(PyObject *__pyx_v_self
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("data_received (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_data), (&PyBytes_Type), 1, "data", 1))) __PYX_ERR(0, 117, __pyx_L1_error)
-  __pyx_r = __pyx_pf_4clib_8Protocol_10data_received(((struct __pyx_obj_4clib_Protocol *)__pyx_v_self), ((PyObject*)__pyx_v_data));
+  __pyx_r = __pyx_pf_4clib_8Protocol_10data_received(((struct __pyx_obj_4clib_Protocol *)__pyx_v_self), ((PyObject *)__pyx_v_data));
 
   /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -20511,7 +20505,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_10data_received(struct __pyx_obj_4clib
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":135
+/* "extensions/lib/protocols.pyx":134
  *         self.last_change = _current_time_
  * 
  *     cpdef int changed(self):             # <<<<<<<<<<<<<<
@@ -20533,7 +20527,7 @@ static int __pyx_f_4clib_8Protocol_changed(struct __pyx_obj_4clib_Protocol *__py
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_changed); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 135, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_changed); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 134, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_8Protocol_13changed)) {
       __Pyx_INCREF(__pyx_t_1);
@@ -20548,14 +20542,14 @@ static int __pyx_f_4clib_8Protocol_changed(struct __pyx_obj_4clib_Protocol *__py
         }
       }
       if (__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 135, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 134, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       } else {
-        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 135, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 134, __pyx_L1_error)
       }
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 135, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 134, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_r = __pyx_t_5;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -20564,7 +20558,7 @@ static int __pyx_f_4clib_8Protocol_changed(struct __pyx_obj_4clib_Protocol *__py
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":136
+  /* "extensions/lib/protocols.pyx":135
  * 
  *     cpdef int changed(self):
  *         self.last_change = _current_time_             # <<<<<<<<<<<<<<
@@ -20573,7 +20567,7 @@ static int __pyx_f_4clib_8Protocol_changed(struct __pyx_obj_4clib_Protocol *__py
  */
   __pyx_v_self->last_change = __pyx_v_4clib__current_time_;
 
-  /* "extensions/lib/protocols.pyx":137
+  /* "extensions/lib/protocols.pyx":136
  *     cpdef int changed(self):
  *         self.last_change = _current_time_
  *         return self.last_change             # <<<<<<<<<<<<<<
@@ -20583,7 +20577,7 @@ static int __pyx_f_4clib_8Protocol_changed(struct __pyx_obj_4clib_Protocol *__py
   __pyx_r = __pyx_v_self->last_change;
   goto __pyx_L0;
 
-  /* "extensions/lib/protocols.pyx":135
+  /* "extensions/lib/protocols.pyx":134
  *         self.last_change = _current_time_
  * 
  *     cpdef int changed(self):             # <<<<<<<<<<<<<<
@@ -20623,7 +20617,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_12changed(struct __pyx_obj_4clib_Proto
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("changed", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_f_4clib_8Protocol_changed(__pyx_v_self, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 135, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_f_4clib_8Protocol_changed(__pyx_v_self, 1)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 134, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -20640,7 +20634,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_12changed(struct __pyx_obj_4clib_Proto
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":139
+/* "extensions/lib/protocols.pyx":138
  *         return self.last_change
  * 
  *     cpdef finished_consumer(self, ProtocolConsumer consumer):             # <<<<<<<<<<<<<<
@@ -20664,7 +20658,7 @@ static PyObject *__pyx_f_4clib_8Protocol_finished_consumer(struct __pyx_obj_4cli
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_finished_consumer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 139, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_finished_consumer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 138, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_8Protocol_15finished_consumer)) {
       __Pyx_XDECREF(__pyx_r);
@@ -20680,13 +20674,13 @@ static PyObject *__pyx_f_4clib_8Protocol_finished_consumer(struct __pyx_obj_4cli
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_consumer)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_consumer)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, ((PyObject *)__pyx_v_consumer)};
-          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
@@ -20694,19 +20688,19 @@ static PyObject *__pyx_f_4clib_8Protocol_finished_consumer(struct __pyx_obj_4cli
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, ((PyObject *)__pyx_v_consumer)};
-          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
         #endif
         {
-          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 139, __pyx_L1_error)
+          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 138, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_INCREF(((PyObject *)__pyx_v_consumer));
           __Pyx_GIVEREF(((PyObject *)__pyx_v_consumer));
           PyTuple_SET_ITEM(__pyx_t_5, 0+1, ((PyObject *)__pyx_v_consumer));
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 139, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         }
@@ -20720,7 +20714,7 @@ static PyObject *__pyx_f_4clib_8Protocol_finished_consumer(struct __pyx_obj_4cli
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":140
+  /* "extensions/lib/protocols.pyx":139
  * 
  *     cpdef finished_consumer(self, ProtocolConsumer consumer):
  *         if self._current_consumer is consumer:             # <<<<<<<<<<<<<<
@@ -20731,7 +20725,7 @@ static PyObject *__pyx_f_4clib_8Protocol_finished_consumer(struct __pyx_obj_4cli
   __pyx_t_7 = (__pyx_t_6 != 0);
   if (__pyx_t_7) {
 
-    /* "extensions/lib/protocols.pyx":141
+    /* "extensions/lib/protocols.pyx":140
  *     cpdef finished_consumer(self, ProtocolConsumer consumer):
  *         if self._current_consumer is consumer:
  *             self._current_consumer = None             # <<<<<<<<<<<<<<
@@ -20744,7 +20738,7 @@ static PyObject *__pyx_f_4clib_8Protocol_finished_consumer(struct __pyx_obj_4cli
     __Pyx_DECREF(((PyObject *)__pyx_v_self->_current_consumer));
     __pyx_v_self->_current_consumer = ((struct __pyx_obj_4clib_ProtocolConsumer *)Py_None);
 
-    /* "extensions/lib/protocols.pyx":140
+    /* "extensions/lib/protocols.pyx":139
  * 
  *     cpdef finished_consumer(self, ProtocolConsumer consumer):
  *         if self._current_consumer is consumer:             # <<<<<<<<<<<<<<
@@ -20753,7 +20747,7 @@ static PyObject *__pyx_f_4clib_8Protocol_finished_consumer(struct __pyx_obj_4cli
  */
   }
 
-  /* "extensions/lib/protocols.pyx":139
+  /* "extensions/lib/protocols.pyx":138
  *         return self.last_change
  * 
  *     cpdef finished_consumer(self, ProtocolConsumer consumer):             # <<<<<<<<<<<<<<
@@ -20784,7 +20778,7 @@ static PyObject *__pyx_pw_4clib_8Protocol_15finished_consumer(PyObject *__pyx_v_
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("finished_consumer (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_consumer), __pyx_ptype_4clib_ProtocolConsumer, 1, "consumer", 0))) __PYX_ERR(0, 139, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_consumer), __pyx_ptype_4clib_ProtocolConsumer, 1, "consumer", 0))) __PYX_ERR(0, 138, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_8Protocol_14finished_consumer(((struct __pyx_obj_4clib_Protocol *)__pyx_v_self), ((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_consumer));
 
   /* function exit code */
@@ -20802,7 +20796,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_14finished_consumer(struct __pyx_obj_4
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("finished_consumer", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_8Protocol_finished_consumer(__pyx_v_self, __pyx_v_consumer, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_8Protocol_finished_consumer(__pyx_v_self, __pyx_v_consumer, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 138, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -20819,7 +20813,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_14finished_consumer(struct __pyx_obj_4
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":144
+/* "extensions/lib/protocols.pyx":143
  * 
  *     # Callbacks
  *     cpdef _build_consumer(self, _, exc=None):             # <<<<<<<<<<<<<<
@@ -20848,7 +20842,7 @@ static PyObject *__pyx_f_4clib_8Protocol__build_consumer(struct __pyx_obj_4clib_
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_build_consumer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 144, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_build_consumer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 143, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_8Protocol_17_build_consumer)) {
       __Pyx_XDECREF(__pyx_r);
@@ -20868,7 +20862,7 @@ static PyObject *__pyx_f_4clib_8Protocol__build_consumer(struct __pyx_obj_4clib_
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v__, __pyx_v_exc};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -20876,13 +20870,13 @@ static PyObject *__pyx_f_4clib_8Protocol__build_consumer(struct __pyx_obj_4clib_
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v__, __pyx_v_exc};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 144, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 143, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         if (__pyx_t_4) {
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -20893,7 +20887,7 @@ static PyObject *__pyx_f_4clib_8Protocol__build_consumer(struct __pyx_obj_4clib_
         __Pyx_INCREF(__pyx_v_exc);
         __Pyx_GIVEREF(__pyx_v_exc);
         PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_exc);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 143, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -20906,7 +20900,7 @@ static PyObject *__pyx_f_4clib_8Protocol__build_consumer(struct __pyx_obj_4clib_
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":145
+  /* "extensions/lib/protocols.pyx":144
  *     # Callbacks
  *     cpdef _build_consumer(self, _, exc=None):
  *         self._current_consumer = None             # <<<<<<<<<<<<<<
@@ -20919,18 +20913,18 @@ static PyObject *__pyx_f_4clib_8Protocol__build_consumer(struct __pyx_obj_4clib_
   __Pyx_DECREF(((PyObject *)__pyx_v_self->_current_consumer));
   __pyx_v_self->_current_consumer = ((struct __pyx_obj_4clib_ProtocolConsumer *)Py_None);
 
-  /* "extensions/lib/protocols.pyx":146
+  /* "extensions/lib/protocols.pyx":145
  *     cpdef _build_consumer(self, _, exc=None):
  *         self._current_consumer = None
  *         self.current_consumer()             # <<<<<<<<<<<<<<
  * 
  *     cpdef _connection_lost(self, _, exc=None):
  */
-  __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_Protocol *)__pyx_v_self->__pyx_base.__pyx_vtab)->current_consumer(__pyx_v_self, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 146, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_Protocol *)__pyx_v_self->__pyx_base.__pyx_vtab)->current_consumer(__pyx_v_self, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 145, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "extensions/lib/protocols.pyx":144
+  /* "extensions/lib/protocols.pyx":143
  * 
  *     # Callbacks
  *     cpdef _build_consumer(self, _, exc=None):             # <<<<<<<<<<<<<<
@@ -20988,7 +20982,7 @@ static PyObject *__pyx_pw_4clib_8Protocol_17_build_consumer(PyObject *__pyx_v_se
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "_build_consumer") < 0)) __PYX_ERR(0, 144, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "_build_consumer") < 0)) __PYX_ERR(0, 143, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -21003,7 +20997,7 @@ static PyObject *__pyx_pw_4clib_8Protocol_17_build_consumer(PyObject *__pyx_v_se
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_build_consumer", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 144, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_build_consumer", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 143, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.Protocol._build_consumer", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -21025,7 +21019,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_16_build_consumer(struct __pyx_obj_4cl
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.exc = __pyx_v_exc;
-  __pyx_t_1 = __pyx_vtabptr_4clib_Protocol->_build_consumer(__pyx_v_self, __pyx_v__, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 144, __pyx_L1_error)
+  __pyx_t_1 = __pyx_vtabptr_4clib_Protocol->_build_consumer(__pyx_v_self, __pyx_v__, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 143, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -21042,7 +21036,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_16_build_consumer(struct __pyx_obj_4cl
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":148
+/* "extensions/lib/protocols.pyx":147
  *         self.current_consumer()
  * 
  *     cpdef _connection_lost(self, _, exc=None):             # <<<<<<<<<<<<<<
@@ -21073,7 +21067,7 @@ static PyObject *__pyx_f_4clib_8Protocol__connection_lost(struct __pyx_obj_4clib
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_connection_lost_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_connection_lost_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_8Protocol_19_connection_lost)) {
       __Pyx_XDECREF(__pyx_r);
@@ -21093,7 +21087,7 @@ static PyObject *__pyx_f_4clib_8Protocol__connection_lost(struct __pyx_obj_4clib
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v__, __pyx_v_exc};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -21101,13 +21095,13 @@ static PyObject *__pyx_f_4clib_8Protocol__connection_lost(struct __pyx_obj_4clib
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v__, __pyx_v_exc};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 148, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 147, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         if (__pyx_t_4) {
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -21118,7 +21112,7 @@ static PyObject *__pyx_f_4clib_8Protocol__connection_lost(struct __pyx_obj_4clib
         __Pyx_INCREF(__pyx_v_exc);
         __Pyx_GIVEREF(__pyx_v_exc);
         PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_exc);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -21131,33 +21125,33 @@ static PyObject *__pyx_f_4clib_8Protocol__connection_lost(struct __pyx_obj_4clib
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":149
+  /* "extensions/lib/protocols.pyx":148
  * 
  *     cpdef _connection_lost(self, _, exc=None):
  *         if self._current_consumer:             # <<<<<<<<<<<<<<
  *             self._current_consumer.event('post_request').fire(exc=exc)
  * 
  */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(((PyObject *)__pyx_v_self->_current_consumer)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 149, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(((PyObject *)__pyx_v_self->_current_consumer)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 148, __pyx_L1_error)
   if (__pyx_t_7) {
 
-    /* "extensions/lib/protocols.pyx":150
+    /* "extensions/lib/protocols.pyx":149
  *     cpdef _connection_lost(self, _, exc=None):
  *         if self._current_consumer:
  *             self._current_consumer.event('post_request').fire(exc=exc)             # <<<<<<<<<<<<<<
  * 
  * 
  */
-    __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->_current_consumer->__pyx_base.__pyx_vtab)->__pyx_base.event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_self->_current_consumer), __pyx_n_s_post_request, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 150, __pyx_L1_error)
+    __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->_current_consumer->__pyx_base.__pyx_vtab)->__pyx_base.event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_self->_current_consumer), __pyx_n_s_post_request, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 149, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_t_8.__pyx_n = 1;
     __pyx_t_8.exc = __pyx_v_exc;
-    __pyx_t_2 = ((struct __pyx_vtabstruct_4clib_Event *)((struct __pyx_obj_4clib_Event *)__pyx_t_1)->__pyx_vtab)->fire(((struct __pyx_obj_4clib_Event *)__pyx_t_1), 0, &__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 150, __pyx_L1_error)
+    __pyx_t_2 = ((struct __pyx_vtabstruct_4clib_Event *)((struct __pyx_obj_4clib_Event *)__pyx_t_1)->__pyx_vtab)->fire(((struct __pyx_obj_4clib_Event *)__pyx_t_1), 0, &__pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 149, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "extensions/lib/protocols.pyx":149
+    /* "extensions/lib/protocols.pyx":148
  * 
  *     cpdef _connection_lost(self, _, exc=None):
  *         if self._current_consumer:             # <<<<<<<<<<<<<<
@@ -21166,7 +21160,7 @@ static PyObject *__pyx_f_4clib_8Protocol__connection_lost(struct __pyx_obj_4clib
  */
   }
 
-  /* "extensions/lib/protocols.pyx":148
+  /* "extensions/lib/protocols.pyx":147
  *         self.current_consumer()
  * 
  *     cpdef _connection_lost(self, _, exc=None):             # <<<<<<<<<<<<<<
@@ -21224,7 +21218,7 @@ static PyObject *__pyx_pw_4clib_8Protocol_19_connection_lost(PyObject *__pyx_v_s
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "_connection_lost") < 0)) __PYX_ERR(0, 148, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "_connection_lost") < 0)) __PYX_ERR(0, 147, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -21239,7 +21233,7 @@ static PyObject *__pyx_pw_4clib_8Protocol_19_connection_lost(PyObject *__pyx_v_s
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_connection_lost", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 148, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_connection_lost", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 147, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.Protocol._connection_lost", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -21261,7 +21255,7 @@ static PyObject *__pyx_pf_4clib_8Protocol_18_connection_lost(struct __pyx_obj_4c
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.exc = __pyx_v_exc;
-  __pyx_t_1 = __pyx_vtabptr_4clib_Protocol->_connection_lost(__pyx_v_self, __pyx_v__, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
+  __pyx_t_1 = __pyx_vtabptr_4clib_Protocol->_connection_lost(__pyx_v_self, __pyx_v__, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 147, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -21631,7 +21625,7 @@ static int __pyx_pf_4clib_8Protocol_9processed_2__set__(struct __pyx_obj_4clib_P
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":164
+/* "extensions/lib/protocols.pyx":163
  *         dict cache
  * 
  *     def __cinit__(self, Protocol connection):             # <<<<<<<<<<<<<<
@@ -21664,7 +21658,7 @@ static int __pyx_pw_4clib_16ProtocolConsumer_1__cinit__(PyObject *__pyx_v_self, 
         else goto __pyx_L5_argtuple_error;
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 164, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 163, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 1) {
       goto __pyx_L5_argtuple_error;
@@ -21675,13 +21669,13 @@ static int __pyx_pw_4clib_16ProtocolConsumer_1__cinit__(PyObject *__pyx_v_self, 
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 164, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 1, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 163, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.ProtocolConsumer.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_connection), __pyx_ptype_4clib_Protocol, 1, "connection", 0))) __PYX_ERR(0, 164, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_connection), __pyx_ptype_4clib_Protocol, 1, "connection", 0))) __PYX_ERR(0, 163, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_16ProtocolConsumer___cinit__(((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_self), __pyx_v_connection);
 
   /* function exit code */
@@ -21699,7 +21693,7 @@ static int __pyx_pf_4clib_16ProtocolConsumer___cinit__(struct __pyx_obj_4clib_Pr
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "extensions/lib/protocols.pyx":165
+  /* "extensions/lib/protocols.pyx":164
  * 
  *     def __cinit__(self, Protocol connection):
  *         self.connection = connection             # <<<<<<<<<<<<<<
@@ -21712,7 +21706,7 @@ static int __pyx_pf_4clib_16ProtocolConsumer___cinit__(struct __pyx_obj_4clib_Pr
   __Pyx_DECREF(((PyObject *)__pyx_v_self->connection));
   __pyx_v_self->connection = __pyx_v_connection;
 
-  /* "extensions/lib/protocols.pyx":166
+  /* "extensions/lib/protocols.pyx":165
  *     def __cinit__(self, Protocol connection):
  *         self.connection = connection
  *         self.producer = connection.producer             # <<<<<<<<<<<<<<
@@ -21727,7 +21721,7 @@ static int __pyx_pf_4clib_16ProtocolConsumer___cinit__(struct __pyx_obj_4clib_Pr
   __pyx_v_self->producer = ((struct __pyx_obj_4clib_Producer *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/protocols.pyx":167
+  /* "extensions/lib/protocols.pyx":166
  *         self.connection = connection
  *         self.producer = connection.producer
  *         self._loop = connection._loop             # <<<<<<<<<<<<<<
@@ -21742,7 +21736,7 @@ static int __pyx_pf_4clib_16ProtocolConsumer___cinit__(struct __pyx_obj_4clib_Pr
   __pyx_v_self->_loop = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/protocols.pyx":164
+  /* "extensions/lib/protocols.pyx":163
  *         dict cache
  * 
  *     def __cinit__(self, Protocol connection):             # <<<<<<<<<<<<<<
@@ -21756,7 +21750,7 @@ static int __pyx_pf_4clib_16ProtocolConsumer___cinit__(struct __pyx_obj_4clib_Pr
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":169
+/* "extensions/lib/protocols.pyx":168
  *         self._loop = connection._loop
  * 
  *     cpdef start(self, object request=None):             # <<<<<<<<<<<<<<
@@ -21794,7 +21788,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_start); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_start); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 168, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_3start)) {
       __Pyx_XDECREF(__pyx_r);
@@ -21810,13 +21804,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_request); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_request); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_request};
-          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
@@ -21824,19 +21818,19 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_request};
-          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
         #endif
         {
-          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 169, __pyx_L1_error)
+          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 168, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_INCREF(__pyx_v_request);
           __Pyx_GIVEREF(__pyx_v_request);
           PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_request);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 169, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 168, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         }
@@ -21850,7 +21844,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":170
+  /* "extensions/lib/protocols.pyx":169
  * 
  *     cpdef start(self, object request=None):
  *         self.connection.processed += 1             # <<<<<<<<<<<<<<
@@ -21862,7 +21856,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
   __pyx_t_6->processed = (__pyx_t_6->processed + 1);
   __Pyx_DECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
 
-  /* "extensions/lib/protocols.pyx":171
+  /* "extensions/lib/protocols.pyx":170
  *     cpdef start(self, object request=None):
  *         self.connection.processed += 1
  *         self.producer.requests_processed += 1             # <<<<<<<<<<<<<<
@@ -21874,38 +21868,38 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
   __pyx_t_7->requests_processed = (__pyx_t_7->requests_processed + 1);
   __Pyx_DECREF(((PyObject *)__pyx_t_7)); __pyx_t_7 = 0;
 
-  /* "extensions/lib/protocols.pyx":172
+  /* "extensions/lib/protocols.pyx":171
  *         self.connection.processed += 1
  *         self.producer.requests_processed += 1
  *         self.event('post_request').bind(self._finished)             # <<<<<<<<<<<<<<
  *         self.request = request or self.create_request()
  *         try:
  */
-  __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_self), __pyx_n_s_post_request, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 172, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_self), __pyx_n_s_post_request, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 171, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_finished); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 172, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_finished); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 171, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = ((struct __pyx_vtabstruct_4clib_Event *)((struct __pyx_obj_4clib_Event *)__pyx_t_1)->__pyx_vtab)->bind(((struct __pyx_obj_4clib_Event *)__pyx_t_1), __pyx_t_2, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 172, __pyx_L1_error)
+  __pyx_t_3 = ((struct __pyx_vtabstruct_4clib_Event *)((struct __pyx_obj_4clib_Event *)__pyx_t_1)->__pyx_vtab)->bind(((struct __pyx_obj_4clib_Event *)__pyx_t_1), __pyx_t_2, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 171, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "extensions/lib/protocols.pyx":173
+  /* "extensions/lib/protocols.pyx":172
  *         self.producer.requests_processed += 1
  *         self.event('post_request').bind(self._finished)
  *         self.request = request or self.create_request()             # <<<<<<<<<<<<<<
  *         try:
  *             self.fire_event('pre_request', data=None, exc=None)
  */
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_request); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 173, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_v_request); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 172, __pyx_L1_error)
   if (!__pyx_t_8) {
   } else {
     __Pyx_INCREF(__pyx_v_request);
     __pyx_t_3 = __pyx_v_request;
     goto __pyx_L3_bool_binop_done;
   }
-  __pyx_t_2 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->__pyx_base.__pyx_vtab)->create_request(__pyx_v_self, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
+  __pyx_t_2 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->__pyx_base.__pyx_vtab)->create_request(__pyx_v_self, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 172, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(__pyx_t_2);
   __pyx_t_3 = __pyx_t_2;
@@ -21917,7 +21911,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
   __pyx_v_self->request = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "extensions/lib/protocols.pyx":174
+  /* "extensions/lib/protocols.pyx":173
  *         self.event('post_request').bind(self._finished)
  *         self.request = request or self.create_request()
  *         try:             # <<<<<<<<<<<<<<
@@ -21933,7 +21927,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
     __Pyx_XGOTREF(__pyx_t_11);
     /*try:*/ {
 
-      /* "extensions/lib/protocols.pyx":175
+      /* "extensions/lib/protocols.pyx":174
  *         self.request = request or self.create_request()
  *         try:
  *             self.fire_event('pre_request', data=None, exc=None)             # <<<<<<<<<<<<<<
@@ -21943,11 +21937,11 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
       __pyx_t_12.__pyx_n = 2;
       __pyx_t_12.exc = Py_None;
       __pyx_t_12.data = Py_None;
-      __pyx_t_3 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.fire_event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_self), __pyx_n_s_pre_request, 0, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 175, __pyx_L5_error)
+      __pyx_t_3 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->__pyx_base.__pyx_vtab)->__pyx_base.fire_event(((struct __pyx_obj_4clib_EventHandler *)__pyx_v_self), __pyx_n_s_pre_request, 0, &__pyx_t_12); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 174, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-      /* "extensions/lib/protocols.pyx":174
+      /* "extensions/lib/protocols.pyx":173
  *         self.event('post_request').bind(self._finished)
  *         self.request = request or self.create_request()
  *         try:             # <<<<<<<<<<<<<<
@@ -21956,7 +21950,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
  */
     }
 
-    /* "extensions/lib/protocols.pyx":179
+    /* "extensions/lib/protocols.pyx":178
  *             self.producer.logger.debug('Abort request %s', request)
  *         else:
  *             self.start_request()             # <<<<<<<<<<<<<<
@@ -21964,7 +21958,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
  *     cpdef object create_request(self):
  */
     /*else:*/ {
-      __pyx_t_3 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->__pyx_base.__pyx_vtab)->start_request(__pyx_v_self, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 179, __pyx_L7_except_error)
+      __pyx_t_3 = ((struct __pyx_vtabstruct_4clib_ProtocolConsumer *)__pyx_v_self->__pyx_base.__pyx_vtab)->start_request(__pyx_v_self, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 178, __pyx_L7_except_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
@@ -21974,40 +21968,40 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
     goto __pyx_L12_try_end;
     __pyx_L5_error:;
     __Pyx_PyThreadState_assign
-    __Pyx_XDECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
-    __Pyx_XDECREF(((PyObject *)__pyx_t_7)); __pyx_t_7 = 0;
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_XDECREF(((PyObject *)__pyx_t_6)); __pyx_t_6 = 0;
+    __Pyx_XDECREF(((PyObject *)__pyx_t_7)); __pyx_t_7 = 0;
 
-    /* "extensions/lib/protocols.pyx":176
+    /* "extensions/lib/protocols.pyx":175
  *         try:
  *             self.fire_event('pre_request', data=None, exc=None)
  *         except AbortEvent:             # <<<<<<<<<<<<<<
  *             self.producer.logger.debug('Abort request %s', request)
  *         else:
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_AbortEvent); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 176, __pyx_L7_except_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_AbortEvent); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 175, __pyx_L7_except_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_13 = __Pyx_PyErr_ExceptionMatches(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     if (__pyx_t_13) {
       __Pyx_AddTraceback("clib.ProtocolConsumer.start", __pyx_clineno, __pyx_lineno, __pyx_filename);
-      if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_2, &__pyx_t_1) < 0) __PYX_ERR(0, 176, __pyx_L7_except_error)
+      if (__Pyx_GetException(&__pyx_t_3, &__pyx_t_2, &__pyx_t_1) < 0) __PYX_ERR(0, 175, __pyx_L7_except_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_GOTREF(__pyx_t_1);
 
-      /* "extensions/lib/protocols.pyx":177
+      /* "extensions/lib/protocols.pyx":176
  *             self.fire_event('pre_request', data=None, exc=None)
  *         except AbortEvent:
  *             self.producer.logger.debug('Abort request %s', request)             # <<<<<<<<<<<<<<
  *         else:
  *             self.start_request()
  */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->producer->logger, __pyx_n_s_debug); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 177, __pyx_L7_except_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->producer->logger, __pyx_n_s_debug); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 176, __pyx_L7_except_error)
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_t_14 = NULL;
       __pyx_t_13 = 0;
@@ -22024,7 +22018,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_4)) {
         PyObject *__pyx_temp[3] = {__pyx_t_14, __pyx_kp_s_Abort_request_s, __pyx_v_request};
-        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_13, 2+__pyx_t_13); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 177, __pyx_L7_except_error)
+        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_13, 2+__pyx_t_13); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 176, __pyx_L7_except_error)
         __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
         __Pyx_GOTREF(__pyx_t_5);
       } else
@@ -22032,13 +22026,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
         PyObject *__pyx_temp[3] = {__pyx_t_14, __pyx_kp_s_Abort_request_s, __pyx_v_request};
-        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_13, 2+__pyx_t_13); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 177, __pyx_L7_except_error)
+        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_13, 2+__pyx_t_13); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 176, __pyx_L7_except_error)
         __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
         __Pyx_GOTREF(__pyx_t_5);
       } else
       #endif
       {
-        __pyx_t_15 = PyTuple_New(2+__pyx_t_13); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 177, __pyx_L7_except_error)
+        __pyx_t_15 = PyTuple_New(2+__pyx_t_13); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 176, __pyx_L7_except_error)
         __Pyx_GOTREF(__pyx_t_15);
         if (__pyx_t_14) {
           __Pyx_GIVEREF(__pyx_t_14); PyTuple_SET_ITEM(__pyx_t_15, 0, __pyx_t_14); __pyx_t_14 = NULL;
@@ -22049,7 +22043,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
         __Pyx_INCREF(__pyx_v_request);
         __Pyx_GIVEREF(__pyx_v_request);
         PyTuple_SET_ITEM(__pyx_t_15, 1+__pyx_t_13, __pyx_v_request);
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_15, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 177, __pyx_L7_except_error)
+        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_15, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 176, __pyx_L7_except_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
       }
@@ -22063,7 +22057,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
     goto __pyx_L7_except_error;
     __pyx_L7_except_error:;
 
-    /* "extensions/lib/protocols.pyx":174
+    /* "extensions/lib/protocols.pyx":173
  *         self.event('post_request').bind(self._finished)
  *         self.request = request or self.create_request()
  *         try:             # <<<<<<<<<<<<<<
@@ -22085,7 +22079,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start(struct __pyx_obj_4clib_P
     __pyx_L12_try_end:;
   }
 
-  /* "extensions/lib/protocols.pyx":169
+  /* "extensions/lib/protocols.pyx":168
  *         self._loop = connection._loop
  * 
  *     cpdef start(self, object request=None):             # <<<<<<<<<<<<<<
@@ -22142,7 +22136,7 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_3start(PyObject *__pyx_v_self
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "start") < 0)) __PYX_ERR(0, 169, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "start") < 0)) __PYX_ERR(0, 168, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -22155,7 +22149,7 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_3start(PyObject *__pyx_v_self
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("start", 0, 0, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 169, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("start", 0, 0, 1, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 168, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.ProtocolConsumer.start", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -22177,7 +22171,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_2start(struct __pyx_obj_4clib
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.request = __pyx_v_request;
-  __pyx_t_1 = __pyx_vtabptr_4clib_ProtocolConsumer->start(__pyx_v_self, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
+  __pyx_t_1 = __pyx_vtabptr_4clib_ProtocolConsumer->start(__pyx_v_self, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 168, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -22194,7 +22188,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_2start(struct __pyx_obj_4clib
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":181
+/* "extensions/lib/protocols.pyx":180
  *             self.start_request()
  * 
  *     cpdef object create_request(self):             # <<<<<<<<<<<<<<
@@ -22215,7 +22209,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_create_request(CYTHON_UNUSED s
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_create_request); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 181, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_create_request); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_5create_request)) {
       __Pyx_XDECREF(__pyx_r);
@@ -22231,10 +22225,10 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_create_request(CYTHON_UNUSED s
         }
       }
       if (__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       } else {
-        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
       }
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -22246,7 +22240,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_create_request(CYTHON_UNUSED s
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":182
+  /* "extensions/lib/protocols.pyx":181
  * 
  *     cpdef object create_request(self):
  *         return dummyRequest             # <<<<<<<<<<<<<<
@@ -22258,7 +22252,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_create_request(CYTHON_UNUSED s
   __pyx_r = __pyx_v_4clib_dummyRequest;
   goto __pyx_L0;
 
-  /* "extensions/lib/protocols.pyx":181
+  /* "extensions/lib/protocols.pyx":180
  *             self.start_request()
  * 
  *     cpdef object create_request(self):             # <<<<<<<<<<<<<<
@@ -22299,7 +22293,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_4create_request(struct __pyx_
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("create_request", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_create_request(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 181, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_create_request(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -22316,7 +22310,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_4create_request(struct __pyx_
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":184
+/* "extensions/lib/protocols.pyx":183
  *         return dummyRequest
  * 
  *     cpdef start_request(self):             # <<<<<<<<<<<<<<
@@ -22337,7 +22331,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start_request(CYTHON_UNUSED st
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_start_request); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 184, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_start_request); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_7start_request)) {
       __Pyx_XDECREF(__pyx_r);
@@ -22353,10 +22347,10 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start_request(CYTHON_UNUSED st
         }
       }
       if (__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 184, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       } else {
-        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 184, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
       }
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -22368,12 +22362,12 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start_request(CYTHON_UNUSED st
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":185
+  /* "extensions/lib/protocols.pyx":184
  * 
  *     cpdef start_request(self):
  *         pass             # <<<<<<<<<<<<<<
  * 
- *     cpdef feed_data(self, bytes data):
+ *     cpdef feed_data(self, data):
  */
 
   /* function exit code */
@@ -22392,7 +22386,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_start_request(CYTHON_UNUSED st
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":184
+/* "extensions/lib/protocols.pyx":183
  *         return dummyRequest
  * 
  *     cpdef start_request(self):             # <<<<<<<<<<<<<<
@@ -22419,7 +22413,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_6start_request(struct __pyx_o
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("start_request", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_start_request(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 184, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_start_request(__pyx_v_self, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 183, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -22436,10 +22430,10 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_6start_request(struct __pyx_o
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":187
+/* "extensions/lib/protocols.pyx":186
  *         pass
  * 
- *     cpdef feed_data(self, bytes data):             # <<<<<<<<<<<<<<
+ *     cpdef feed_data(self, data):             # <<<<<<<<<<<<<<
  *         pass
  * 
  */
@@ -22458,7 +22452,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_feed_data(CYTHON_UNUSED struct
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_feed_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 187, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_feed_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 186, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_9feed_data)) {
       __Pyx_XDECREF(__pyx_r);
@@ -22474,13 +22468,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_feed_data(CYTHON_UNUSED struct
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_data); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 187, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_data); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 186, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_data};
-          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 187, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 186, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
@@ -22488,19 +22482,19 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_feed_data(CYTHON_UNUSED struct
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_data};
-          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 187, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 186, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
         #endif
         {
-          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 187, __pyx_L1_error)
+          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 186, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_INCREF(__pyx_v_data);
           __Pyx_GIVEREF(__pyx_v_data);
           PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_data);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 187, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 186, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         }
@@ -22514,9 +22508,9 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_feed_data(CYTHON_UNUSED struct
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":188
+  /* "extensions/lib/protocols.pyx":187
  * 
- *     cpdef feed_data(self, bytes data):
+ *     cpdef feed_data(self, data):
  *         pass             # <<<<<<<<<<<<<<
  * 
  *     cpdef _finished(self, object _, object exc=None):
@@ -22539,10 +22533,10 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_feed_data(CYTHON_UNUSED struct
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":187
+/* "extensions/lib/protocols.pyx":186
  *         pass
  * 
- *     cpdef feed_data(self, bytes data):             # <<<<<<<<<<<<<<
+ *     cpdef feed_data(self, data):             # <<<<<<<<<<<<<<
  *         pass
  * 
  */
@@ -22553,14 +22547,9 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_9feed_data(PyObject *__pyx_v_
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("feed_data (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_data), (&PyBytes_Type), 1, "data", 1))) __PYX_ERR(0, 187, __pyx_L1_error)
-  __pyx_r = __pyx_pf_4clib_16ProtocolConsumer_8feed_data(((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_self), ((PyObject*)__pyx_v_data));
+  __pyx_r = __pyx_pf_4clib_16ProtocolConsumer_8feed_data(((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_self), ((PyObject *)__pyx_v_data));
 
   /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __pyx_r = NULL;
-  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -22571,7 +22560,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_8feed_data(struct __pyx_obj_4
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("feed_data", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_feed_data(__pyx_v_self, __pyx_v_data, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 187, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_feed_data(__pyx_v_self, __pyx_v_data, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 186, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -22588,7 +22577,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_8feed_data(struct __pyx_obj_4
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":190
+/* "extensions/lib/protocols.pyx":189
  *         pass
  * 
  *     cpdef _finished(self, object _, object exc=None):             # <<<<<<<<<<<<<<
@@ -22617,7 +22606,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer__finished(struct __pyx_obj_4cl
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_finished); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 190, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_finished); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 189, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_11_finished)) {
       __Pyx_XDECREF(__pyx_r);
@@ -22637,7 +22626,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer__finished(struct __pyx_obj_4cl
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v__, __pyx_v_exc};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 190, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 189, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -22645,13 +22634,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer__finished(struct __pyx_obj_4cl
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v__, __pyx_v_exc};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 190, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 189, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 190, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 189, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         if (__pyx_t_4) {
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -22662,7 +22651,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer__finished(struct __pyx_obj_4cl
         __Pyx_INCREF(__pyx_v_exc);
         __Pyx_GIVEREF(__pyx_v_exc);
         PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_exc);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 190, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 189, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -22675,18 +22664,18 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer__finished(struct __pyx_obj_4cl
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":191
+  /* "extensions/lib/protocols.pyx":190
  * 
  *     cpdef _finished(self, object _, object exc=None):
  *         self.connection.finished_consumer(self)             # <<<<<<<<<<<<<<
  * 
  *     cpdef object get(self, str attr):
  */
-  __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_Protocol *)__pyx_v_self->connection->__pyx_base.__pyx_vtab)->finished_consumer(__pyx_v_self->connection, __pyx_v_self, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 191, __pyx_L1_error)
+  __pyx_t_1 = ((struct __pyx_vtabstruct_4clib_Protocol *)__pyx_v_self->connection->__pyx_base.__pyx_vtab)->finished_consumer(__pyx_v_self->connection, __pyx_v_self, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "extensions/lib/protocols.pyx":190
+  /* "extensions/lib/protocols.pyx":189
  *         pass
  * 
  *     cpdef _finished(self, object _, object exc=None):             # <<<<<<<<<<<<<<
@@ -22744,7 +22733,7 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_11_finished(PyObject *__pyx_v
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "_finished") < 0)) __PYX_ERR(0, 190, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "_finished") < 0)) __PYX_ERR(0, 189, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -22759,7 +22748,7 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_11_finished(PyObject *__pyx_v
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("_finished", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 190, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("_finished", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 189, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.ProtocolConsumer._finished", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -22781,7 +22770,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_10_finished(struct __pyx_obj_
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.exc = __pyx_v_exc;
-  __pyx_t_1 = __pyx_vtabptr_4clib_ProtocolConsumer->_finished(__pyx_v_self, __pyx_v__, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 190, __pyx_L1_error)
+  __pyx_t_1 = __pyx_vtabptr_4clib_ProtocolConsumer->_finished(__pyx_v_self, __pyx_v__, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 189, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -22798,7 +22787,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_10_finished(struct __pyx_obj_
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":193
+/* "extensions/lib/protocols.pyx":192
  *         self.connection.finished_consumer(self)
  * 
  *     cpdef object get(self, str attr):             # <<<<<<<<<<<<<<
@@ -22820,7 +22809,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_get); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 193, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_get); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_13get)) {
       __Pyx_XDECREF(__pyx_r);
@@ -22836,13 +22825,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_attr); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 193, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_attr); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 192, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_attr};
-          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 193, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 192, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
@@ -22850,19 +22839,19 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_attr};
-          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 193, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 192, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_2);
         } else
         #endif
         {
-          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 193, __pyx_L1_error)
+          __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 192, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_5);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_INCREF(__pyx_v_attr);
           __Pyx_GIVEREF(__pyx_v_attr);
           PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_attr);
-          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 193, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 192, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         }
@@ -22876,7 +22865,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":194
+  /* "extensions/lib/protocols.pyx":193
  * 
  *     cpdef object get(self, str attr):
  *         return getattr(self, attr, None)             # <<<<<<<<<<<<<<
@@ -22884,13 +22873,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_get(struct __pyx_obj_4clib_Pro
  *     cpdef set(self, str attr, value):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_v_attr, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 194, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_v_attr, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 193, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "extensions/lib/protocols.pyx":193
+  /* "extensions/lib/protocols.pyx":192
  *         self.connection.finished_consumer(self)
  * 
  *     cpdef object get(self, str attr):             # <<<<<<<<<<<<<<
@@ -22919,7 +22908,7 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_13get(PyObject *__pyx_v_self,
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("get (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 193, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 192, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_16ProtocolConsumer_12get(((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_self), ((PyObject*)__pyx_v_attr));
 
   /* function exit code */
@@ -22937,7 +22926,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_12get(struct __pyx_obj_4clib_
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("get", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_get(__pyx_v_self, __pyx_v_attr, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 193, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_get(__pyx_v_self, __pyx_v_attr, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -22954,7 +22943,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_12get(struct __pyx_obj_4clib_
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":196
+/* "extensions/lib/protocols.pyx":195
  *         return getattr(self, attr, None)
  * 
  *     cpdef set(self, str attr, value):             # <<<<<<<<<<<<<<
@@ -22978,7 +22967,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_set(struct __pyx_obj_4clib_Pro
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_set); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 196, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_set); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 195, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_15set)) {
       __Pyx_XDECREF(__pyx_r);
@@ -22998,7 +22987,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_set(struct __pyx_obj_4clib_Pro
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_attr, __pyx_v_value};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 196, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 195, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -23006,13 +22995,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_set(struct __pyx_obj_4clib_Pro
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_attr, __pyx_v_value};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 196, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 195, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 196, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 195, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         if (__pyx_t_4) {
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -23023,7 +23012,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_set(struct __pyx_obj_4clib_Pro
         __Pyx_INCREF(__pyx_v_value);
         __Pyx_GIVEREF(__pyx_v_value);
         PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_value);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 196, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 195, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -23036,7 +23025,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_set(struct __pyx_obj_4clib_Pro
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":197
+  /* "extensions/lib/protocols.pyx":196
  * 
  *     cpdef set(self, str attr, value):
  *         return setattr(self, attr, value)             # <<<<<<<<<<<<<<
@@ -23044,14 +23033,14 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_set(struct __pyx_obj_4clib_Pro
  *     cpdef object pop(self, str attr, object default=None):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_7 = PyObject_SetAttr(((PyObject *)__pyx_v_self), __pyx_v_attr, __pyx_v_value); if (unlikely(__pyx_t_7 == -1)) __PYX_ERR(0, 197, __pyx_L1_error)
-  __pyx_t_1 = __Pyx_Owned_Py_None(__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 197, __pyx_L1_error)
+  __pyx_t_7 = PyObject_SetAttr(((PyObject *)__pyx_v_self), __pyx_v_attr, __pyx_v_value); if (unlikely(__pyx_t_7 == -1)) __PYX_ERR(0, 196, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Owned_Py_None(__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 196, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "extensions/lib/protocols.pyx":196
+  /* "extensions/lib/protocols.pyx":195
  *         return getattr(self, attr, None)
  * 
  *     cpdef set(self, str attr, value):             # <<<<<<<<<<<<<<
@@ -23102,11 +23091,11 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_15set(PyObject *__pyx_v_self,
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_value)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("set", 1, 2, 2, 1); __PYX_ERR(0, 196, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("set", 1, 2, 2, 1); __PYX_ERR(0, 195, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "set") < 0)) __PYX_ERR(0, 196, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "set") < 0)) __PYX_ERR(0, 195, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -23119,13 +23108,13 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_15set(PyObject *__pyx_v_self,
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("set", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 196, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("set", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 195, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.ProtocolConsumer.set", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 196, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 195, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_16ProtocolConsumer_14set(((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_self), __pyx_v_attr, __pyx_v_value);
 
   /* function exit code */
@@ -23143,7 +23132,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_14set(struct __pyx_obj_4clib_
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("set", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_set(__pyx_v_self, __pyx_v_attr, __pyx_v_value, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 196, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_4clib_16ProtocolConsumer_set(__pyx_v_self, __pyx_v_attr, __pyx_v_value, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 195, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -23160,7 +23149,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_14set(struct __pyx_obj_4clib_
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":199
+/* "extensions/lib/protocols.pyx":198
  *         return setattr(self, attr, value)
  * 
  *     cpdef object pop(self, str attr, object default=None):             # <<<<<<<<<<<<<<
@@ -23194,7 +23183,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
   if (unlikely(__pyx_skip_dispatch)) ;
   /* Check if overridden in Python */
   else if (unlikely(Py_TYPE(((PyObject *)__pyx_v_self))->tp_dictoffset != 0)) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_pop); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 199, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_pop); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 198, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     if (!PyCFunction_Check(__pyx_t_1) || (PyCFunction_GET_FUNCTION(__pyx_t_1) != (PyCFunction)__pyx_pw_4clib_16ProtocolConsumer_17pop)) {
       __Pyx_XDECREF(__pyx_r);
@@ -23214,7 +23203,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_attr, __pyx_v_default};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 199, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 198, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -23222,13 +23211,13 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_attr, __pyx_v_default};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 199, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 2+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 198, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 199, __pyx_L1_error)
+        __pyx_t_6 = PyTuple_New(2+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 198, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         if (__pyx_t_4) {
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -23239,7 +23228,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
         __Pyx_INCREF(__pyx_v_default);
         __Pyx_GIVEREF(__pyx_v_default);
         PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_5, __pyx_v_default);
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 199, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 198, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
       }
@@ -23252,19 +23241,19 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "extensions/lib/protocols.pyx":200
+  /* "extensions/lib/protocols.pyx":199
  * 
  *     cpdef object pop(self, str attr, object default=None):
  *         cdef object value = getattr(self, attr, default)             # <<<<<<<<<<<<<<
  *         try:
  *             delattr(self, attr)
  */
-  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_v_attr, __pyx_v_default); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 200, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_v_attr, __pyx_v_default); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 199, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_value = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "extensions/lib/protocols.pyx":201
+  /* "extensions/lib/protocols.pyx":200
  *     cpdef object pop(self, str attr, object default=None):
  *         cdef object value = getattr(self, attr, default)
  *         try:             # <<<<<<<<<<<<<<
@@ -23280,16 +23269,16 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     __Pyx_XGOTREF(__pyx_t_9);
     /*try:*/ {
 
-      /* "extensions/lib/protocols.pyx":202
+      /* "extensions/lib/protocols.pyx":201
  *         cdef object value = getattr(self, attr, default)
  *         try:
  *             delattr(self, attr)             # <<<<<<<<<<<<<<
  *         except AttributeError:
  *             pass
  */
-      __pyx_t_10 = PyObject_DelAttr(((PyObject *)__pyx_v_self), __pyx_v_attr); if (unlikely(__pyx_t_10 == -1)) __PYX_ERR(0, 202, __pyx_L3_error)
+      __pyx_t_10 = PyObject_DelAttr(((PyObject *)__pyx_v_self), __pyx_v_attr); if (unlikely(__pyx_t_10 == -1)) __PYX_ERR(0, 201, __pyx_L3_error)
 
-      /* "extensions/lib/protocols.pyx":201
+      /* "extensions/lib/protocols.pyx":200
  *     cpdef object pop(self, str attr, object default=None):
  *         cdef object value = getattr(self, attr, default)
  *         try:             # <<<<<<<<<<<<<<
@@ -23309,7 +23298,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "extensions/lib/protocols.pyx":203
+    /* "extensions/lib/protocols.pyx":202
  *         try:
  *             delattr(self, attr)
  *         except AttributeError:             # <<<<<<<<<<<<<<
@@ -23324,7 +23313,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "extensions/lib/protocols.pyx":201
+    /* "extensions/lib/protocols.pyx":200
  *     cpdef object pop(self, str attr, object default=None):
  *         cdef object value = getattr(self, attr, default)
  *         try:             # <<<<<<<<<<<<<<
@@ -23346,7 +23335,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
     __pyx_L10_try_end:;
   }
 
-  /* "extensions/lib/protocols.pyx":205
+  /* "extensions/lib/protocols.pyx":204
  *         except AttributeError:
  *             pass
  *         return value             # <<<<<<<<<<<<<<
@@ -23356,7 +23345,7 @@ static PyObject *__pyx_f_4clib_16ProtocolConsumer_pop(struct __pyx_obj_4clib_Pro
   __pyx_r = __pyx_v_value;
   goto __pyx_L0;
 
-  /* "extensions/lib/protocols.pyx":199
+  /* "extensions/lib/protocols.pyx":198
  *         return setattr(self, attr, value)
  * 
  *     cpdef object pop(self, str attr, object default=None):             # <<<<<<<<<<<<<<
@@ -23413,7 +23402,7 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_17pop(PyObject *__pyx_v_self,
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "pop") < 0)) __PYX_ERR(0, 199, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "pop") < 0)) __PYX_ERR(0, 198, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -23428,13 +23417,13 @@ static PyObject *__pyx_pw_4clib_16ProtocolConsumer_17pop(PyObject *__pyx_v_self,
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("pop", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 199, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("pop", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 198, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("clib.ProtocolConsumer.pop", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 199, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_attr), (&PyString_Type), 1, "attr", 1))) __PYX_ERR(0, 198, __pyx_L1_error)
   __pyx_r = __pyx_pf_4clib_16ProtocolConsumer_16pop(((struct __pyx_obj_4clib_ProtocolConsumer *)__pyx_v_self), __pyx_v_attr, __pyx_v_default);
 
   /* function exit code */
@@ -23455,7 +23444,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_16pop(struct __pyx_obj_4clib_
   __Pyx_XDECREF(__pyx_r);
   __pyx_t_2.__pyx_n = 1;
   __pyx_t_2.__pyx_default = __pyx_v_default;
-  __pyx_t_1 = __pyx_vtabptr_4clib_ProtocolConsumer->pop(__pyx_v_self, __pyx_v_attr, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 199, __pyx_L1_error)
+  __pyx_t_1 = __pyx_vtabptr_4clib_ProtocolConsumer->pop(__pyx_v_self, __pyx_v_attr, 1, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 198, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -23472,7 +23461,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_16pop(struct __pyx_obj_4clib_
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":157
+/* "extensions/lib/protocols.pyx":156
  * 
  *     cdef readonly:
  *         Protocol connection             # <<<<<<<<<<<<<<
@@ -23509,7 +23498,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_10connection___get__(struct _
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":158
+/* "extensions/lib/protocols.pyx":157
  *     cdef readonly:
  *         Protocol connection
  *         Producer producer             # <<<<<<<<<<<<<<
@@ -23546,7 +23535,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_8producer___get__(struct __py
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":159
+/* "extensions/lib/protocols.pyx":158
  *         Protocol connection
  *         Producer producer
  *         object _loop, request             # <<<<<<<<<<<<<<
@@ -23612,7 +23601,7 @@ static PyObject *__pyx_pf_4clib_16ProtocolConsumer_7request___get__(struct __pyx
   return __pyx_r;
 }
 
-/* "extensions/lib/protocols.pyx":162
+/* "extensions/lib/protocols.pyx":161
  * 
  *     cdef public:
  *         dict cache             # <<<<<<<<<<<<<<
@@ -23667,7 +23656,7 @@ static int __pyx_pf_4clib_16ProtocolConsumer_5cache_2__set__(struct __pyx_obj_4c
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__set__", 0);
-  if (!(likely(PyDict_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "dict", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 162, __pyx_L1_error)
+  if (!(likely(PyDict_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "dict", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(0, 161, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_value;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -40773,7 +40762,7 @@ static int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 105, __pyx_L1_error)
   __pyx_builtin_OSError = __Pyx_GetBuiltinName(__pyx_n_s_OSError); if (!__pyx_builtin_OSError) __PYX_ERR(0, 107, __pyx_L1_error)
   __pyx_builtin_NameError = __Pyx_GetBuiltinName(__pyx_n_s_NameError); if (!__pyx_builtin_NameError) __PYX_ERR(0, 107, __pyx_L1_error)
-  __pyx_builtin_AttributeError = __Pyx_GetBuiltinName(__pyx_n_s_AttributeError); if (!__pyx_builtin_AttributeError) __PYX_ERR(0, 203, __pyx_L1_error)
+  __pyx_builtin_AttributeError = __Pyx_GetBuiltinName(__pyx_n_s_AttributeError); if (!__pyx_builtin_AttributeError) __PYX_ERR(0, 202, __pyx_L1_error)
   __pyx_builtin_property = __Pyx_GetBuiltinName(__pyx_n_s_property); if (!__pyx_builtin_property) __PYX_ERR(2, 26, __pyx_L1_error)
   __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(2, 103, __pyx_L1_error)
   return 0;
@@ -41599,14 +41588,14 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__87);
   __Pyx_GIVEREF(__pyx_tuple__87);
 
-  /* "extensions/lib/protocols.pyx":154
+  /* "extensions/lib/protocols.pyx":153
  * 
  * cdef class ProtocolConsumer(EventHandler):
  *     ONE_TIME_EVENTS = ('post_request',)             # <<<<<<<<<<<<<<
  * 
  *     cdef readonly:
  */
-  __pyx_tuple__88 = PyTuple_Pack(1, __pyx_n_s_post_request); if (unlikely(!__pyx_tuple__88)) __PYX_ERR(0, 154, __pyx_L1_error)
+  __pyx_tuple__88 = PyTuple_Pack(1, __pyx_n_s_post_request); if (unlikely(!__pyx_tuple__88)) __PYX_ERR(0, 153, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__88);
   __Pyx_GIVEREF(__pyx_tuple__88);
 
@@ -41963,10 +41952,10 @@ PyMODINIT_FUNC PyInit_clib(void)
   __pyx_vtable_4clib_ProtocolConsumer.set = (PyObject *(*)(struct __pyx_obj_4clib_ProtocolConsumer *, PyObject *, PyObject *, int __pyx_skip_dispatch))__pyx_f_4clib_16ProtocolConsumer_set;
   __pyx_vtable_4clib_ProtocolConsumer.pop = (PyObject *(*)(struct __pyx_obj_4clib_ProtocolConsumer *, PyObject *, int __pyx_skip_dispatch, struct __pyx_opt_args_4clib_16ProtocolConsumer_pop *__pyx_optional_args))__pyx_f_4clib_16ProtocolConsumer_pop;
   __pyx_type_4clib_ProtocolConsumer.tp_base = __pyx_ptype_4clib_EventHandler;
-  if (PyType_Ready(&__pyx_type_4clib_ProtocolConsumer) < 0) __PYX_ERR(0, 153, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_4clib_ProtocolConsumer) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
   __pyx_type_4clib_ProtocolConsumer.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_4clib_ProtocolConsumer.tp_dict, __pyx_vtabptr_4clib_ProtocolConsumer) < 0) __PYX_ERR(0, 153, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "ProtocolConsumer", (PyObject *)&__pyx_type_4clib_ProtocolConsumer) < 0) __PYX_ERR(0, 153, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_4clib_ProtocolConsumer.tp_dict, __pyx_vtabptr_4clib_ProtocolConsumer) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "ProtocolConsumer", (PyObject *)&__pyx_type_4clib_ProtocolConsumer) < 0) __PYX_ERR(0, 152, __pyx_L1_error)
   __pyx_ptype_4clib_ProtocolConsumer = &__pyx_type_4clib_ProtocolConsumer;
   __pyx_vtabptr_4clib_WsgiProtocol = &__pyx_vtable_4clib_WsgiProtocol;
   __pyx_vtable_4clib_WsgiProtocol.on_url = (void (*)(struct __pyx_obj_4clib_WsgiProtocol *, PyObject *, int __pyx_skip_dispatch))__pyx_f_4clib_12WsgiProtocol_on_url;
@@ -42970,14 +42959,14 @@ PyMODINIT_FUNC PyInit_clib(void)
   if (PyDict_SetItem((PyObject *)__pyx_ptype_4clib_Protocol->tp_dict, __pyx_n_s_ONE_TIME_EVENTS, __pyx_tuple__87) < 0) __PYX_ERR(0, 61, __pyx_L1_error)
   PyType_Modified(__pyx_ptype_4clib_Protocol);
 
-  /* "extensions/lib/protocols.pyx":154
+  /* "extensions/lib/protocols.pyx":153
  * 
  * cdef class ProtocolConsumer(EventHandler):
  *     ONE_TIME_EVENTS = ('post_request',)             # <<<<<<<<<<<<<<
  * 
  *     cdef readonly:
  */
-  if (PyDict_SetItem((PyObject *)__pyx_ptype_4clib_ProtocolConsumer->tp_dict, __pyx_n_s_ONE_TIME_EVENTS, __pyx_tuple__88) < 0) __PYX_ERR(0, 154, __pyx_L1_error)
+  if (PyDict_SetItem((PyObject *)__pyx_ptype_4clib_ProtocolConsumer->tp_dict, __pyx_n_s_ONE_TIME_EVENTS, __pyx_tuple__88) < 0) __PYX_ERR(0, 153, __pyx_L1_error)
   PyType_Modified(__pyx_ptype_4clib_ProtocolConsumer);
 
   /* "extensions/lib/wsgi.pyx":1

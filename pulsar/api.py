@@ -7,7 +7,8 @@ from .utils.exceptions import (
 )
 from .utils.config import Config, Setting
 from .utils.lib import (
-    HAS_C_EXTENSIONS, EventHandler, ProtocolConsumer, Protocol, AbortEvent
+    HAS_C_EXTENSIONS, EventHandler, ProtocolConsumer, Protocol,
+    Producer, AbortEvent
 )
 
 from .async.access import get_actor, create_future, cfg_value, ensure_future
@@ -35,6 +36,7 @@ __all__ = [
     'ProtocolConsumer',
     'Protocol',
     'Connection',
+    'Producer',
     'DatagramProtocol',
     'TcpServer',
     'DatagramServer',
