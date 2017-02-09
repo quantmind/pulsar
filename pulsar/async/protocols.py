@@ -1,5 +1,4 @@
 import asyncio
-from socket import IPPROTO_TCP, TCP_NODELAY
 
 from pulsar.utils.internet import nice_address, format_address
 
@@ -368,11 +367,6 @@ class PulsarProtocol(EventHandler, FlowControl):
         if not addr:
             addr = self._transport.get_extra_info('sockname')
         self._address = addr
-        sock = transport.get_extra_info('socket')
-        try:
-            sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-        except (OSError, NameError):
-            pass
         # let everyone know we have a connection with endpoint
         self.fire_event('connection_made')
 

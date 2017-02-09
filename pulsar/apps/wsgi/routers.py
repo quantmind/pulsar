@@ -87,7 +87,6 @@ import os
 import re
 import stat
 import mimetypes
-from functools import partial, lru_cache
 from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import http_date, CacheControl
@@ -130,19 +129,6 @@ def _get_default(parent, name):
 
 class SkipRoute(Exception):
     pass
-
-
-class Handler:
-    __slots__ = ('router', 'handler', 'urlargs')
-
-    def __init__(self, router, handler, urlargs):
-        self.router = router
-        self.handler = handler
-        self.urlargs = urlargs
-
-    def __call__(self, environ):
-        request = wsgi_request(environ, self.router, self.urlargs)
-        return self.handler(request)
 
 
 class RouterParam:
@@ -378,19 +364,17 @@ class Router(metaclass=RouterType):
         return self.full_route.__repr__()
 
     def __call__(self, environ, start_response=None):
-        handler = self._get(environ.get('PATH_INFO') or '/',
-                            environ.get('REQUEST_METHOD'))
-        if handler:
+        path = environ.get('PATH_INFO') or '/'
+        path = path[1:]
+        router_args = self.resolve(path)
+        if router_args:
+            router, args = router_args
             try:
-                return handler(environ)
+                return router.response(environ, args)
             except SkipRoute:
                 pass
 
-    @lru_cache(maxsize=1024)
-    def _get(self, url, method):
-        return self.resolve(url[1:], method.lower())
-
-    def resolve(self, path, method, urlargs=None):
+    def resolve(self, path, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
         ``None`` if the path could not be resolved.
         '''
@@ -402,19 +386,31 @@ class Router(metaclass=RouterType):
             path = match.pop('__remaining__')
             urlargs = update_args(urlargs, match)
         else:
-            handler = getattr(self, method, None)
-            if handler is None:
-                raise MethodNotAllowed
-            response_wrapper = self.response_wrapper
-            if response_wrapper:
-                handler = partial(response_wrapper, handler)
-            return Handler(self, handler, update_args(urlargs, match))
+            return self, update_args(urlargs, match)
         #
         for handler in self.routes:
-            view_args = handler.resolve(path, method, urlargs)
+            view_args = handler.resolve(path, urlargs)
             if view_args is None:
                 continue
             return view_args
+
+    def response(self, environ, args):
+        '''Once the :meth:`resolve` method has matched the correct
+        :class:`Router` for serving the request, this matched router invokes
+        this method to produce the WSGI response.
+        '''
+        request = wsgi_request(environ, self, args)
+        method = request.method.lower()
+        request.set_response_content_type(self.response_content_types)
+
+        callable = getattr(self, method, None)
+        if callable is None:
+            raise MethodNotAllowed
+
+        response_wrapper = self.response_wrapper
+        if response_wrapper:
+            return response_wrapper(callable, request)
+        return callable(request)
 
     def add_child(self, router, index=None):
         '''Add a new :class:`Router` to the :attr:`routes` list.

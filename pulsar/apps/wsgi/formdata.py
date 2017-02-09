@@ -24,14 +24,13 @@ LARGE_BODY_CODE = 403
 
 
 def http_protocol(parser):
-    try:
-        return "HTTP/%s.%s" % parser.get_version()
-    except TypeError:   # pragma nocover
-        version = parser.get_version()
-        return "HTTP/%s" % ".".join(('%s' % v for v in version))
+    version = parser.get_version()
+    return "HTTP/%s" % ".".join(('%s' % v for v in version))
 
 
 class HttpBodyReader:
+    _expect_sent = None
+    _waiting = None
 
     def __init__(self, headers, parser, transport, limit, **kw):
         self.headers = headers
@@ -41,8 +40,6 @@ class HttpBodyReader:
         self.reader.set_transport(transport)
         self.feed_data = self.reader.feed_data
         self.feed_eof = self.reader.feed_eof
-        self._expect_sent = None
-        self._waiting = None
 
     def waiting_expect(self):
         '''``True`` when the client is waiting for 100 Continue.

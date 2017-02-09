@@ -1,9 +1,9 @@
 from collections import deque
 from functools import partial
 
-from asyncio import InvalidStateError, ensure_future
+from asyncio import Future, InvalidStateError, ensure_future
 
-from .access import Future, _EVENT_LOOP_CLASSES
+from .access import _EVENT_LOOP_CLASSES
 from .futures import future_result_exc, AsyncObject
 
 

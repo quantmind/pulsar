@@ -261,8 +261,7 @@ def header_field(name):
 
     If ``header_set`` is given, only return headers included in the set.
     """
-    return name.lower()
-    # return capheader(name.lower())
+    return capheader(name.lower())
 
 
 #    HEADERS UTILITIES
