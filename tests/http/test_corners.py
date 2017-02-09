@@ -1,7 +1,8 @@
 import unittest
+from urllib.parse import parse_qsl, urlparse
 
 from pulsar.apps.http import (
-    HttpClient, HttpRequest, parse_qsl, urlparse, OAuth1, OAuth2
+    HttpClient, HttpRequest, OAuth1, OAuth2
 )
 
 

@@ -2,14 +2,14 @@
 import unittest
 
 from pulsar.apps import rpc
-from pulsar.apps.test import HttpTestClient
+from pulsar.apps.http import HttpWsgiClient
 
 
 class rpcTest(unittest.TestCase):
 
     def proxy(self):
         from examples.calculator.manage import Site
-        http = HttpTestClient(self, Site())
+        http = HttpWsgiClient(Site())
         return rpc.JsonProxy('http://127.0.0.1:8060/', http=http, timeout=20)
 
     def test_proxy(self):

@@ -13,13 +13,11 @@ from .loader import TestLoader
 from .utils import (sequential, ActorTestMixin, check_server,
                     test_timeout, dont_run_with_thread, TestFailure,
                     skipUnless)
-from .wsgi import HttpTestClient
 from .runner import Runner
 
 
 __all__ = ['populate',
            'random_string',
-           'HttpTestClient',
            'TestLoader',
            'Plugin',
            'TestStream',

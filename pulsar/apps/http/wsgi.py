@@ -10,9 +10,6 @@ from pulsar.apps.wsgi import HttpServerResponse
 from pulsar.async.access import cfg
 
 
-__all__ = ['HttpWsgiClient']
-
-
 class DummyTransport(Transport):
 
     def __init__(self, connection, address, ssl=None):

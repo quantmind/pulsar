@@ -10,11 +10,6 @@ from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
 from .plugins import request_again, noerror
 
 
-__all__ = ['Auth',
-           'HTTPBasicAuth',
-           'HTTPDigestAuth']
-
-
 class Auth:
     '''Base class for managing authentication.
     '''
