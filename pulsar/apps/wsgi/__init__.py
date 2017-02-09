@@ -66,7 +66,7 @@ from .middleware import (clean_path_middleware, authorization_middleware,
                          wait_for_body_middleware, middleware_in_executor)
 from .response import AccessControl, GZipMiddleware
 from .wrappers import WsgiResponse, WsgiRequest, wsgi_cached
-from .server import HttpServerResponse, test_wsgi_environ, AbortWsgi
+from .server import HttpServerResponse, AbortWsgi
 from .route import route, Route
 from .handlers import WsgiHandler, LazyWsgi
 from .routers import (Router, MediaRouter, MediaMixin, RouterParam,
@@ -81,7 +81,6 @@ __all__ = [
     # Server
     'WSGIServer',
     'HttpServerResponse',
-    'test_wsgi_environ',
     'AbortWsgi',
     #
     # Content strings

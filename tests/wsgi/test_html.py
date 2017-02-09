@@ -11,7 +11,7 @@ class TestHtml(unittest.TestCase):
         self.assertTrue(h)
         self.assertEqual(h.attr('value'), 'bla')
         self.assertEqual(h.attr('type'), 'text')
-        text = h.render()
+        text = h.to_string()
         self.assertTrue(" type='text'" in text)
         self.assertTrue(" value='bla'" in text)
 
@@ -98,20 +98,20 @@ class TestHtml(unittest.TestCase):
         self.assertEqual(c.attr('value'), 0)
 
     def test_true_attribute(self):
-        txt = wsgi.Html('div', bla=True).render()
-        self.assertEqual(txt, '<div bla></div>')
+        txt = wsgi.Html('div', bla=True).to_string()
+        self.assertEqual(txt, '<div bla></div>\n')
 
     def test_option_empty_attribute(self):
         opt = wsgi.Html('option', '--------', value='')
         self.assertEqual(opt.attr('value'), '')
-        text = opt.render()
+        text = opt.to_string()
         self.assertTrue(" value=''" in text)
 
     def test_textarea_value_attribute(self):
         opt = wsgi.Html('textarea', 'Hello World!')
         self.assertEqual(opt.attr('value'), None)
         self.assertEqual(opt.get_form_value(), 'Hello World!')
-        text = opt.render()
+        text = opt.to_string()
         self.assertTrue("Hello World!" in text)
 
     def testHide(self):
@@ -126,7 +126,7 @@ class TestWidgets(unittest.TestCase):
     def test_ancor(self):
         a = wsgi.Html('a', 'kaput', cn='bla', href='/abc/')
         self.assertEqual(a.attr('href'), '/abc/')
-        ht = a.render()
+        ht = a.to_string()
         self.assertTrue('>kaput</a>' in ht)
         a = wsgi.Html('a', xxxx='ciao')
         self.assertTrue('xxxx' in a.attr())
@@ -137,7 +137,7 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(len(ul.children), 0)
         ul = wsgi.Html('ul', 'a list item', 'another one')
         self.assertEqual(len(ul.children), 2)
-        ht = ul.render()
+        ht = ul.to_string()
         self.assertTrue('<ul>' in ht)
         self.assertTrue('</ul>' in ht)
         self.assertTrue('<li>a list item</li>' in ht)
@@ -145,7 +145,7 @@ class TestWidgets(unittest.TestCase):
 
     def test_simple(self):
         html = wsgi.HtmlDocument()
-        self.assertEqual(len(html.head.children), 5)
+        self.assertEqual(len(html.head.children), 6)
         self.assertEqual(len(html.body.children), 0)
 
     def testHead(self):
@@ -162,7 +162,7 @@ class TestWidgets(unittest.TestCase):
         self.assertEqual(meta.tag, None)
         html.head.add_meta(name='bla')
         self.assertEqual(len(meta.children), 2)
-        text = meta.render()
+        text = meta.to_string()
         self.assertEqual(text, "<meta charset='utf-8'>\n<meta name='bla'>\n")
 
     def test_document_empty_body(self):
@@ -170,22 +170,22 @@ class TestWidgets(unittest.TestCase):
         self.assertTrue(m.head)
         self.assertTrue(m.body)
         self.assertEqual(m.head.title, 'test')
-        txt = m.render()
+        txt = m.to_string()
         self.assertEqual(txt,
-                         '\n'.join(('<!DOCTYPE html>',
+                         '\n'.join(("<!DOCTYPE html>",
                                     "<html bla='foo'>",
-                                    '<head>',
-                                    '<title>test</title>',
+                                    "<head>",
+                                    "<title>test</title>",
                                     "<meta charset='utf-8'>",
                                     '</head>',
-                                    '<body>',
-                                    '</body>',
-                                    '</html>')))
+                                    '<body></body>',
+                                    '</html>',
+                                    '')))
 
     def test_document(self):
         m = wsgi.HtmlDocument(title='test')
         m.body.append(wsgi.Html('div', 'this is a test'))
-        txt = m.render()
+        txt = m.to_string()
         self.assertEqual(txt,
                          '\n'.join(['<!DOCTYPE html>',
                                     '<html>',
@@ -194,6 +194,7 @@ class TestWidgets(unittest.TestCase):
                                     "<meta charset='utf-8'>",
                                     '</head>',
                                     '<body>',
-                                    '<div>this is a test</div>'
+                                    '<div>this is a test</div>',
                                     '</body>',
-                                    '</html>']))
+                                    '</html>',
+                                    '']))

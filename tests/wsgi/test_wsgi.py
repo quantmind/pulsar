@@ -59,7 +59,7 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.status, '200 OK')
         self.assertEqual(r.content, ())
-        self.assertFalse(r.is_streamed)
+        self.assertFalse(r.is_streamed())
         self.assertFalse(r.started)
         self.assertEqual(list(r), [])
         self.assertTrue(r.started)
@@ -71,7 +71,7 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(r.status_code, 500)
         self.assertEqual(r.status, '500 Internal Server Error')
         self.assertEqual(r.content, (b'A critical error occurred',))
-        self.assertFalse(r.is_streamed)
+        self.assertFalse(r.is_streamed())
         self.assertFalse(r.started)
         self.assertEqual(list(r), [b'A critical error occurred'])
         self.assertTrue(r.started)
@@ -82,7 +82,7 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.status, '200 OK')
         self.assertEqual(r.content, stream)
-        self.assertTrue(r.is_streamed)
+        self.assertTrue(r.is_streamed())
         data = []
         for l, a in enumerate(r):
             data.append(a)

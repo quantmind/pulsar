@@ -5,7 +5,7 @@ from pulsar.utils.structures import recursive_update
 HTML_VISITORS = {}
 
 
-newline = frozenset(('meta', 'link', 'script', 'head', 'body', 'title'))
+newline = frozenset(('html', 'head', 'body'))
 
 
 def html_visitor(tag):

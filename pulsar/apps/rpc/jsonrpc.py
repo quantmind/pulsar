@@ -248,7 +248,7 @@ class JsonProxy(AsyncObject):
             return resp
         else:
             content = resp.json()
-            if resp.is_error:
+            if not resp.ok:
                 if 'error' not in content:
                     resp.raise_for_status()
             return self.loads(content)
@@ -348,7 +348,7 @@ class JsonBatchProxy(JsonProxy):
             return resp
         else:
             content = resp.json()
-            if resp.is_error:
+            if not resp.ok:
                 if 'error' not in content:
                     resp.raise_for_status()
             self.discard()

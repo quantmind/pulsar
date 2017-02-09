@@ -279,7 +279,7 @@ class String:
         parent.append(self)
         return self
 
-    def stream(self, request):
+    def stream(self, request, counter=0):
         '''Returns an iterable over strings or asynchronous components.
 
         If :ref:`asynchronous elements <tutorials-coroutine>` are included
@@ -291,7 +291,7 @@ class String:
         if self._children:
             for child in self._children:
                 if isinstance(child, String):
-                    yield from child.stream(request)
+                    yield from child.stream(request, counter+1)
                 else:
                     yield child
 
@@ -584,26 +584,26 @@ class Html(String):
         '''
         pass
 
-    def stream(self, request):
+    def stream(self, request, counter=0):
         self.add_media(request)
         tag = self._tag
         n = '\n' if tag in newline else ''
         if tag and tag in INLINE_TAGS:
-            yield '<%s%s>%s' % (tag, self.flatatt(), n)
+            yield '<%s%s>\n' % (tag, self.flatatt())
         else:
             if tag:
                 if not self._children:
-                    yield '<%s%s></%s>%s' % (tag, self.flatatt(), tag, n)
+                    yield '<%s%s></%s>\n' % (tag, self.flatatt(), tag)
                 else:
                     yield '<%s%s>%s' % (tag, self.flatatt(), n)
             if self._children:
                 for child in self._children:
                     if isinstance(child, String):
-                        yield from child.stream(request)
+                        yield from child.stream(request, counter+1)
                     else:
                         yield child
                 if tag:
-                    yield '</%s>%s' % (tag, n)
+                    yield '</%s>\n' % tag
 
     def _attrdata(self, cont, name, *val):
         if not name:
@@ -959,10 +959,10 @@ class Body(Html):
         self.embedded_js = Embedded('script', type='text/javascript')
         self.scripts = Scripts(**kwargs)
 
-    def stream(self, request):
-        yield from super().stream(request)
-        yield from self.embedded_js.stream(request)
-        yield from self.scripts.stream(request)
+    def stream(self, request, counter=0):
+        yield from super().stream(request, counter)
+        yield from self.embedded_js.stream(request, counter)
+        yield from self.scripts.stream(request, counter)
 
 
 class HtmlDocument(Html):
@@ -997,6 +997,6 @@ class HtmlDocument(Html):
     def body(self):
         return self._children[1]
 
-    def stream(self, request):
+    def stream(self, request, counter=0):
         yield '<!DOCTYPE html>\n'
-        yield from super().stream(request)
+        yield from super().stream(request, counter)

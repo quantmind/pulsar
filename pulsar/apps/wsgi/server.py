@@ -6,22 +6,13 @@ HTTP Protocol Consumer
    :members:
    :member-order: bysource
 
-
-Testing WSGI Environ
-=========================
-
-.. autofunction:: test_wsgi_environ
 '''
 import sys
 import os
-import io
-from urllib.parse import urlparse
 
 from async_timeout import timeout
-from multidict import CIMultiDict
 
 from pulsar.api import BadRequest, ProtocolConsumer
-from pulsar.utils.httpurl import iri_to_uri
 from pulsar.utils.lib import WsgiProtocol
 from pulsar.utils import http
 
@@ -49,43 +40,6 @@ ENVIRON = {
 
 class AbortWsgi(Exception):
     pass
-
-
-def test_wsgi_environ(path=None, method=None, headers=None, extra=None,
-                      https=False, loop=None, body=None, **params):
-    '''An function to create a WSGI environment dictionary for testing.
-
-    :param url: the resource in the ``PATH_INFO``.
-    :param method: the ``REQUEST_METHOD``.
-    :param headers: optional request headers
-    :params https: a secure connection?
-    :param extra: additional dictionary of parameters to add to ``params``
-    :param params: key valued parameters
-    :return: a valid WSGI environ dictionary.
-    '''
-    parser = http.HttpRequestParser()
-    method = (method or 'GET').upper()
-    path = iri_to_uri(path or '/')
-    request_headers = CIMultiDict(headers)
-    # Add Host if not available
-    parsed = urlparse(path)
-    if 'host' not in request_headers:
-        if not parsed.netloc:
-            scheme = ('https' if https else 'http')
-            path = '%s://127.0.0.1%s' % (scheme, path)
-        else:
-            request_headers['host'] = parsed.netloc
-    #
-    data = '%s %s HTTP/1.1\r\n\r\n' % (method, path)
-    data = data.encode('latin1')
-    parser.execute(data, len(data))
-    #
-    stream = io.BytesIO(body or b'')
-    if extra:
-        params.update(extra)
-    return WsgiProtocol(stream, parser, request_headers,
-                        ('127.0.0.1', 8060), '255.0.1.2:8080',
-                        CIMultiDict(), https=https, extra=params)
 
 
 class HttpServerResponse(ProtocolConsumer):

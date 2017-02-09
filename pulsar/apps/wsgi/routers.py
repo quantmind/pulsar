@@ -375,7 +375,8 @@ class Router(metaclass=RouterType):
         return self.full_route.__repr__()
 
     def __call__(self, environ, start_response=None):
-        hnd = self._get(environ['PATH_INFO'] or '/', environ['REQUEST_METHOD'])
+        hnd = self.resolve(environ['PATH_INFO'] or '/',
+                           environ['REQUEST_METHOD'])
         if hnd:
             try:
                 request = wsgi_request(environ, hnd.router, hnd.urlargs)
@@ -384,10 +385,10 @@ class Router(metaclass=RouterType):
                 pass
 
     @lru_cache(maxsize=1024)
-    def _get(self, url, method):
-        return self.resolve(url[1:], method.lower())
+    def resolve(self, url, method):
+        return self._resolve(url[1:], method.lower())
 
-    def resolve(self, path, method, urlargs=None):
+    def _resolve(self, path, method, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
         ``None`` if the path could not be resolved.
         '''
@@ -408,7 +409,7 @@ class Router(metaclass=RouterType):
             return Handler(self, handler, update_args(urlargs, match))
         #
         for handler in self.routes:
-            view_args = handler.resolve(path, method, urlargs)
+            view_args = handler._resolve(path, method, urlargs)
             if view_args is None:
                 continue
             return view_args

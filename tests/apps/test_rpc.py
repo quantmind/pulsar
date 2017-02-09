@@ -16,8 +16,8 @@ class rpcTest(unittest.TestCase):
         p = self.proxy()
         http = p._http
         self.assertTrue(len(http.headers))
-        self.assertEqual(http.headers['user-agent'], 'Pulsar-Http-Test-Client')
-        self.assertTrue(http.wsgi)
+        self.assertEqual(http.headers['user-agent'], 'Pulsar-Http-Wsgi-Client')
+        self.assertTrue(http.wsgi_callable)
         self.assertEqual(p._version, '2.0')
 
     async def test_addition(self):

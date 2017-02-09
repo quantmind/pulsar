@@ -31,7 +31,9 @@ cdef class WsgiResponse:
         dict environ
         int status_code
         str encoding
-        object headers, can_store_cookies, __wsgi_started__
+        object headers, can_store_cookies
+    cdef readonly:
+        object __wsgi_started__
     cdef object _content, _cookies
     cdef int _iterated
 
@@ -61,6 +63,10 @@ cdef class WsgiResponse:
             self._content = content,
         else:
             self._content = content
+
+    @property
+    def started(self):
+        return self.__wsgi_started__
 
     @property
     def content(self):
@@ -115,6 +121,12 @@ cdef class WsgiResponse:
         iterable = iter(self._content)
         self._content = None
         return iterable
+
+    def __str__(self):
+        return self.status
+
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, self)
 
     def set_cookie(self, key, **kwargs):
         """

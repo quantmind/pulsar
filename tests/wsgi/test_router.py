@@ -2,10 +2,12 @@
 import unittest
 
 from pulsar.api import Http404, PermissionDenied, create_future
+from pulsar.apps.http import HttpWsgiClient
 from pulsar.apps.wsgi import (
-    Router, RouterParam, route, test_wsgi_environ, MediaRouter
+    Router, RouterParam, route, MediaRouter, WsgiHandler
 )
 
+from examples.helloworld.manage import hello
 from examples.httpbin.manage import HttpBin
 
 
@@ -94,13 +96,13 @@ class TestRouter(unittest.TestCase):
     def test_router(self):
         router = self.router()
         self.assertEqual(router.route.path, '/')
-        handler, urlargs = router.resolve('')
-        self.assertEqual(handler, router)
-        self.assertEqual(urlargs, {})
+        hnd = router.resolve('/', 'GET')
+        self.assertEqual(hnd.router, router)
+        self.assertEqual(hnd.urlargs, {})
         #
-        handler, urlargs = router.resolve('bla')
-        self.assertNotEqual(handler, router)
-        self.assertEqual(urlargs, {})
+        hnd = router.resolve('/bla', 'GET')
+        self.assertNotEqual(hnd.router, router)
+        self.assertEqual(hnd.urlargs, {})
 
     def test_derived(self):
         self.assertTrue('gzip' in HttpBin.rule_methods)
@@ -132,10 +134,10 @@ class TestRouter(unittest.TestCase):
                         Router('a', get=lambda r: ['route a']))
         self.assertEqual(router.path(), '/root')
         self.assertEqual(router.route.is_leaf, True)
-        child, args = router.resolve('root/a')
-        self.assertFalse(args)
-        self.assertEqual(child.parent, router)
-        self.assertEqual(child.path(), '/root/a')
+        hnd = router.resolve('/root/a', 'GET')
+        self.assertFalse(hnd.urlargs)
+        self.assertEqual(hnd.router.parent, router)
+        self.assertEqual(hnd.router.path(), '/root/a')
 
     def test_router_count(self):
         self.assertTrue(HttpBin2.rule_methods)
@@ -224,33 +226,29 @@ class TestRouter(unittest.TestCase):
         self.assertTrue(child.get.__name__, 'get_elem')
         self.assertTrue(child.post.__name__, 'post_elem')
 
-    def test_response_wrapper(self):
+    async def test_response_wrapper(self):
 
         def response_wrapper(callable, response):
             raise PermissionDenied('Test Response Wrapper')
 
         router = HttpBin('/', response_wrapper=response_wrapper)
+        cli = HttpWsgiClient(router)
+        response = await cli.get('http://example.com')
+        self.assertEqual(response.status_code, 403)
+        response = await cli.get('http://example.com/get')
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue('Test Response Wrapper' in response.text)
 
-        environ = test_wsgi_environ()
-        try:
-            router(environ, None)
-        except PermissionDenied as exc:
-            self.assertEqual(str(exc), 'Test Response Wrapper')
-        else:
-            raise RuntimeError
-
-        environ = test_wsgi_environ('/get')
-        try:
-            router(environ, None)
-        except PermissionDenied as exc:
-            self.assertEqual(str(exc), 'Test Response Wrapper')
-        else:
-            raise RuntimeError
-
-    def test_media_router_serve_only(self):
+    async def test_media_router_serve_only(self):
         router = MediaRouter('/', serve_only=('json', 'png'))
         self.assertIsInstance(router._serve_only, set)
         self.assertEqual(len(router._serve_only), 2)
-        self.assertEqual(router(test_wsgi_environ('/foo')), None)
-        self.assertEqual(router(test_wsgi_environ('/foo/bla')), None)
-        self.assertRaises(Http404, router, test_wsgi_environ('/foo/bla.png'))
+        cli = HttpWsgiClient(WsgiHandler((router, hello)))
+        response = await cli.get('http://example.com/foo')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.text, 'Hello World!\n')
+        response = await cli.get('http://example.com/foo/bla')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.text, 'Hello World!\n')
+        response = await cli.get('http://example.com/foo/bla.png')
+        self.assertEqual(response.status_code, 404)
