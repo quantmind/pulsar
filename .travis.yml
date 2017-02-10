@@ -1,25 +1,61 @@
 language: python
 
-python:
-  - 3.5.2
-  - 3.6.0
-  - 3.7-dev
-
-matrix:
-  allow_failures:
-    - python: 3.7-dev
-
 env:
   - COVERAGE=3.6.0
 
 services:
   - redis-server
 
+matrix:
+  allow_failures:
+    - python: 3.7-dev
+
+  include:
+    - os: linux
+      dist: trusty
+      language: python
+      python: 3.5
+      services: [redis-server]
+      env: BUILD=tests
+
+    - os: linux
+      dist: trusty
+      language: python
+      python: 3.6
+      services: [redis-server]
+      env: BUILD=tests
+
+    - os: linux
+      dist: trusty
+      language: python
+      python: 3.7-dev
+      services: [redis-server]
+      env: BUILD=tests
+
+    - os: linux
+      dist: trusty
+      branches: {only: [releases]}
+      sudo: required
+      language: python
+      python: 3.5
+      services: [docker, redis-server]
+      env: BUILD=tests,wheels,release
+
+    - os: linux
+      dist: trusty
+      branches: {only: [releases]}
+      sudo: required
+      language: python
+      python: 3.6
+      services: [docker, redis-server]
+      env: BUILD=tests,wheels,release
+
+
 install:
   - .ci/travis-install.sh
 
 script:
-  - .ci/travis-test.sh
+  - .ci/travis-test.sh && .ci/travis-build-wheels.sh
 
 
 notifications:
