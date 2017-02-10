@@ -8,14 +8,9 @@ if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
     eval "$(pyenv init -)"
 fi
 
-make clean && make coverage
+make clean && make testall
 
-if [[ $COVERALLS == "yes" ]]; then
+if [ "${COVERALLS}" == "yes" ]; then
     python setup.py test --coveralls;
     cd docs && make spelling;
 fi
-
-python -W ignore setup.py test -q --io uv
-python -W ignore setup.py test --http-py-parser -q
-python setup.py bench
-# - python setup.py bench --io uv
