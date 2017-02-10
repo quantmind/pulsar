@@ -1,15 +1,8 @@
+-r requirements-ci.txt
 coverage
-flake8
-cython
-greenlet
 setproctitle
 psutil
 unidecode
-flask
-oauthlib
-requests
-certifi
-recommonmark
 sphinxcontrib-spelling
 uvloop
 http-parser
