@@ -1,26 +1,28 @@
 language: python
 
 python:
-  - 3.5.2
-  - 3.6-dev
+  - 3.5.3
+  - 3.6.0
+
+env:
+  - COVERAGE=3.6.0
 
 services:
   - redis-server
 
 install:
-  - sudo apt-get install enchant
+  - if [[ $TRAVIS_PYTHON_VERSION == $COVERAGE ]]; then sudo apt-get install enchant; fi
   - pip install -r requirements-dev.txt
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then pip install uvloop; fi
 
 script:
   - python -W ignore setup.py test --coverage -q
   - flake8
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test --coveralls; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test -q --io uv; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == $COVERAGE ]]; then python setup.py test --coveralls; fi
+  - python -W ignore setup.py test -q --io uv
   - python -W ignore setup.py test --http-py-parser -q
   - python setup.py bench
   # - python setup.py bench --io uv
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then cd docs && make spelling; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == $COVERAGE ]]; then cd docs && make spelling; fi
 
 
 notifications:
