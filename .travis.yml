@@ -1,10 +1,7 @@
-language: python
-
-env:
-  - COVERAGE=3.6.0
-
 services:
+  - docker
   - redis-server
+
 
 matrix:
   allow_failures:
@@ -15,47 +12,33 @@ matrix:
       dist: trusty
       language: python
       python: 3.5
-      services: [redis-server]
-      env: BUILD=tests
+      env: BUILD=test
 
     - os: linux
       dist: trusty
       language: python
       python: 3.6
-      services: [redis-server]
-      env: BUILD=tests
+      env: COVERALLS=yes
 
     - os: linux
       dist: trusty
       language: python
       python: 3.7-dev
-      services: [redis-server]
-      env: BUILD=tests
-
-    - os: linux
-      dist: trusty
-      branches: {only: [releases]}
-      sudo: required
-      language: python
-      python: 3.5
-      services: [docker, redis-server]
-      env: BUILD=tests,wheels,release
-
-    - os: linux
-      dist: trusty
-      branches: {only: [releases]}
-      sudo: required
-      language: python
-      python: 3.6
-      services: [docker, redis-server]
-      env: BUILD=tests,wheels,release
+      env: BUILD=test
 
 
 install:
   - .ci/travis-install.sh
 
 script:
-  - .ci/travis-test.sh && .ci/travis-build-wheels.sh
+  - .ci/travis-test.sh
+
+deploy:
+    provider: script
+    script: .ci/travis-release.sh
+    on:
+        tags: true
+        condition: '"${BUILD}" == *release*'
 
 
 notifications:
