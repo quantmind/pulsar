@@ -8,30 +8,42 @@ matrix:
     - python: 3.7-dev
 
   include:
+    - os: osx
+      # Travis macOS env does not support Python yet,
+      # so we have to set things up manually in install.sh.
+      env: BUILD=tests,wheels PYTHON_VERSION=3.5.2 PIP_USER=1
+      branches: {only: [releases]}
+
+    - os: osx
+      # Travis macOS env does not support Python yet,
+      # so we have to set things up manually in install.sh.
+      env: BUILD=tests,wheels PYTHON_VERSION=3.6.0 PIP_USER=1
+      branches: {only: [releases]}
+
     - os: linux
       dist: trusty
       language: python
       python: 3.5
-      env: BUILD=test
+      env: BUILD=tests
 
     - os: linux
       dist: trusty
       language: python
       python: 3.6
-      env: COVERALLS=yes
+      env: BUILD=tests COVERALLS=yes
 
     - os: linux
       dist: trusty
       language: python
       python: 3.7-dev
-      env: BUILD=test
+      env: BUILD=tests
 
 
 install:
   - .ci/travis-install.sh
 
 script:
-  - .ci/travis-test.sh
+  - .ci/travis-test.sh & .ci/travis-build-wheels.sh
 
 deploy:
     provider: script
