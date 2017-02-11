@@ -1,6 +1,14 @@
+language: generic
+
+
 services:
   - docker
   - redis-server
+
+
+env:
+  global:
+    - PYMODULE=pulsar
 
 
 matrix:
@@ -39,11 +47,14 @@ matrix:
       env: BUILD=tests
 
 
+cache:
+    pip
+
 install:
   - .ci/travis-install.sh
 
 script:
-  - .ci/travis-test.sh & .ci/travis-build-wheels.sh
+  - .ci/travis-test.sh && .ci/travis-build-wheels.sh
 
 deploy:
     provider: script
