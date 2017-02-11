@@ -1,8 +1,6 @@
 import re
 import textwrap
 import logging
-import socket
-from functools import lru_cache
 from urllib.parse import parse_qsl
 
 from multidict import MultiDict
@@ -47,11 +45,6 @@ def set_wsgi_request_class(RequestClass):
 
 def get_logger(environ):
     return getattr(environ.get(PULSAR_CACHE), 'logger', LOGGER)
-
-
-@lru_cache(maxsize=1024)
-def server_name(address):
-    return socket.getfqdn(address)
 
 
 def log_wsgi_info(log, environ, status, exc=None):

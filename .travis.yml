@@ -1,26 +1,67 @@
-language: python
+language: generic
 
-python:
-  - 3.5.2
-  - 3.6-dev
 
 services:
+  - docker
   - redis-server
 
+
+env:
+  global:
+    - PYMODULE=pulsar
+
+
+matrix:
+  allow_failures:
+    - python: 3.7-dev
+
+  include:
+    - os: osx
+      # Travis macOS env does not support Python yet,
+      # so we have to set things up manually in install.sh.
+      env: BUILD=tests,wheels PYTHON_VERSION=3.5.2 PIP_USER=1
+      branches: {only: [releases]}
+
+    - os: osx
+      # Travis macOS env does not support Python yet,
+      # so we have to set things up manually in install.sh.
+      env: BUILD=tests,wheels PYTHON_VERSION=3.6.0 PIP_USER=1
+      branches: {only: [releases]}
+
+    - os: linux
+      dist: trusty
+      language: python
+      python: 3.5
+      env: BUILD=tests
+
+    - os: linux
+      dist: trusty
+      language: python
+      python: 3.6
+      env: BUILD=tests COVERALLS=yes
+
+    - os: linux
+      dist: trusty
+      language: python
+      python: 3.7-dev
+      env: BUILD=tests
+
+
+cache:
+    pip
+
 install:
-  - sudo apt-get install enchant
-  - pip install -r requirements-dev.txt
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then pip install uvloop; fi
+  - .ci/travis-install.sh
 
 script:
-  - python -W ignore setup.py test --coverage -q
-  - flake8
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test --coveralls; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then python setup.py test -q --io uv; fi
-  - python -W ignore setup.py test --http-py-parser -q
-  - python setup.py bench
-  # - python setup.py bench --io uv
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.5.2 ]]; then cd docs && make spelling; fi
+  - .ci/travis-test.sh && .ci/travis-build-wheels.sh
+
+deploy:
+    provider: script
+    script: .ci/travis-release.sh
+    on:
+        tags: true
+        condition: '"${BUILD}" == *release*'
 
 
 notifications:

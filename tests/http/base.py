@@ -207,7 +207,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = await http.get(self.httpbin())
         self.assertEqual(str(response), '<Response [200]>')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_status(), '200 OK')
+        self.assertEqual(response.reason, 'OK')
         self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
         self._check_pool(http, response)
@@ -408,7 +408,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = await http.get(self.httpbin('status', '400'))
         self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.get_status(), '400 Bad Request')
+        self.assertEqual(response.reason, 'Bad Request')
         self.assertTrue(response.content)
         self.assertRaises(HttpRequestException, response.raise_for_status)
         # Make sure we only have one connection after a valid request

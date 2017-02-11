@@ -3,7 +3,8 @@
 from .utils.version import get_version
 
 
-VERSION = (1, 8, 0, 'alpha', 1)
+VERSION = (2, 0, 0, 'alpha', 1)
+
 
 __version__ = version = get_version(VERSION)
 

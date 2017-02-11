@@ -1,4 +1,4 @@
-'''
+"""
 HTTP Protocol Consumer
 ==============================
 
@@ -6,7 +6,7 @@ HTTP Protocol Consumer
    :members:
    :member-order: bysource
 
-'''
+"""
 import sys
 import os
 

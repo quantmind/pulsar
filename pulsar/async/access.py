@@ -36,7 +36,7 @@ CANCELLED_ERRORS = (asyncio.CancelledError,)
 
 
 def isfuture(x):
-    return isinstance(x, asyncio.Future)
+    return isinstance(x, Future)
 
 
 def create_future(loop=None):
@@ -44,7 +44,7 @@ def create_future(loop=None):
     try:
         return loop.create_future()
     except AttributeError:
-        return Future(loop=loop)
+        return asyncio.Future(loop=loop)
 
 
 LOGGER = logging.getLogger('pulsar')

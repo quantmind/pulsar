@@ -152,11 +152,11 @@ class TestEchoServerProcess(TestEchoServerThread):
         self.assertEqual(result, b'ciao luca')
 
     #    TEST SYNCHRONOUS CLIENT
-    async def test_sync_echo(self):
+    async def __test_sync_echo(self):
         loop = get_event_loop()
         await loop.run_in_executor(None, self._test_sync_echo)
 
-    async def test_sync_close(self):
+    async def __test_sync_close(self):
         loop = get_event_loop()
         await loop.run_in_executor(None, self._test_sync_close)
 

@@ -1,4 +1,4 @@
-'''
+"""
 
 .. contents::
     :local:
@@ -82,13 +82,14 @@ RouterParam
    :member-order: bysource
 
 .. _WSGI: http://www.wsgi.org
-'''
+"""
 import os
 import re
 import stat
 import mimetypes
 from collections import OrderedDict
 from functools import partial, lru_cache
+
 from email.utils import parsedate_tz, mktime_tz
 
 from pulsar.utils.httpurl import CacheControl
