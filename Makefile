@@ -35,7 +35,7 @@ testall:
 	$(PYTHON) -W ignore setup.py test -q
 	$(PYTHON) -W ignore setup.py test -q --io uv
 	$(PYTHON) setup.py bench
-	$(PYTHON) -W ignore setup.py test --coverage --http-py-parser --sequential
+	$(PYTHON) -W ignore setup.py test --coverage --http-py-parser -q
 
 
 release: clean compile test

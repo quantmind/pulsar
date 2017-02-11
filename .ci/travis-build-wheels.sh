@@ -16,8 +16,8 @@ if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
     pyenv local ${PYTHON_VERSION}
 fi
 
-PACKAGE_VERSION=$(python ".ci/package-version.py")
-PYPI_VERSION=$(python ".ci/pypi-check.py" "${PYMODULE}")
+PACKAGE_VERSION=$(python "pulsar_test/package-version.py")
+PYPI_VERSION=$(python "pulsar_test/pypi-check.py" "${PYMODULE}" --upgrade "${PACKAGE_VERSION}")
 
 if [ "${PACKAGE_VERSION}" == "${PYPI_VERSION}" ]; then
     echo "${PYMODULE}-${PACKAGE_VERSION} is already published on PyPI"
