@@ -40,7 +40,8 @@ from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.httpurl import (
     encode_multipart_formdata, CHARSET, get_environ_proxies, is_succesful,
     get_hostport, cookiejar_from_dict, host_no_default_port, http_chunks,
-    parse_options_header, tls_schemes, parse_header_links, JSON_CONTENT_TYPES
+    parse_options_header, tls_schemes, parse_header_links, requote_uri,
+    JSON_CONTENT_TYPES
 )
 
 from .plugins import (
@@ -96,8 +97,9 @@ def full_url(url, params, method=None):
     query = parse_qsl(p.query, True)
     query.extend(split_url_params(params))
     query = urlencode(query)
-    return urlunparse((p.scheme, p.netloc, p.path,
-                       p.params, query, p.fragment))
+    return requote_uri(
+        urlunparse((p.scheme, p.netloc, p.path, p.params, query, p.fragment))
+    )
 
 
 class RequestBase:
@@ -811,7 +813,11 @@ class HttpClient(AbstractClient):
         dheaders = self.DEFAULT_HTTP_HEADERS.copy()
         dheaders['user-agent'] = self.client_version
         if headers:
-            dheaders.update(headers)
+            for name, value in mapping_iterator(headers):
+                if value is None:
+                    dheaders.pop(name, None)
+                else:
+                    dheaders[name] = value
         self.headers = dheaders
         self.tunnel_headers = self.DEFAULT_TUNNEL_HEADERS.copy()
         self.proxies = dict(proxies or ())

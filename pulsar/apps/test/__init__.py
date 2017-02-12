@@ -14,6 +14,7 @@ from .utils import (sequential, ActorTestMixin, check_server,
                     test_timeout, dont_run_with_thread, TestFailure,
                     skipUnless)
 from .runner import Runner
+from .wsgi import test_wsgi_request
 
 
 __all__ = ['populate',
@@ -31,6 +32,7 @@ __all__ = ['populate',
            'check_server',
            'test_timeout',
            'dont_run_with_thread',
+           'test_wsgi_request',
            'skipUnless']
 
 

@@ -158,7 +158,7 @@ class HttpRedirect(HttpException):
     def location(self):
         '''The value in the ``Location`` header entry.
         '''
-        return self._headers['location']
+        return self.headers['location']
 
 
 @httperror

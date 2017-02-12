@@ -79,6 +79,7 @@ class DummyClientConnection(Protocol, DymmyConnection):
 
         if connection.producer.wsgi_callable:
             connection.other_side = WsgiProducer(connection).create_protocol()
+            consumer.server_side = connection.other_side.current_consumer()
         else:
             consumer.message = bytearray()
             consumer.in_parser = HttpRequestParser(consumer)

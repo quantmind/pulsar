@@ -1,52 +1,13 @@
 import unittest
-from asyncio import Future
 
-from pulsar.api import create_future
 from pulsar.apps import wsgi
-from pulsar.utils.system import json
 
 
 class TestAsyncContent(unittest.TestCase):
 
     def test_string(self):
         a = wsgi.String('Hello')
-        self.assertEqual(a.render(), 'Hello')
-        self.assertRaises(RuntimeError, a.render)
-
-    def test_simple_json(self):
-        response = wsgi.Json({'bla': 'foo'})
-        self.assertEqual(len(response.children), 1)
-        self.assertEqual(response.content_type,
-                         'application/json; charset=utf-8')
-        self.assertFalse(response.as_list)
-        self.assertEqual(response.render(), json.dumps({'bla': 'foo'}))
-
-    def test_simple_json_as_list(self):
-        response = wsgi.Json({'bla': 'foo'}, as_list=True)
-        self.assertEqual(len(response.children), 1)
-        self.assertEqual(response.content_type,
-                         'application/json; charset=utf-8')
-        self.assertTrue(response.as_list)
-        self.assertEqual(response.render(), json.dumps([{'bla': 'foo'}]))
-
-    def test_json_with_async_string(self):
-        astr = wsgi.String('ciao')
-        response = wsgi.Json({'bla': astr})
-        self.assertEqual(len(response.children), 1)
-        self.assertEqual(response.content_type,
-                         'application/json; charset=utf-8')
-        self.assertEqual(response.render(), json.dumps({'bla': 'ciao'}))
-
-    async def test_json_with_async_string2(self):
-        d = create_future()
-        astr = wsgi.String(d)
-        response = wsgi.Json({'bla': astr})
-        self.assertEqual(len(response.children), 1)
-        result = response.render()
-        self.assertIsInstance(result, Future)
-        d.set_result('ciao')
-        result = await result
-        self.assertEqual(result, json.dumps({'bla': 'ciao'}))
+        self.assertEqual(a.to_string(), 'Hello')
 
     def test_append_self(self):
         root = wsgi.String()
@@ -167,7 +128,7 @@ class TestAsyncContent(unittest.TestCase):
     def test_link_condition(self):
         links = wsgi.Links('/media/')
         links.append('bla.css', condition='IE 6')
-        html = links.render()
+        html = links.to_string()
         lines = html.split('\n')
         self.assertEqual(len(lines), 4)
         self.assertEqual(lines[0], '<!--[if IE 6]>')

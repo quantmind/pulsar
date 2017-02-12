@@ -8,39 +8,36 @@ from urllib.parse import urlparse
 
 from pulsar.api import HttpRedirect
 from pulsar.apps import wsgi, http
+from pulsar.apps.test import test_wsgi_request
 from pulsar.utils.lib import http_date
 
 
 class WsgiRequestTests(unittest.TestCase):
 
-    def request(self, **kwargs):
-        environ = wsgi.test_wsgi_environ(**kwargs)
-        return wsgi.WsgiRequest(environ)
-
-    def test_absolute_path(self):
+    async def test_absolute_path(self):
         uri = 'http://bbc.co.uk/news/'
-        request = self.request(path=uri)
-        self.assertEqual(request.get('RAW_URI'), uri)
+        request = await test_wsgi_request(uri)
+        self.assertEqual(request.get('RAW_URI'), '/news/')
         self.assertEqual(request.path, '/news/')
         self.assertEqual(request.absolute_uri(), uri)
 
-    def test_is_secure(self):
-        request = self.request(https=True)
+    async def test_is_secure(self):
+        request = await test_wsgi_request('https://example.com')
         self.assertTrue(request.is_secure)
         self.assertEqual(request.environ['HTTPS'], 'on')
         self.assertEqual(request.environ['wsgi.url_scheme'], 'https')
 
-    def test_get_host(self):
-        request = self.request(headers=[('host', 'blaa.com')])
+    async def test_get_host(self):
+        request = await test_wsgi_request(headers=[('host', 'blaa.com')])
         self.assertEqual(request.get_host(), 'blaa.com')
 
-    def test_full_path(self):
-        request = self.request(headers=[('host', 'blaa.com')])
+    async def test_full_path(self):
+        request = await test_wsgi_request(headers=[('host', 'blaa.com')])
         self.assertEqual(request.full_path(), '/')
         self.assertEqual(request.full_path('/foo'), '/foo')
 
-    def test_full_path_query(self):
-        request = self.request(path='/bla?path=foo&id=5')
+    async def test_full_path_query(self):
+        request = await test_wsgi_request('/bla?path=foo&id=5')
         self.assertEqual(request.path, '/bla')
         self.assertEqual(request.url_data, {'path': 'foo', 'id': '5'})
         self.assertEqual(request.full_path(), '/bla')
@@ -48,9 +45,9 @@ class WsgiRequestTests(unittest.TestCase):
         #                                         '/bla?id=5&path=foo'))
         self.assertEqual(request.full_path(g=7), '/bla?g=7')
 
-    def test_url_handling(self):
+    async def test_url_handling(self):
         target = '/\N{SNOWMAN}'
-        request = self.request(path=target)
+        request = await test_wsgi_request(target)
         path = urlparse(request.path).path
         self.assertEqual(path, target)
 
@@ -77,23 +74,21 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertTrue(r.started)
 
     def testStreamed(self):
-        stream = ('line {0}\n'.format(l+1) for l in range(10))
+        stream = (b'line %x\n' % (l+1) for l in range(10))
         r = wsgi.WsgiResponse(content=stream)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.status, '200 OK')
         self.assertEqual(r.content, stream)
         self.assertTrue(r.is_streamed())
         data = []
-        for l, a in enumerate(r):
+        for l, a in enumerate(r, 1):
             data.append(a)
             self.assertTrue(r.started)
-            self.assertEqual(a, ('line {0}\n'.format(l+1)).encode('utf-8'))
+            self.assertEqual(a, b'line %x\n' % l)
         self.assertEqual(len(data), 10)
 
     def testForCoverage(self):
-        r = wsgi.WsgiResponse(environ={'PATH_INFO': 'bla/'})
-        self.assertEqual(r.path, 'bla/')
-        self.assertEqual(r.connection, None)
+        r = wsgi.WsgiResponse()
         self.assertEqual(r.content, ())
         self.assertEqual(list(r), [])
         self.assertRaises(RuntimeError, list, r)
@@ -124,7 +119,7 @@ class WsgiRequestTests(unittest.TestCase):
         response.set_cookie('datetime', expires=datetime(2028, 1, 1, 4, 5, 6))
         datetime_cookie = response.cookies['datetime']
         self.assertEqual(datetime_cookie['expires'],
-                         'Sat, 01-Jan-2028 04:05:06 GMT')
+                         'Sat, 01 Jan 2028 04:05:06 GMT')
 
     def test_max_age_expiration(self):
         "Cookie will expire if max_age is provided"
@@ -168,49 +163,49 @@ class WsgiRequestTests(unittest.TestCase):
 
     def test_clean_path_middleware(self):
         url = 'bla//foo'
-        try:
+        with self.assertRaises(HttpRedirect) as r:
             wsgi.clean_path_middleware({'PATH_INFO': url,
                                         'QUERY_STRING': 'page=1'}, None)
-        except HttpRedirect as e:
-            url = e.headers[0][1]
-            self.assertEqual(url, '/bla/foo?page=1')
 
-    def test_handle_wsgi_error(self):
+        url = r.exception.headers['location']
+        self.assertEqual(url, '/bla/foo?page=1')
+
+    async def test_handle_wsgi_error(self):
 
         def handler(request, exc):
             return 'exception: %s' % exc
 
-        environ = wsgi.test_wsgi_environ(
-            extra={'error.handler': handler})
+        request = await test_wsgi_request()
+        request.environ['error.handler'] = handler
         try:
             raise ValueError('just a test')
         except ValueError as exc:
-            response = wsgi.handle_wsgi_error(environ, exc)
+            response = wsgi.handle_wsgi_error(request.environ, exc)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.content, (b'exception: just a test',))
 
-    def test_handle_wsgi_error_debug(self):
+    async def test_handle_wsgi_error_debug(self):
         cfg = self.cfg.copy()
         cfg.set('debug', True)
-        environ = wsgi.test_wsgi_environ(extra={'pulsar.cfg': cfg})
+        request = await test_wsgi_request()
+        request.environ['pulsar.cfg'] = cfg
         try:
             raise ValueError('just a test for debug wsgi error handler')
         except ValueError as exc:
-            response = wsgi.handle_wsgi_error(environ, exc)
+            response = wsgi.handle_wsgi_error(request.environ, exc)
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.content_type, None)
+        self.assertEqual(response.content_type, 'text/html')
         self.assertEqual(len(response.content), 1)
 
-    def test_handle_wsgi_error_debug_html(self):
+    async def test_handle_wsgi_error_debug_html(self):
         cfg = self.cfg.copy()
         cfg.set('debug', True)
-        headers = [('Accept', '*/*')]
-        environ = wsgi.test_wsgi_environ(extra={'pulsar.cfg': cfg},
-                                         headers=headers)
+        request = await test_wsgi_request()
+        request.environ['pulsar.cfg'] = cfg
         try:
             raise ValueError('just a test for debug wsgi error handler')
         except ValueError as exc:
-            response = wsgi.handle_wsgi_error(environ, exc)
+            response = wsgi.handle_wsgi_error(request.environ, exc)
         self.assertEqual(response.status_code, 500)
         html = response.content[0]
         self.assertEqual(response.content_type, 'text/html')
@@ -220,13 +215,13 @@ class WsgiRequestTests(unittest.TestCase):
     async def test_wsgi_handler_404(self):
         start = mock.MagicMock()
         handler = wsgi.WsgiHandler()
-        environ = self.request().environ
-        response = await handler(environ, start)
+        request = await test_wsgi_request()
+        response = await handler(request.environ, start)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(start.call_count, 1)
 
-    def test_request_redirect(self):
-        request = self.request()
+    async def test_request_redirect(self):
+        request = await test_wsgi_request()
         response = request.redirect('/foo')
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'], '/foo')

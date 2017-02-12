@@ -163,7 +163,6 @@ class WsgiResponse:
     def __repr__(self):
         return '%s(%s)' % (self.__class__.__name__, self)
 
-    @property
     def is_streamed(self):
         """Check if the response is streamed.
 
@@ -223,7 +222,7 @@ class WsgiResponse:
             headers.pop('content-length', None)
             self._content = ()
         else:
-            if not self.is_streamed:
+            if not self.is_streamed():
                 cl = reduce(count_len, self._content, 0)
                 headers['content-length'] = str(cl)
             ct = headers.get('content-type')
