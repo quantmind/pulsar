@@ -161,11 +161,11 @@ def worker_stopping(self, exc=None):
         asyncio.ensure_future(coro, loop=self._loop)
 
 
-def monitor_info(self, info=None):
+def monitor_info(self, data=None):
     if not self.cfg.workers:
-        self.app.worker_info(self, info)
+        self.app.worker_info(self, data)
     else:
-        self.app.monitor_info(self, info)
+        self.app.monitor_info(self, data)
 
 
 def monitor_params(self, data=None):
@@ -527,7 +527,7 @@ class Application(Configurator):
         """
         pass
 
-    def monitor_info(self, monitor, info):
+    def monitor_info(self, monitor, data):
         """Hook to add additional entries to the monitor ``info`` dictionary.
         """
         pass

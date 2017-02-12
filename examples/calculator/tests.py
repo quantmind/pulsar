@@ -119,30 +119,32 @@ class TestRpcOnThread(unittest.TestCase):
             self.assertEqual(sock['address'],
                              '%s:%s' % self.app_cfg.addresses[0])
 
-    def test_invalid_params(self):
-        return self.wait.assertRaises(rpc.InvalidParams, self.p.calc.add,
-                                      50, 25, 67)
+    async def test_invalid_params(self):
+        with self.assertRaises(rpc.InvalidParams):
+            await self.p.calc.add(50, 25, 67)
 
-    def test_invalid_params_fromApi(self):
-        return self.wait.assertRaises(rpc.InvalidParams, self.p.calc.divide,
-                                      50, 25, 67)
+    async def test_invalid_params_fromApi(self):
+        with self.assertRaises(rpc.InvalidParams):
+            await self.p.calc.divide(50, 25, 67)
 
     async def test_invalid_function(self):
         p = self.p
-        await self.wait.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
-        await self.wait.assertRaises(rpc.NoSuchFunction,
-                                     p.blabla)
-        await self.wait.assertRaises(rpc.NoSuchFunction,
-                                     p.blabla.foofoo)
-        await self.wait.assertRaises(rpc.NoSuchFunction,
-                                     p.blabla.foofoo.sjdcbjcb)
+        with self.assertRaises(rpc.NoSuchFunction):
+            await p.foo('ciao')
+        with self.assertRaises(rpc.NoSuchFunction):
+            await p.blabla()
+        with self.assertRaises(rpc.NoSuchFunction):
+            await p.blabla.foofoo()
+        with self.assertRaises(rpc.NoSuchFunction):
+            await p.blabla.foofoo.sjdcbjcb()
 
-    def testInternalError(self):
-        return self.wait.assertRaises(rpc.InternalError, self.p.calc.divide,
-                                      'ciao', 'bo')
+    async def testInternalError(self):
+        with self.assertRaises(rpc.InternalError):
+            await self.p.calc.divide('ciao', 'bo')
 
-    def testCouldNotserialize(self):
-        return self.wait.assertRaises(rpc.InternalError, self.p.dodgy_method)
+    async def testCouldNotserialize(self):
+        with self.assertRaises(rpc.InternalError):
+            await self.p.dodgy_method()
 
     async def testpaths(self):
         '''Fetch a sizable ammount of data'''
@@ -250,7 +252,7 @@ class TestRpcOnProcess(TestRpcOnThread):
         self.assertEqual(response, 'pong')
 
     # Synchronous client
-    async def test_sync_ping(self):
+    async def __test_sync_ping(self):
         await get_event_loop().run_in_executor(None, self._test_sync_ping)
 
     def _test_sync_ping(self):

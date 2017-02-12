@@ -105,7 +105,9 @@ class Pool(AsyncObject):
             while queue.qsize():
                 connection = queue.get_nowait()
                 if connection:
-                    waiters.append(connection.close())
+                    closed = connection.close()
+                    if closed:
+                        waiters.append(closed)
             in_use = self._in_use_connections
             self._in_use_connections = set()
             for connection in in_use:

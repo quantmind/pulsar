@@ -89,33 +89,34 @@ class EchoProtocol(ProtocolConsumer):
     '''
     separator = b'\r\n\r\n'
     '''A separator for messages.'''
-    buffer = b''
+    buffer = None
     '''The buffer for long messages'''
 
-    def data_received(self, data):
+    def feed_data(self, data):
         '''Implements the :meth:`~.ProtocolConsumer.data_received` method.
 
         It simply search for the :attr:`separator` and, if found, it invokes
         the :meth:`response` method with the value of the message.
         '''
-        if self.buffer:
-            data = self.buffer + data
+        if self.buffer is None:
+            self.buffer = bytearray(data)
+        else:
+            self.buffer.extend(data)
+        data = self.buffer
 
         idx = data.find(self.separator)
         if idx >= 0:    # we have a full message
             idx += len(self.separator)
             data, rest = data[:idx], data[idx:]
             self.buffer = self.response(data, rest)
-            self.finished()
+            self.event('post_request').fire()
             return rest
-        else:
-            self.buffer = data
 
     def start_request(self):
         '''Override :meth:`~.ProtocolConsumer.start_request` to write
         the message ended by the :attr:`separator` into the transport.
         '''
-        self.transport.write(self._request + self.separator)
+        self.connection.transport.write(self.request + self.separator)
 
     def response(self, data, rest):
         '''Clients return the message so that the
@@ -130,11 +131,14 @@ class EchoProtocol(ProtocolConsumer):
 class EchoServerProtocol(EchoProtocol):
     '''The :class:`EchoProtocol` used by the echo :func:`server`.
     '''
+    def start_request(self):
+        pass
+
     def response(self, data, rest):
         '''Override :meth:`~EchoProtocol.response` method by writing the
         ``data`` received back to the client.
         '''
-        self.transport.write(data)
+        self.connection.transport.write(data)
         data = data[:-len(self.separator)]
         # If we get a QUIT message, close the transport.
         # Used by the test suite.
@@ -174,10 +178,11 @@ class Echo(AbstractClient):
 
         Default: ``False``
     '''
-    protocol_factory = partial(Connection, EchoProtocol)
-
     def __init__(self, address, full_response=False, pool_size=10, loop=None):
-        super().__init__(loop)
+        super().__init__(
+            partial(Connection, EchoProtocol),
+            loop=loop
+        )
         self.address = address
         self.full_response = full_response
         self.pool = Pool(self.connect, pool_size, self._loop)
@@ -201,7 +206,7 @@ class Echo(AbstractClient):
         with connection:
             consumer = connection.current_consumer()
             consumer.start(message)
-            await consumer.on_finished
+            await consumer.event('post_request').waiter()
             return consumer if self.full_response else consumer.buffer
 
 

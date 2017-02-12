@@ -178,6 +178,13 @@ class WsgiResponse:
             return True
         return False
 
+    def length(self):
+        try:
+            len(self._content)
+        except TypeError:
+            return
+        return reduce(count_len, self._content, 0)
+
     def can_set_cookies(self):
         return self.status_code < 400 and self._can_store_cookies
 

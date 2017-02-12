@@ -71,7 +71,6 @@ def rpc_method(func, doc=None, format='json', request_handler=None):
         request = args[0]
         if request_handler:
             kwargs = request_handler(request, format, kwargs)
-        request.format = kwargs.pop('format', format)
         try:
             return func(*args, **kwargs)
         except TypeError:

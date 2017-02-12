@@ -34,8 +34,8 @@ def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
 
 class RequestCheck:
 
-    async def __call__(self, request, name):
-        data = await request.async_body_data()
+    def __call__(self, request, name):
+        data = request.body_data()
         assert(data['method'] == name)
         return True
 

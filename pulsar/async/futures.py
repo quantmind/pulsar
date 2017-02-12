@@ -237,12 +237,12 @@ class Bench:
     def __call__(self, func, *args, **kwargs):
         self.start = self._loop.time()
         data = [func(*args, **kwargs) for _ in range(self.times)]
-        self.result = gather(data, loop=self._loop)
+        self.result = gather(*data, loop=self._loop)
         return chain_future(self.result, callback=self._done)
 
     def _done(self, result):
         self.finish = self._loop.time()
-        self.result = tuple(result)
+        self.result = result
         return self
 
 

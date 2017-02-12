@@ -155,7 +155,7 @@ class KeepAlive(SocketSetting):
     flags = ["--keep-alive"]
     validator = validate_pos_int
     type = int
-    default = 15
+    default = 0
     desc = """\
         The number of seconds to keep an idle client connection
         open."""

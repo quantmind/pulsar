@@ -61,7 +61,8 @@ class PulsarProtocol(Protocol, FlowControl, Timeout):
                     pass
             self._closed = closed or True
             if not closed:
-                self.event('connection_lost').fire()
+                event.fire()
+        return self._closed
 
     def abort(self):
         """Abort by aborting the :attr:`transport`

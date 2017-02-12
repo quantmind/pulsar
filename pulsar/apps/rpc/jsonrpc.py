@@ -31,10 +31,7 @@ class JSONRPC(RpcHandler):
     '''
     version = '2.0'
 
-    def __call__(self, request):
-        return ensure_future(self._execute_request(request))
-
-    async def _execute_request(self, request):
+    async def __call__(self, request):
         response = request.response
 
         try:

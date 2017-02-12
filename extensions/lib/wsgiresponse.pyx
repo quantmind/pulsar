@@ -110,6 +110,13 @@ cdef class WsgiResponse:
             return True
         return False
 
+    cpdef length(self):
+        try:
+            len(self._content)
+        except TypeError:
+            return
+        return reduce(count_len, self._content, 0)
+
     cpdef object start(self, object start_response):
         return start_response(self.status, self.get_headers())
 
@@ -146,9 +153,6 @@ cdef class WsgiResponse:
         """
         if hasattr(self._content, 'close'):
             self._content.close()
-
-    cpdef int length(self):
-        return reduce(count_len, self._content, 0)
 
     cpdef object get_headers(self):
         """The list of headers for this response

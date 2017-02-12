@@ -85,21 +85,21 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)
         self.assertEqual(client.sessions, 0)
-        self.assertEqual(client._requests_processed, 0)
+        self.assertEqual(client.requests_processed, 0)
         #
         response = await client(b'test connection')
         self.assertEqual(response, b'test connection')
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 1)
         self.assertEqual(client.sessions, 1)
-        self.assertEqual(client._requests_processed, 1)
+        self.assertEqual(client.requests_processed, 1)
         #
         response = await client(b'test connection 2')
         self.assertEqual(response, b'test connection 2')
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 1)
         self.assertEqual(client.sessions, 1)
-        self.assertEqual(client._requests_processed, 2)
+        self.assertEqual(client.requests_processed, 2)
         #
         result = await gather(client(b'ciao'),
                               client(b'pippo'),
@@ -111,7 +111,7 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 2)
         self.assertEqual(client.sessions, 2)
-        self.assertEqual(client._requests_processed, 5)
+        self.assertEqual(client.requests_processed, 5)
         #
         # drop a connection
         self._drop_conection(client)
@@ -123,14 +123,14 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 2)
         self.assertEqual(client.sessions, 3)
-        self.assertEqual(client._requests_processed, 8)
+        self.assertEqual(client.requests_processed, 8)
         #
         await client.pool.close()
         #
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)
         self.assertEqual(client.sessions, 3)
-        self.assertEqual(client._requests_processed, 8)
+        self.assertEqual(client.requests_processed, 8)
 
     def _drop_conection(self, client):
         conn1 = client.pool._queue.get_nowait()

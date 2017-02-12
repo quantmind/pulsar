@@ -37,7 +37,7 @@ class DummyTransport(Transport):
                 consumer.finished()
 
 
-class DymmyConnection:
+class DummyConnection:
     other_side = None
 
     def write(self, data):
@@ -56,7 +56,7 @@ class DymmyConnection:
         pass
 
 
-class DummyClientConnection(Protocol, DymmyConnection):
+class DummyClientConnection(DummyConnection, Protocol):
     """A class simulating a :class:`pulsar.Transport` to a :attr:`connection`
 
     .. attribute:: client
@@ -87,7 +87,7 @@ class DummyClientConnection(Protocol, DymmyConnection):
         return consumer
 
 
-class DummyServerConnection(Protocol, DymmyConnection):
+class DummyServerConnection(DummyConnection, Protocol):
 
     @classmethod
     def create(cls, producer):
