@@ -51,9 +51,11 @@ from functools import partial, reduce
 from collections import namedtuple
 from itertools import zip_longest
 
+from pulsar import SERVER_SOFTWARE
+
 from ..socket import SocketServer
 from ...async.access import get_actor
-from ...async.protocols import TcpServer
+from ...async.protocols import TcpServer, Connection
 from ...utils.config import Setting, Config
 from ...utils.structures import Dict, Zset, Deque
 
@@ -148,12 +150,12 @@ class KeyValueFileName(PulsarDsSetting):
 
 
 class Server(TcpServer):
+    _key_value_store = None
 
-    def __init__(self, cfg, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.cfg = cfg
-        self._parser_class = redis_parser()
-        self._key_value_store = Storage(self, cfg)
+    def store(self):
+        if self._key_value_store is None:
+            self._key_value_store = Storage(self)
+        return self._key_value_store
 
     def info(self):
         info = super().info()
@@ -167,13 +169,14 @@ class PulsarDS(SocketServer):
     name = 'pulsards'
     cfg = Config(bind=DEFAULT_PULSAR_STORE_ADDRESS,
                  keep_alive=0,
+                 server_software=SERVER_SOFTWARE,
                  apps=['socket', 'pulsards'])
 
     def server_factory(self, *args, **kw):
-        return TcpServer(self.cfg, *args, **kw)
+        return Server(*args, **kw)
 
     def protocol_factory(self):
-        return partial(PulsarStoreClient, self.cfg)
+        return partial(Connection, PulsarStoreClient)
 
     def monitor_start(self, monitor):
         cfg = self.cfg
@@ -189,14 +192,14 @@ pubsub_patterns = namedtuple('pubsub_patterns', 're clients')
 class Storage:
     '''Implement redis commands.
     '''
-    def __init__(self, server, cfg):
-        self.cfg = cfg
-        self._password = cfg.key_value_password.encode('utf-8')
-        self._filename = cfg.key_value_filename
+    def __init__(self, server):
+        self.cfg = server.cfg
+        self._password = self.cfg.key_value_password.encode('utf-8')
+        self._filename = self.cfg.key_value_filename
         self._writer = None
         self._server = server
         self._loop = server._loop
-        self._parser = server._parser_class()
+        self._parser = redis_parser()
         self._missed_keys = 0
         self._hit_keys = 0
         self._expired_keys = 0
@@ -273,7 +276,7 @@ class Storage:
                                set: 'set',
                                self.zset_type: 'zset'}
         self.databases = dict(((num, Db(num, self))
-                               for num in range(cfg.key_value_databases)))
+                               for num in range(self.cfg.key_value_databases)))
         # Initialise lua
         self.lua = None
         self.version = '2.4.10'
@@ -1886,7 +1889,7 @@ class Storage:
                 self._close_transaction(client)
                 client.reply_multi_bulk_len(len(requests))
                 for handle, request in requests:
-                    client._execute_command(handle, request)
+                    client.execute_command(handle, request)
 
     @command('Transactions', script=0)
     def multi(self, client, request, N):

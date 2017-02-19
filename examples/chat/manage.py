@@ -42,7 +42,7 @@ import time
 
 from pulsar.api import create_future, ensure_future
 from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,
-                              GZipMiddleware)
+                              GZipMiddleware, wsgi_request)
 from pulsar.apps.ws import WS, WebSocket
 from pulsar.apps.rpc import PulsarServerCommands
 from pulsar.apps.data import create_store, PubSubClient
@@ -137,8 +137,9 @@ class WebChat(LazyWsgi):
         Check :ref:`lazy wsgi handler <wsgi-lazy-handler>`
         section for further information.
         '''
-        cfg = environ['pulsar.cfg']
-        loop = environ['pulsar.connection']._loop
+        request = wsgi_request(environ)
+        cfg = request.cache.cfg
+        loop = request.cache._loop
         self.store = create_store(cfg.data_store, loop=loop)
         pubsub = self.store.pubsub(protocol=Protocol())
         channel = '%s_webchat' % self.name

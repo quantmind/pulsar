@@ -690,7 +690,7 @@ class HttpResponse(ProtocolConsumer):
             self.version = self.parser.get_http_version()
             self.event('on_headers').fire()
             if request.method == 'HEAD':
-                self.finished()
+                self.event('post_request').fire()
 
     def on_body(self, body):
         if self.request.stream:

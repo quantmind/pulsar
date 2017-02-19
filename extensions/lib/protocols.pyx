@@ -12,12 +12,12 @@ cdef PROTOCOL_LOGGER = logging.getLogger('pulsar.protocols')
 
 cdef class Producer(EventHandler):
     cdef readonly:
-        object protocol_factory, _loop
+        object _loop
         int sessions
         str name
     cdef public:
         int requests_processed, keep_alive
-        object logger
+        object protocol_factory, logger
 
     def __init__(self, object protocol_factory, object loop=None,
                  str name=None, int keep_alive=0, logger=None):
@@ -140,11 +140,11 @@ cdef class Protocol(EventHandler):
             self._current_consumer = None
 
     # Callbacks
-    cpdef _build_consumer(self, _, exc=None):
+    cpdef _build_consumer(self, _, exc=None, data=None):
         self._current_consumer = None
         self.current_consumer()
 
-    cpdef _connection_lost(self, _, exc=None):
+    cpdef _connection_lost(self, _, exc=None, data=None):
         if self._current_consumer:
             self._current_consumer.event('post_request').fire(exc=exc)
 
@@ -186,7 +186,7 @@ cdef class ProtocolConsumer(EventHandler):
     cpdef feed_data(self, data):
         pass
 
-    cpdef _finished(self, object _, object exc=None):
+    cpdef _finished(self, object _, object exc=None, object data=None):
         self.connection.finished_consumer(self)
 
     cpdef object get(self, str attr):

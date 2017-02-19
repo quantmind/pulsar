@@ -284,7 +284,7 @@ class ProtocolConsumer(EventHandler):
         """
         pass
 
-    def _finished(self, _, exc=None):
+    def _finished(self, _, **kw):
         self.connection.finished_consumer(self)
 
     def get(self, attr):

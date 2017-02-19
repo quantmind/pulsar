@@ -1,13 +1,13 @@
 from itertools import chain
 import datetime
 
+from ....async.protocols import Connection
 from ....utils.string import to_string
 from ....utils.structures import mapping_iterator, Zset
 from ....utils.lib import ProtocolConsumer
-from ...ds import COMMANDS_INFO, CommandError
-
-from .pubsub import RedisPubSub
+from ...ds import COMMANDS_INFO, CommandError, redis_parser
 from .lock import Lock
+
 
 str_or_bytes = (bytes, str)
 
@@ -111,6 +111,29 @@ def pubsub_callback(response, subcommand=None):
         return response
 
 
+class RedisStoreConnection(Connection):
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.parser = redis_parser()
+
+    async def execute(self, *args, **options):
+        consumer = self.current_consumer()
+        consumer.start((args, options))
+        result = await consumer.event('post_request').waiter()
+        if isinstance(result, ResponseError):
+            raise result.exception
+        return result
+
+    async def execute_pipeline(self, commands, raise_on_error=True):
+        consumer = self.current_consumer()
+        consumer.start((commands, raise_on_error, []))
+        result = await consumer.event('post_request').waiter()
+        if isinstance(result, ResponseError):
+            raise result.exception
+        return result
+
+
 class Consumer(ProtocolConsumer):
 
     RESPONSE_CALLBACKS = dict_merge(
@@ -141,24 +164,23 @@ class Consumer(ProtocolConsumer):
     )
 
     def start_request(self):
-        conn = self._connection
-        args = self._request[0]
-        if len(self._request) == 2:
+        conn = self.connection
+        args = self.request[0]
+        if len(self.request) == 2:
             chunk = conn.parser.pack_command(args)
         else:
             chunk = conn.parser.pack_pipeline(args)
-        conn._transport.write(chunk)
+        conn.write(chunk)
 
     def parse_response(self, response, command, options):
         callback = self.RESPONSE_CALLBACKS.get(command.upper())
         return callback(response, **options) if callback else response
 
-    def data_received(self, data):
-        conn = self._connection
-        parser = conn.parser
+    def feed_data(self, data):
+        parser = self.connection.parser
         parser.feed(data)
         response = parser.get()
-        request = self._request
+        request = self.request
         try:
             if len(request) == 2:
                 if response is not False:
@@ -168,7 +190,7 @@ class Consumer(ProtocolConsumer):
                                                        request[1])
                     else:
                         response = ResponseError(response)
-                    self.finished(response)
+                    self.event('post_request').fire(data=response)
             else:   # pipeline
                 commands, raise_on_error, responses = request
                 while response is not False:
@@ -189,9 +211,9 @@ class Consumer(ProtocolConsumer):
                         response.append(resp)
                     if error and raise_on_error:
                         response = ResponseError(error)
-                    self.finished(response)
+                    self.event('post_request').fire(data=response)
         except Exception as exc:
-            self.finished(exc=exc)
+            self.event('post_request').fire(exc=exc)
 
 
 class RedisClient:
@@ -213,7 +235,7 @@ class RedisClient:
         return self.store._loop
 
     def pubsub(self, **kw):
-        return RedisPubSub(self.store, **kw)
+        return self.store.pubsub(**kw)
 
     def pipeline(self):
         '''Create a :class:`.Pipeline` for pipelining commands

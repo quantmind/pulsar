@@ -86,8 +86,8 @@ class TestWebSocket(unittest.TestCase):
         self.assertEqual(ws.handler, handler)
         #
         # on_finished
-        self.assertTrue(response.on_finished.done())
-        self.assertFalse(ws.on_finished.done())
+        self.assertTrue(response.event('post_request').fired())
+        self.assertFalse(ws.event('post_request').fired())
         # Send a message to the websocket
         ws.write('Hi there!')
         message = await handler.get()
@@ -122,7 +122,7 @@ class TestWebSocket(unittest.TestCase):
         self.assertEqual(message, 'CLOSE')
         self.assertTrue(ws.close_reason)
         self.assertEqual(ws.close_reason[0], 1001)
-        self.assertTrue(ws._connection.closed)
+        self.assertTrue(ws.connection.closed)
 
     async def test_home(self):
         c = self.http()

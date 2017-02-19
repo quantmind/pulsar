@@ -192,12 +192,11 @@ class WebSocket:
             if not handler:
                 handler = WS()
             parser = request.client.frame_parser(kind=1)
-            consumer = partial(WebSocketClient, response, handler, parser)
+            consumer = partial(WebSocketClient.create,
+                               response, handler, parser)
             connection.upgrade(consumer)
-            body = response.recv_body()
-            response.finished()
+            response.event('post_request').fire()
             websocket = connection.current_consumer()
-            websocket.data_received(body)
             response.request_again = lambda r: websocket
 
 

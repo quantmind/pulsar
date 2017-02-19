@@ -4,7 +4,7 @@ import logging
 import asyncio
 from collections import namedtuple
 
-from pulsar.api import AsyncObject, ensure_future
+from pulsar.api import AsyncObject
 from pulsar.utils.string import gen_unique_id
 from pulsar.utils.tools import checkarity
 from pulsar.apps.http import HttpClient

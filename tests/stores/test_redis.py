@@ -1,4 +1,3 @@
-from pulsar.api import HAS_C_EXTENSIONS
 from pulsar.apps.test import check_server, skipUnless
 from pulsar.apps.data.redis import RedisScript
 
@@ -53,8 +52,3 @@ class TestRedisStore(RedisCommands,
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0], [b'a', b'b'])
         self.assertEqual(result[1], [b'first', b'second', b'third'])
-
-
-@skipUnless(OK and HAS_C_EXTENSIONS, 'Requires cython extensions')
-class TestRedisStorePyParser(TestRedisStore):
-    pass

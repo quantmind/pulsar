@@ -3,6 +3,7 @@ from asyncio import get_event_loop
 
 
 LOGGER = logging.getLogger('pulsar.events')
+NoData = object()
 
 
 class AbortEvent(Exception):
@@ -60,7 +61,7 @@ class Event:
             return removed_count
         return 0
 
-    def fire(self, exc=None, data=None):
+    def fire(self, exc=None, data=NoData):
         o = self._self
 
         if o is not None:
@@ -73,7 +74,7 @@ class Event:
                 if exc is not None:
                     for hnd in handlers:
                         hnd(o, exc=exc)
-                elif data is not None:
+                elif data is not NoData:
                     for hnd in handlers:
                         hnd(o, data=data)
                 else:
@@ -84,7 +85,7 @@ class Event:
                 if exc:
                     self._waiter.set_exception(exc)
                 else:
-                    self._waiter.set_result(o)
+                    self._waiter.set_result(data if data is not NoData else o)
                 self._waiter = None
 
     def waiter(self):
@@ -118,7 +119,7 @@ class EventHandler:
             events[name] = Event(name, self, 0)
         return events[name]
 
-    def fire_event(self, name, exc=None, data=None):
+    def fire_event(self, name, exc=None, data=NoData):
         if self._events and name in self._events:
             self._events[name].fire(exc=exc, data=data)
 
@@ -143,12 +144,14 @@ class EventHandler:
         All many times events of ``other`` are copied to this handler
         provided the events handlers already exist.
         '''
-        events = self._events
-        if events and other._events:
-            for name, event in other._events.items():
-                if not event.onetime() and event._handlers:
+        events = self.events()
+        other_events = other.events()
+        if events and other_events:
+            for name, event in other_events.items():
+                handlers = event.handlers()
+                if not event.onetime() and handlers:
                     ev = events.get(name)
                     # If the event is available add it
                     if ev:
-                        for callback in event._handlers:
+                        for callback in handlers:
                             ev.bind(callback)
