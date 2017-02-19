@@ -54,6 +54,7 @@ import socket
 import pickle
 import asyncio
 import logging
+from functools import partial
 from collections import namedtuple
 
 from ..utils.exceptions import CommandError
@@ -62,7 +63,7 @@ from ..utils.websocket import frame_parser
 from ..utils.string import gen_unique_id
 from ..utils.lib import ProtocolConsumer
 
-from .protocols import PulsarProtocol
+from .protocols import Connection
 from .access import get_actor
 from .proxy import actor_identity, get_proxy, get_command, ActorProxy
 from .clients import AbstractClient
@@ -121,14 +122,18 @@ class MessageConsumer(ProtocolConsumer):
     messages = None
     parser = None
     worker = None
+    parser = None
+    pending_responses = None
 
     def start_request(self):
+        self.parser = frame_parser(kind=2)
+        self.pending_responses = {}
         self.messages = asyncio.Queue(loop=self._loop)
         self.worker = self._loop.create_task(self._process_messages())
         self.event('post_request').bind(self._close_worker)
 
     def feed_data(self, data):
-        msg = self.connection.parser.decode(data)
+        msg = self.parser.decode(data)
         while msg:
             try:
                 message = pickle.loads(msg.body)
@@ -138,7 +143,47 @@ class MessageConsumer(ProtocolConsumer):
                 )
             else:
                 self.messages.put_nowait(message)
-            msg = self.connection.parser.decode()
+            msg = self.parser.decode()
+
+    def send(self, command, sender, target, args, kwargs):
+        """Used by the server to send messages to the client.
+        Returns a future.
+        """
+        command = get_command(command)
+        data = {'command': command.__name__,
+                'sender': actor_identity(sender),
+                'target': actor_identity(target),
+                'args': args if args is not None else (),
+                'kwargs': kwargs if kwargs is not None else {}}
+
+        waiter = self._loop.create_future()
+        ack = None
+        if command.ack:
+            ack = create_aid()
+            data['ack'] = ack
+            self.pending_responses[ack] = waiter
+
+        try:
+            self.write(data)
+        except Exception as exc:
+            waiter.set_exception(exc)
+            if ack:
+                self.pending_responses.pop(ack, None)
+        else:
+            if not ack:
+                waiter.set_result(None)
+        return waiter
+
+    def write(self, msg):
+        obj = pickle.dumps(msg, protocol=2)
+        data = self.parser.encode(obj, opcode=2)
+        try:
+            self.connection.write(data)
+        except (socket.error, RuntimeError):
+            actor = get_actor()
+            if actor.is_running() and not actor.is_arbiter():
+                actor.logger.warning('Lost connection with arbiter')
+                actor._loop.stop()
 
     async def _process_messages(self):
         actor = get_actor()
@@ -152,7 +197,7 @@ class MessageConsumer(ProtocolConsumer):
                     logger.error('A callback without id')
                 else:
                     logger.debug('Callback from "%s"', ack)
-                    pending = self.connection.pending_responses.pop(ack)
+                    pending = self.pending_responses.pop(ack)
                     pending.set_result(message.get('result'))
                 continue
 
@@ -189,7 +234,7 @@ class MessageConsumer(ProtocolConsumer):
                 result = None
             if ack:
                 data = {'command': 'callback', 'result': result, 'ack': ack}
-                self.connection.write(data)
+                self.write(data)
 
     def _close_worker(self, _, **kw):
         if self.worker and not self.worker.done():
@@ -197,70 +242,17 @@ class MessageConsumer(ProtocolConsumer):
             self.worker = None
 
 
-class MailboxConnection(PulsarProtocol):
-    """The :class:`.Protocol` for internal message passing between actors.
-
-    Encoding and decoding uses the unmasked websocket protocol.
-    """
-    pending_responses = None
-    parser = None
-
-    @classmethod
-    def create(cls, producer):
-        connection = cls(MessageConsumer, producer)
-        connection.pending_responses = {}
-        connection.parser = frame_parser(kind=2)
-        return connection
-
-    def send(self, command, sender, target, args, kwargs):
-        """Used by the server to send messages to the client.
-        Returns a future.
-        """
-        command = get_command(command)
-        data = {'command': command.__name__,
-                'sender': actor_identity(sender),
-                'target': actor_identity(target),
-                'args': args if args is not None else (),
-                'kwargs': kwargs if kwargs is not None else {}}
-
-        waiter = self._loop.create_future()
-        ack = None
-        if command.ack:
-            ack = create_aid()
-            data['ack'] = ack
-            self.pending_responses[ack] = waiter
-
-        try:
-            self.write(data)
-        except Exception as exc:
-            waiter.set_exception(exc)
-            if ack:
-                self.pending_responses.pop(ack, None)
-        else:
-            if not ack:
-                waiter.set_result(None)
-        return waiter
-
-    def write(self, msg):
-        obj = pickle.dumps(msg, protocol=2)
-        data = self.parser.encode(obj, opcode=2)
-        try:
-            self.transport.write(data)
-        except (socket.error, RuntimeError):
-            actor = get_actor()
-            if actor.is_running() and not actor.is_arbiter():
-                actor.logger.warning('Lost connection with arbiter')
-                actor._loop.stop()
+mailbox_protocol = partial(Connection, MessageConsumer)
 
 
 class MailboxClient(AbstractClient):
     """Used by actors to send messages to other actors via the arbiter.
     """
     def __init__(self, address, actor, loop):
-        super().__init__(MailboxConnection.create, loop=loop,
+        super().__init__(mailbox_protocol, loop=loop,
                          name='%s-mailbox' % actor, logger=LOGGER)
         self.address = address
-        self._connection = None
+        self.connection = None
 
     def connect(self):
         return self.create_connection(self.address)
@@ -269,17 +261,19 @@ class MailboxClient(AbstractClient):
         return '%s %s' % (self.name, nice_address(self.address))
 
     async def send(self, command, sender, target, args, kwargs):
-        if self._connection is None:
-            self._connection = await self.connect()
-            self._connection.event('connection_lost').bind(self._lost)
-        response = await self._connection.send(
-            command, sender, target, args, kwargs
-        )
+        if self.connection is None:
+            self.connection = await self.connect()
+            self.connection.event('connection_lost').bind(self._lost)
+            consumer = self.connection.current_consumer()
+            consumer.start()
+        else:
+            consumer = self.connection.current_consumer()
+        response = await consumer.send(command, sender, target, args, kwargs)
         return response
 
     def close(self):
-        if self._connection:
-            self._connection.close()
+        if self.connection:
+            self.connection.close()
 
     def start_serving(self):    # pragma    nocover
         pass

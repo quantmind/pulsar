@@ -1228,8 +1228,7 @@ class RedisCommands(StoreMixin):
             channel, message = await listener.get()
             self.assertEqual(channel, 'foo')
             self.assertEqual(message, 'hello foo')
-            eq(await pubsub.punsubscribe(), None)
-            # await listener.get()
+            pubsub.punsubscribe()
 
     ###########################################################################
     #    TRANSACTION

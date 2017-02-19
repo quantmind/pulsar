@@ -83,8 +83,8 @@ class WebSocketClient(WebSocketProtocol):
     status_code = 101
 
     @property
-    def _request(self):
-        return self.handshake._request
+    def request(self):
+        return self.handshake.request
 
     @property
     def headers(self):

@@ -14,7 +14,7 @@ def wait_for_stop(test, aid, terminating=False):
     waiter = create_future(loop=actor._loop)
 
     def remove():
-        test.assertEqual(actor.unbind('periodic_task', check), 1)
+        test.assertEqual(actor.event('periodic_task').unbind(check), 1)
         waiter.set_result(None)
 
     def check(caller, **kw):

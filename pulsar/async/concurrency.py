@@ -19,7 +19,7 @@ from ..utils import autoreload
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import get_actor, set_actor, logger, EventLoopPolicy
 from .threads import Thread
-from .mailbox import MailboxClient, MailboxConnection, ProxyMailbox, create_aid
+from .mailbox import MailboxClient, mailbox_protocol, ProxyMailbox, create_aid
 from .futures import ensure_future, chain_future, create_future
 from .protocols import TcpServer
 from .actor import Actor
@@ -545,7 +545,7 @@ class ArbiterConcurrency(MonitorMixin, ProcessMixin, Concurrency):
         '''Override :meth:`.Concurrency.create_mailbox` to create the
         mailbox server.
         '''
-        mailbox = TcpServer(MailboxConnection.create,
+        mailbox = TcpServer(mailbox_protocol,
                             address=('127.0.0.1', 0),
                             loop=loop, name='mailbox')
         # when the mailbox stop, close the event loop too

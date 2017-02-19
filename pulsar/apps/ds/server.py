@@ -2384,8 +2384,7 @@ class Storage:
             yield ' '.join(self._client_info(client))
 
     def _client_info(self, client):
-        yield 'addr=%s:%s' % client._transport.get_extra_info('addr')
-        yield 'fd=%s' % client._transport._sock_fd
+        yield 'addr=%s:%s' % client.transport.get_extra_info('addr')
         yield 'age=%s' % int(time.time() - client.started)
         yield 'db=%s' % client.database
         yield 'sub=%s' % len(client.channels)
@@ -2436,7 +2435,7 @@ class Storage:
         count = 0
         for client in clients:
             try:
-                client._transport.write(msg)
+                client.connection.write(msg)
                 count += 1
             except Exception:
                 remove.add(client)
@@ -2487,13 +2486,12 @@ class Storage:
                 self._patterns.pop(pattern)
 
     def _write_to_monitors(self, client, request):
-        # addr = '%s:%s' % self._transport.get_extra_info('addr')
         cmds = b'" "'.join(request)
         message = '+%s [0 %s] "'.encode('utf-8') + cmds + b'"\r\n'
         remove = set()
         for m in self._monitors:
             try:
-                m._transport.write(message)
+                m.connection.write(message)
             except Exception:
                 remove.add(m)
         if remove:

@@ -201,7 +201,7 @@ class HttpTunnel(RequestBase):
             response.event('pre_request').bind(handler)
         elif tunnel_status == 1:
             connection._tunnel_status = 2
-            response._request = self
+            response.request = self
             response.event('on_headers').bind(handler.on_headers)
 
 
