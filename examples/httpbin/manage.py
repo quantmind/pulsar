@@ -54,6 +54,12 @@ def asset(name, mode='r'):
         return data
 
 
+def as_dict(m):
+    if isinstance(m, MultiDict):
+        return dict(((k, m.getall(k)) for k in m))
+    return m
+
+
 class BaseRouter(wsgi.Router):
     ########################################################################
     #    INTERNALS
@@ -79,12 +85,9 @@ class BaseRouter(wsgi.Router):
                             part = part.string()
                         except UnicodeError:
                             part = part.base64()
-                        jfiles[name] = part
-            if isinstance(args, MultiDict):
-                args = dict(args)
-
-            data.update((('args', args),
-                         ('files', dict(jfiles))))
+                        jfiles.add(name, part)
+            data.update((('args', as_dict(args)),
+                         ('files', as_dict(jfiles))))
         data.update(params)
         return data
 
@@ -327,8 +330,8 @@ class Upload(BaseRouter):
                 'files': MultiDict()}
         request.cache.response_data = data
         await request.data_and_files(stream=partial(self.stream, request))
-        data['args'] = dict(data['args'])
-        data['files'] = dict(data['files'])
+        data['args'] = as_dict(data['args'])
+        data['files'] = as_dict(data['files'])
         return request.json_response(data)
 
     def stream(self, request, part):
@@ -349,7 +352,7 @@ class Upload(BaseRouter):
                 except UnicodeError:
                     data = b64encode(data)
 
-            store[part.name] = data.decode('utf-8')
+            store.add(part.name, data.decode('utf-8'))
 
 
 class ExpectFail(BaseRouter):

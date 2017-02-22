@@ -20,10 +20,6 @@ from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
 linux = platform.name == 'posix' and not platform.isMacOSX
 
 
-def dodgyhook(response, exc=None):
-    raise ValueError('Dodgy header hook')
-
-
 def no_tls(f):
     # Don't do the test when tunneling, it causes timeout at times
 
@@ -425,12 +421,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.content)
         self.assertRaises(HttpRequestException, response.raise_for_status)
-
-    async def test_dodgy_on_header_event(self):
-        client = self._client
-        response = await client.get(self.httpbin(), on_headers=dodgyhook)
-        self.assertTrue(response.headers)
-        self.assertEqual(response.status_code, 200)
 
     async def test_redirect_1(self):
         http = self.client()

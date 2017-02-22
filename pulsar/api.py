@@ -12,6 +12,7 @@ from .utils.lib import (
 )
 
 from .async.access import get_actor, create_future, cfg_value, ensure_future
+from .async.futures import as_coroutine
 from .async.actor import is_actor, send, spawn, get_stream
 from .async.proxy import command, get_proxy
 from .async.lock import Lock, LockBase
@@ -44,11 +45,14 @@ __all__ = [
     'Setting',
     'AbortEvent',
     #
-    # Actor Layer
+    # Async Tools
     'create_future',
     'ensure_future',
+    'as_coroutine',
     'chain_future',
     'async_while',
+    #
+    # Actor Layer
     'get_actor',
     'is_actor',
     'send',

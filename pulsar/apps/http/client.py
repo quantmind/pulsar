@@ -329,9 +329,7 @@ class HttpRequest(RequestBase):
 
     def new_parser(self, protocol):
         protocol.headers = CIMultiDict()
-        parser = self.client.http_parser(protocol)
-        protocol.feed_data = parser.feed_data
-        return parser
+        return self.client.http_parser(protocol)
 
     def is_chunked(self):
         return self.body and 'content-length' not in self.headers
@@ -674,6 +672,12 @@ class HttpResponse(ProtocolConsumer):
         self.connection.transport.write(request.encode())
         if request.headers.get('expect') != '100-continue':
             self.write_body()
+
+    def feed_data(self, data):
+        try:
+            self.parser.feed_data(data)
+        except http.HttpParserUpgrade:
+            pass
 
     def on_header(self, name, value):
         self.headers.add(name.decode(CHARSET), value.decode(CHARSET))

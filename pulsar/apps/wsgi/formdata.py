@@ -357,9 +357,9 @@ class MultipartPart:
                 self.parser.stream(self)
 
             if self.is_file():
-                self.parser.result[1][self.name] = self
+                self.parser.result[1].add(self.name, self)
             else:
-                self.parser.result[0][self.name] = self.string()
+                self.parser.result[0].add(self.name, self.string())
 
 
 async def parse_headers(fp, _class=HTTPMessage):

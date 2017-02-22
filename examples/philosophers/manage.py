@@ -52,7 +52,7 @@ Implementation
 
 '''
 import random
-from asyncio import ensure_future
+from asyncio import sleep
 
 from pulsar.api import command, Setting, Config, Application
 from pulsar.utils.config import validate_pos_float
@@ -111,6 +111,7 @@ class DiningPhilosophers(Application):
     description = ('Dining philosophers sit at a table around a bowl of '
                    'spaghetti and waits for available forks.')
     cfg = Config(workers=5, apps=['philosophers'])
+    eating = None
 
     def monitor_start(self, monitor):
         self.not_available_forks = set()
@@ -121,59 +122,59 @@ class DiningPhilosophers(Application):
         self.thinking = 0
         self.started_waiting = 0
         self.forks = []
-        philosopher._loop.call_soon(self.take_action, philosopher)
+        self.eating = philosopher._loop.create_task(self.eat(philosopher))
 
-    def worker_info(self, philosopher, info=None):
+    def worker_stopping(self, worker, exc=None):
+        if self.eating:
+            self.eating.cancel()
+
+    def worker_info(self, philosopher, data=None):
         '''Override :meth:`~.Application.worker_info` to provide
         information about the philosopher.'''
-        info['philosopher'] = {'number': philosopher.number,
+        data['philosopher'] = {'number': philosopher.number,
                                'eaten': self.eaten}
 
-    def take_action(self, philosopher):
+    async def eat(self, philosopher):
         '''The ``philosopher`` performs one of these two actions:
 
         * eat, if he has both forks and then :meth:`release_forks`.
         * try to :meth:`pickup_fork`, if he has fewer than 2 forks.
         '''
         loop = philosopher._loop
-        forks = self.forks
-        if forks:
-            #
-            # Two forks. Eat!
-            if len(forks) == 2:
-                self.thinking = 0
-                self.eaten += 1
-                philosopher.logger.info("eating... So far %s times",
-                                        self.eaten)
-                eat_time = 2*self.cfg.eating_period*random.random()
-                return loop.call_later(eat_time, self.release_forks,
-                                       philosopher)
-            #
-            # One fork only! release fork or try to pick one up
-            elif len(forks) == 1:
-                waiting_period = 2*self.cfg.waiting_period*random.random()
-                if self.started_waiting == 0:
-                    self.started_waiting = loop.time()
-                elif loop.time() - self.started_waiting > waiting_period:
-                    philosopher.logger.debug("tired of waiting")
-                    return self.release_forks(philosopher)
-            #
-            # this should never happen
-            elif len(forks) > 2:    # pragma    nocover
-                philosopher.logger.critical('more than 2 forks!!!')
-                return self.release_forks(philosopher)
-        else:
-            if not self.thinking:
-                philosopher.logger.warning('%s thinking...', philosopher.name)
-            self.thinking += 1
-        self.pickup_fork(philosopher)
+        while True:
+            forks = self.forks
+            if forks:
+                #
+                # Two forks. Eat!
+                if len(forks) == 2:
+                    self.thinking = 0
+                    self.eaten += 1
+                    philosopher.logger.info("eating... So far %s times",
+                                            self.eaten)
+                    eat_time = 2*self.cfg.eating_period*random.random()
+                    await sleep(eat_time)
+                    await self.release_forks(philosopher)
+                #
+                # One fork only! release fork or try to pick one up
+                elif len(forks) == 1:
+                    waiting_period = 2*self.cfg.waiting_period*random.random()
+                    if self.started_waiting == 0:
+                        self.started_waiting = loop.time()
+                    elif loop.time() - self.started_waiting > waiting_period:
+                        philosopher.logger.debug("tired of waiting")
+                        await self.release_forks(philosopher)
+                #
+                # this should never happen
+                elif len(forks) > 2:    # pragma    nocover
+                    philosopher.logger.critical('more than 2 forks!!!')
+                    await self.release_forks(philosopher)
+            else:
+                if not self.thinking:
+                    philosopher.logger.warning('thinking...')
+                self.thinking += 1
+            await self.pickup_fork(philosopher)
 
-    def pickup_fork(self, philosopher):
-        """Pick up a fork
-        """
-        ensure_future(self._pickup_fork(philosopher), loop=philosopher._loop)
-
-    def release_forks(self, philosopher):
+    async def release_forks(self, philosopher):
         '''The ``philosopher`` has just eaten and is ready to release both
         forks.
 
@@ -185,9 +186,20 @@ class DiningPhilosophers(Application):
         self.started_waiting = 0
         for fork in forks:
             philosopher.logger.debug('Putting down fork %s', fork)
-            philosopher.send('monitor', 'putdown_fork', fork)
-        philosopher._loop.call_later(self.cfg.waiting_period, self.take_action,
-                                     philosopher)
+            await philosopher.send('monitor', 'putdown_fork', fork)
+        await sleep(self.cfg.waiting_period)
+
+    async def pickup_fork(self, philosopher):
+        fork = await philosopher.send(philosopher.monitor, 'pickup_fork',
+                                      philosopher.number)
+        if fork:
+            forks = self.forks
+            if fork in forks:
+                philosopher.logger.error('Got fork %s. I already have it',
+                                         fork)
+            else:
+                philosopher.logger.debug('Got fork %s.', fork)
+                forks.append(fork)
 
     def actorparams(self, monitor, params):
         avail = set(range(1, monitor.cfg.workers+1))
@@ -200,19 +212,6 @@ class DiningPhilosophers(Application):
                 break
         number = min(avail) if avail else len(monitor.managed_actors) + 1
         params.update({'name': 'Philosopher %s' % number, 'number': number})
-
-    async def _pickup_fork(self, philosopher):
-        fork = await philosopher.send(philosopher.monitor, 'pickup_fork',
-                                      philosopher.number)
-        if fork:
-            forks = self.forks
-            if fork in forks:
-                philosopher.logger.error('Got fork %s. I already have it',
-                                         fork)
-            else:
-                philosopher.logger.debug('Got fork %s.', fork)
-                forks.append(fork)
-        philosopher._loop.call_soon(self.take_action, philosopher)
 
 
 if __name__ == '__main__':      # pragma    nocover

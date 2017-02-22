@@ -18,7 +18,7 @@ MANIFEST
 .settings
 .python-version
 release-notes.md
-extensions/lib/lib.c
+extensions/lib/clib.c
 
 # IDE
 .DS_Store

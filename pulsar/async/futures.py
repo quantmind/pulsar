@@ -118,8 +118,10 @@ def maybe_async(value, *, loop=None):
 
 
 async def as_coroutine(value):
-    if isawaitable(value):
+    try:
         value = await value
+    except TypeError:
+        pass
     return value
 
 
