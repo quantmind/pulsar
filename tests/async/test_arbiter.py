@@ -2,7 +2,7 @@
 import unittest
 import asyncio
 
-from pulsar.api import send, spawn, get_actor
+from pulsar.api import send, spawn, get_actor, arbiter as get_arbiter
 from pulsar.async.consts import ACTOR_ACTION_TIMEOUT
 from pulsar.apps.test import ActorTestMixin, test_timeout
 
@@ -15,7 +15,7 @@ class TestArbiterProcess(ActorTestMixin, unittest.TestCase):
     def test_arbiter_object(self):
         '''Test the arbiter in its process domain'''
         arbiter = get_actor()
-        self.assertEqual(arbiter, arbiter())
+        self.assertEqual(arbiter, get_arbiter())
         self.assertTrue(arbiter.is_arbiter())
         self.assertEqual(arbiter.impl.kind, 'arbiter')
         self.assertEqual(arbiter.aid, 'arbiter')

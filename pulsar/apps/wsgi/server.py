@@ -9,6 +9,7 @@ HTTP Protocol Consumer
 """
 import sys
 import os
+from asyncio import CancelledError
 
 from async_timeout import timeout
 
@@ -60,6 +61,14 @@ class HttpServerResponse(ProtocolConsumer):
         wsgi = WsgiProtocol(self, producer.cfg, FileWrapper)
         return wsgi
 
+    def __repr__(self):
+        return '%s - %d - %s' % (
+            self.__class__.__name__,
+            self.connection.processed,
+            self.connection
+        )
+    __str__ = __repr__
+
     ########################################################################
     #    INTERNALS
     def feed_data(self, data):
@@ -68,7 +77,8 @@ class HttpServerResponse(ProtocolConsumer):
         except http.HttpParserUpgrade:
             pass
 
-    async def _response(self):
+    async def write_response(self):
+        loop = self._loop
         wsgi = self.request
         producer = self.producer
         wsgi_callable = producer.wsgi_callable
@@ -82,53 +92,52 @@ class HttpServerResponse(ProtocolConsumer):
             while not done:
                 done = True
                 try:
-                    with timeout(keep_alive, loop=self._loop):
-                        if exc_info is None:
-                            if (not environ.get('HTTP_HOST') and
-                                    environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
-                                raise BadRequest
-                            response = wsgi_callable(environ,
-                                                     wsgi.start_response)
+                    if exc_info is None:
+                        if (not environ.get('HTTP_HOST') and
+                                environ['SERVER_PROTOCOL'] != 'HTTP/1.0'):
+                            raise BadRequest
+                        response = wsgi_callable(environ,
+                                                 wsgi.start_response)
+                        with timeout(keep_alive, loop=loop):
                             try:
                                 response = await response
                             except TypeError:
                                 pass
-                        else:
-                            response = handle_wsgi_error(environ, exc_info)
+                    else:
+                        response = handle_wsgi_error(environ, exc_info)
+                        with timeout(keep_alive, loop=loop):
                             try:
                                 response = await response
                             except TypeError:
                                 pass
-                        #
-                        if exc_info:
-                            wsgi.start_response(
-                                response.status,
-                                response.get_headers(),
-                                exc_info
-                            )
-                        #
-                        # Do the actual writing
-                        loop = self._loop
-                        # start = loop.time()
-                        for chunk in response:
+                    #
+                    if exc_info:
+                        response.start(
+                            environ,
+                            wsgi.start_response,
+                            exc_info
+                        )
+                    #
+                    # Do the actual writing
+                    for chunk in response:
+                        with timeout(keep_alive, loop=loop):
                             try:
                                 chunk = await chunk
                             except TypeError:
                                 pass
+                        with timeout(keep_alive, loop=loop):
                             try:
                                 await wsgi.write(chunk)
                             except TypeError:
                                 pass
-                            # time_in_loop = loop.time() - start
-                            # if time_in_loop > MAX_TIME_IN_LOOP:
-                            #     get_logger(environ).debug(
-                            #         'Released loop after %.3f seconds',
-                            #         time_in_loop)
-                            #     await sleep(0.1, loop=self._loop)
-                            #     start = loop.time()
-                        #
-                        # make sure we write headers and last chunk if needed
-                        wsgi.write(b'', True)
+                            except CancelledError:
+                                # the writing was cancelled
+                                # If the connection is closed simply leave
+                                if self.connection.closed:
+                                    return
+                    #
+                    # make sure we write headers and last chunk if needed
+                    wsgi.write(b'', True)
 
                 # client disconnected, end this connection
                 except (IOError, AbortWsgi, RuntimeError):

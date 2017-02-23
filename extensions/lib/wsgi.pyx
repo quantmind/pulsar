@@ -47,7 +47,7 @@ cdef class WsgiProtocol:
         self.environ = {
             'wsgi.input': protocol.body_reader,
             'wsgi.async': True,
-            'wsgi.timestamp': _current_time_,
+            'wsgi.timestamp': connection.producer.time.current_time,
             'wsgi.errors': sys.stderr,
             'wsgi.version': (1, 0),
             'wsgi.run_once': False,
@@ -138,7 +138,7 @@ cdef class WsgiProtocol:
                 path_info = path_info.split(script_name, 1)[1]
             self.environ['PATH_INFO'] = unquote(path_info)
 
-        self.protocol._loop.create_task(self.protocol._response())
+        self.connection.pipeline(self.protocol)
 
     cpdef on_body(self, bytes body):
         cdef object proto = self.protocol
@@ -180,7 +180,7 @@ cdef class WsgiProtocol:
                 continue
             self.headers.add(header, value)
         self.headers[SERVER] = self.environ['SERVER_SOFTWARE']
-        self.headers[DATE] = fast_http_date(_current_time_)
+        self.headers[DATE] = fast_http_date(self.environ['wsgi.timestamp'])
         self.keep_alive = self.parser.should_keep_alive()
         return self.write
 

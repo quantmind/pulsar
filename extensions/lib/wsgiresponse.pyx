@@ -1,3 +1,5 @@
+import time
+
 from http.client import responses
 from http.cookies import SimpleCookie
 from datetime import datetime, timedelta
@@ -28,7 +30,6 @@ def wsgi_cached(method):
 
 cdef class WsgiResponse:
     cdef public:
-        dict environ
         int status_code
         str encoding
         object headers, can_store_cookies
@@ -37,11 +38,10 @@ cdef class WsgiResponse:
     cdef object _content, _cookies
     cdef int _iterated
 
-    def __cinit__(self, int status_code=200, dict environ=None,
-                  object content=None, object response_headers=None,
+    def __cinit__(self, int status_code=200, object content=None,
+                  object response_headers=None,
                   str content_type=None, str encoding=None,
                   object can_store_cookies=True):
-        self.environ = environ
         self.status_code = status_code
         self.encoding = encoding
         self.can_store_cookies = can_store_cookies
@@ -117,8 +117,10 @@ cdef class WsgiResponse:
             return
         return reduce(count_len, self._content, 0)
 
-    cpdef object start(self, object start_response):
-        return start_response(self.status, self.get_headers())
+    cpdef object start(self, dict environ, object start_response,
+                       object exc_info=None):
+        self.__wsgi_started__ = True
+        return start_response(self.status, self._get_headers(environ), exc_info)
 
     def __iter__(self):
         if self._iterated:
@@ -154,18 +156,25 @@ cdef class WsgiResponse:
         if hasattr(self._content, 'close'):
             self._content.close()
 
-    cpdef object get_headers(self):
+    cpdef has_header(self, str header):
+        return header in self.headers
+
+    def __contains__(self, str header):
+        return header in self.headers
+
+    def __setitem__(self, str header, value):
+        self.headers[header] = value
+
+    def __getitem__(self, str header):
+        return self.headers[header]
+
+    cdef object _get_headers(self, dict environ):
         """The list of headers for this response
         """
         cdef headers = self.headers
-        cdef dict environ = self.environ
         cdef int status = self.status_code
         cdef int cl
         cdef str ct
-
-        assert not self.__wsgi_started__
-        self.__wsgi_started__ = True
-        self.environ = None
 
         if status == 204 or status == 304 or 100 <= status < 200:
             headers.pop(CONTENT_TYPE, None)
@@ -186,7 +195,7 @@ cdef class WsgiResponse:
                 if ';' not in ct:
                     ct = '%s; charset=%s' % (ct, self.encoding)
                 headers[CONTENT_TYPE] = ct
-            if environ and environ['REQUEST_METHOD'] == 'HEAD':
+            if environ['REQUEST_METHOD'] == 'HEAD':
                 self._content = EMPTY
         # Cookies
         if (self.status_code < 400 and self.can_store_cookies and
@@ -194,18 +203,6 @@ cdef class WsgiResponse:
             for c in self.cookies.values():
                 headers.add(SET_COOKIE, c.OutputString())
         return headers.items()
-
-    cpdef has_header(self, str header):
-        return header in self.headers
-
-    def __contains__(self, str header):
-        return header in self.headers
-
-    def __setitem__(self, str header, value):
-        self.headers[header] = value
-
-    def __getitem__(self, str header):
-        return self.headers[header]
 
 
 cdef int count_len(int a, object b):
@@ -237,7 +234,7 @@ cpdef set_cookie(
         cookies[key]['max-age'] = max_age
         # IE requires expires, so set it if hasn't been already.
         if not expires:
-            cookies[key]['expires'] = _http_date(_current_time_ + max_age)
+            cookies[key]['expires'] = _http_date(int(time.time()) + max_age)
     if path is not None:
         cookies[key]['path'] = path
     if domain is not None:

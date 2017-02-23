@@ -52,7 +52,6 @@ Client
 """
 import socket
 import pickle
-import asyncio
 import logging
 from functools import partial
 from collections import namedtuple
@@ -119,18 +118,21 @@ class ProxyMailbox:
 
 
 class MessageConsumer(ProtocolConsumer):
-    messages = None
+    tasks = None
     parser = None
     worker = None
     parser = None
+    debug = False
     pending_responses = None
 
     def start_request(self):
+        actor = get_actor()
         self.parser = frame_parser(kind=2)
         self.pending_responses = {}
-        self.messages = asyncio.Queue(loop=self._loop)
-        self.worker = self._loop.create_task(self._process_messages())
-        self.event('post_request').bind(self._close_worker)
+        self.tasks = {}
+        self.logger = actor.logger
+        self.debug = actor.cfg.debug
+        self.event('post_request').bind(self._cancel_tasks)
 
     def feed_data(self, data):
         msg = self.parser.decode(data)
@@ -138,11 +140,14 @@ class MessageConsumer(ProtocolConsumer):
             try:
                 message = pickle.loads(msg.body)
             except Exception:
-                self.producer.logger.exception(
-                    'could not decode message body'
-                )
+                self.logger.exception('could not decode message body')
             else:
-                self.messages.put_nowait(message)
+                # Avoid to create a task on callbacks
+                if message.get('command') == 'callback':
+                    self._on_callback(message)
+                else:
+                    task = self._loop.create_task(self._on_message(message))
+                    self.tasks[message['id']] = task
             msg = self.parser.decode()
 
     def send(self, command, sender, target, args, kwargs):
@@ -151,6 +156,7 @@ class MessageConsumer(ProtocolConsumer):
         """
         command = get_command(command)
         data = {'command': command.__name__,
+                'id': create_aid(),
                 'sender': actor_identity(sender),
                 'target': actor_identity(target),
                 'args': args if args is not None else (),
@@ -182,27 +188,27 @@ class MessageConsumer(ProtocolConsumer):
         except (socket.error, RuntimeError):
             actor = get_actor()
             if actor.is_running() and not actor.is_arbiter():
-                actor.logger.warning('Lost connection with arbiter')
-                actor._loop.stop()
+                self.logger.warning('Lost connection with arbiter')
+                self._loop.stop()
 
-    async def _process_messages(self):
-        actor = get_actor()
-        logger = self.producer.logger
-        while actor.is_running():
-            message = await self.messages.get()
+    def _on_callback(self, message):
+        ack = message.get('ack')
+        if not ack:
+            self.logger.error('A callback without id')
+        else:
+            if self.debug:
+                self.logger.debug('Callback from "%s"', ack)
+            pending = self.pending_responses.pop(ack)
+            pending.set_result(message.get('result'))
+
+    async def _on_message(self, message):
+        try:
+            actor = get_actor()
             command = message.get('command')
             ack = message.get('ack')
-            if command == 'callback':
-                if not ack:
-                    logger.error('A callback without id')
-                else:
-                    logger.debug('Callback from "%s"', ack)
-                    pending = self.pending_responses.pop(ack)
-                    pending.set_result(message.get('result'))
-                continue
-
             try:
-                logger.debug('Got message "%s"', command)
+                if self.debug:
+                    self.logger.debug('Got message "%s"', command)
                 target = actor.get_actor(message['target'])
                 if target is None:
                     raise CommandError(
@@ -226,20 +232,24 @@ class MessageConsumer(ProtocolConsumer):
                                                       message['args'],
                                                       message['kwargs'],
                                                       self)
+
             except CommandError as exc:
-                logger.warning('Command error: %s' % exc)
+                self.logger.warning('Command error: %s' % exc)
                 result = None
             except Exception:
-                logger.exception('Unhandled exception')
+                self.logger.exception('Unhandled exception')
                 result = None
             if ack:
                 data = {'command': 'callback', 'result': result, 'ack': ack}
                 self.write(data)
+        finally:
+            self.tasks.pop(message['id'], None)
 
-    def _close_worker(self, _, **kw):
-        if self.worker and not self.worker.done():
-            self.worker.cancel()
-            self.worker = None
+    def _cancel_tasks(self, _, **kw):
+        if self.tasks:
+            for task in self.tasks.values():
+                task.cancel()
+            self.tasks = {}
 
 
 mailbox_protocol = partial(Connection, MessageConsumer)
@@ -263,8 +273,8 @@ class MailboxClient(AbstractClient):
     async def send(self, command, sender, target, args, kwargs):
         if self.connection is None:
             self.connection = await self.connect()
-            self.connection.event('connection_lost').bind(self._lost)
             consumer = self.connection.current_consumer()
+            self.connection.event('connection_lost').bind(self._lost)
             consumer.start()
         else:
             consumer = self.connection.current_consumer()
@@ -273,7 +283,7 @@ class MailboxClient(AbstractClient):
 
     def close(self):
         if self.connection:
-            self.connection.close()
+            self.connection.abort()
 
     def start_serving(self):    # pragma    nocover
         pass

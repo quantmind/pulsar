@@ -52,20 +52,13 @@ async def spawn_actor_from_actor(actor, name):
 
 
 def cause_timeout(actor):
-    if actor.next_periodic_task:
-        actor.next_periodic_task.cancel()
-    else:
-        actor.event_loop.call_soon(cause_timeout, actor)
+    actor.cfg.set('timeout', 10*actor.cfg.timeout)
 
 
 def cause_terminate(actor):
-    if actor.next_periodic_task:
-        actor.next_periodic_task.cancel()
-        # hijack the SIGTERM
-        actor.impl.kill = kill_hack(actor.impl.kill)
-        actor.stop = lambda exc=None, exit_code=None: False
-    else:
-        actor._loop.call_soon(cause_timeout, actor)
+    actor.cfg.set('timeout', 100*actor.cfg.timeout)
+    actor.impl.kill = kill_hack(actor.impl.kill)
+    actor.stop = lambda exc=None, exit_code=None: False
 
 
 def kill_hack(kill):

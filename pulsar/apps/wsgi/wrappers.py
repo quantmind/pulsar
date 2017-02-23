@@ -220,7 +220,7 @@ class WsgiRequest:
     def response(self):
         """The :class:`WsgiResponse` for this client request.
         """
-        return WsgiResponse(environ=self.environ)
+        return WsgiResponse()
 
     #######################################################################
     #    environ shortcuts

@@ -189,12 +189,16 @@ class Protocol(EventHandler):
             except (OSError, NameError):
                 pass
         self.changed()
+        if self._loop.get_debug():
+            self.producer.logger.info('new connection %s', self)
         # let everyone know we have a connection with endpoint
         self.event('connection_made').fire()
 
     def connection_lost(self, _, exc=None):
         """Fires the ``connection_lost`` event.
         """
+        if self._loop.get_debug():
+            self.producer.logger.debug('connection lost %s', self)
         self.event('connection_lost').fire(exc=exc)
 
     def data_received(self, data):

@@ -1,3 +1,8 @@
+import time
+
+from asyncio import Queue, CancelledError
+
+
 DEFAULT_LIMIT = 2**16
 
 
@@ -18,11 +23,16 @@ class FlowControl:
         Returns an empty tuple or a :class:`~asyncio.Future` if this
         protocol has paused writing.
         """
-        t = self.transport
-        if t:
-            if self._paused:
+        if self.closed:
+            raise ConnectionResetError(
+                'Transport closed - cannot write on %s' % self
+            )
+        else:
+            t = self.transport
+            if self._paused or self._buffer:
                 self._buffer.appendleft(data)
                 self._buffer_size += len(data)
+                self._write_from_buffer()
                 if self._buffer_size > 2 * self._b_limit:
                     if self._waiter and not self._waiter.cancelled():
                         self.logger.warning(
@@ -36,8 +46,6 @@ class FlowControl:
                 t.write(data)
             self.changed()
             return self._waiter
-        else:
-            raise ConnectionResetError('No Transport')
 
     def pause_writing(self):
         '''Called by the transport when the buffer goes over the
@@ -66,10 +74,23 @@ class FlowControl:
                 else:
                     waiter.set_exception(exc)
             self.transport.resume_reading()
-        if self._buffer:
-            self.write(self._buffer.pop())
+        self._write_from_buffer()
 
     # INTERNAL CALLBACKS
+    def _write_from_buffer(self):
+        t = self.transport
+        if not t:
+            return
+        while not self._paused and self._buffer:
+            if t.is_closing():
+                self.producer.logger.debug(
+                    'Transport closed - cannot write on %s', self
+                )
+                break
+            data = self._buffer.pop()
+            self._buffer_size -= len(data)
+            self.transport.write(data)
+
     def _set_flow_limits(self, _, exc=None):
         if not exc:
             self.transport.set_write_buffer_limits(high=self._limit)
@@ -104,7 +125,7 @@ class Timeout:
     # INTERNALS
     def _timed_out(self):
         if self.last_change:
-            gap = self._loop.time() - self.last_change
+            gap = time.time() - self.last_change
             if gap < self._timeout:
                 self._timeout_handler = None
                 return self._add_timeout(None, timeout=self._timeout-gap)
@@ -124,3 +145,58 @@ class Timeout:
         if self._timeout_handler:
             self._timeout_handler.cancel()
             self._timeout_handler = None
+
+
+class Pipeline:
+    """Pipeline protocol consumers once reading is finished
+
+    This mixin can be used by server-side TCP connections
+    once a given request has finished processing the input data and is ready
+    to write data back to the client.
+    """
+    _pipeline = None
+
+    def pipeline(self, consumer):
+        """Add a consumer to the pipeline.
+
+        When adding a consumer to a pipeline, the consumer is no longer
+        the connection current consumer.
+        """
+        if self._pipeline is None:
+            self._pipeline = ResponsePipeline(self)
+            self.event('connection_lost').bind(self._close_pipeline)
+        self._pipeline.put(consumer)
+
+    def _close_pipeline(self, _, **kw):
+        self._pipeline.worker.cancel()
+        self._pipeline = None
+
+
+class ResponsePipeline:
+
+    def __init__(self, connection):
+        self.connection = connection
+        self.queue = Queue(loop=connection._loop)
+        self.logger = connection.producer.logger
+        self.worker = self.queue._loop.create_task(self._process())
+
+    def put(self, consumer):
+        consumer.connection.finished_consumer(consumer)
+        self.queue.put_nowait(consumer)
+
+    async def _process(self):
+        while True:
+            try:
+                consumer = await self.queue.get()
+                await consumer.write_response()
+            except CancelledError:
+                break
+            except Exception:
+                self.logger.exception('Critical exception in %s '
+                                      'response pipeline', self.connection)
+                self.connection.close()
+                break
+        # help gc
+        self.connection = None
+        self.queue = None
+        self.worker = None

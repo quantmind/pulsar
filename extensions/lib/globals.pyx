@@ -39,6 +39,5 @@ cdef object HOP_HEADERS = frozenset((
     PROXY_AUTHORIZATION, TE, TRAILERS,
     TRANSFER_ENCODING, UPGRADE
 ))
-cdef int _current_time_ = 0
 cdef str _http_date_ = ''
 cdef int _http_time_ = 0

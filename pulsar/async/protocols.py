@@ -6,7 +6,7 @@ from async_timeout import timeout
 import pulsar
 
 from .access import LOGGER
-from .mixins import FlowControl, Timeout, DEFAULT_LIMIT
+from .mixins import FlowControl, Timeout, Pipeline, DEFAULT_LIMIT
 from ..utils.lib import Protocol, Producer
 from ..utils.internet import nice_address, format_address
 
@@ -14,7 +14,7 @@ from ..utils.internet import nice_address, format_address
 CLOSE_TIMEOUT = 3
 
 
-class PulsarProtocol(Protocol, FlowControl, Timeout):
+class PulsarProtocol(Protocol, FlowControl, Timeout, Pipeline):
     _closed = None
 
     def __init__(self, consumer_factory, producer, limit=None, **kw):

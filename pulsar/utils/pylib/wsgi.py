@@ -167,7 +167,7 @@ class WsgiProtocol:
                 path_info = path_info.split(script_name, 1)[1]
             self.environ['PATH_INFO'] = unquote(path_info)
 
-        self.protocol._loop.create_task(self.protocol._response())
+        self.connection.pipeline(self.protocol)
 
     def on_body(self, body):
         proto = self.protocol

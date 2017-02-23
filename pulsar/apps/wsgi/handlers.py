@@ -64,7 +64,7 @@ class WsgiHandler:
                     except TypeError:
                         response = result
 
-            response.start(start_response)
+            response.start(environ, start_response)
         return response
 
     def _sync_call(self, environ, start_response):
@@ -83,7 +83,7 @@ class WsgiHandler:
         if not getattr(response, '__wsgi_started__', True):
             for middleware in self.response_middleware:
                 response = middleware(environ, response) or response
-            response.start(start_response)
+            response.start(environ, start_response)
         return response
 
 

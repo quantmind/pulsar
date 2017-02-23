@@ -63,10 +63,6 @@ class WsgiResponse:
 
         The :class:`.Headers` container for this response.
 
-    .. attribute:: environ
-
-        The dictionary of WSGI environment if passed to the constructor.
-
     .. attribute:: cookies
 
         A python :class:`SimpleCookie` container of cookies included in the
@@ -76,9 +72,7 @@ class WsgiResponse:
     __wsgi_started__ = False
 
     def __init__(self, status_code=200, content=None, response_headers=None,
-                 content_type=None, encoding=None, environ=None,
-                 can_store_cookies=True):
-        self.environ = environ
+                 content_type=None, encoding=None, can_store_cookies=True):
         self.status_code = status_code
         self.encoding = encoding
         self.headers = CIMultiDict(response_headers or ())
@@ -101,21 +95,6 @@ class WsgiResponse:
         if self._cookies is None:
             self._cookies = SimpleCookie()
         return self._cookies
-
-    @property
-    def path(self):
-        if self.environ:
-            return self.environ.get('PATH_INFO', '')
-
-    @property
-    def method(self):
-        if self.environ:
-            return self.environ.get('REQUEST_METHOD')
-
-    @property
-    def connection(self):
-        if self.environ:
-            return self.environ.get('pulsar.connection')
 
     @property
     def content(self):
@@ -188,17 +167,19 @@ class WsgiResponse:
     def can_set_cookies(self):
         return self.status_code < 400 and self._can_store_cookies
 
-    def start(self, start_response):
-        assert not self.__wsgi_started__
+    def start(self, environ, start_response, exc_info=None):
         self.__wsgi_started__ = True
-        return start_response(self.status, self.get_headers())
+        headers = self._get_headers(environ)
+        return start_response(self.status, headers, exc_info)
 
     def __iter__(self):
         if self._iterated:
             raise RuntimeError('WsgiResponse can be iterated once only')
         self.__wsgi_started__ = True
         self._iterated = True
-        return iter(self._content)
+        iterable = iter(self._content)
+        self._content = None
+        return iterable
 
     def close(self):
         """Close this response, required by WSGI
@@ -220,7 +201,17 @@ class WsgiResponse:
         set_cookie(self.cookies, key, max_age=0, path=path, domain=domain,
                    expires='Thu, 01-Jan-1970 00:00:00 GMT')
 
-    def get_headers(self):
+    def has_header(self, header):
+        return header in self.headers
+    __contains__ = has_header
+
+    def __setitem__(self, header, value):
+        self.headers[header] = value
+
+    def __getitem__(self, header):
+        return self.headers[header]
+
+    def _get_headers(self, environ):
         """The list of headers for this response
         """
         headers = self.headers
@@ -240,7 +231,7 @@ class WsgiResponse:
                     ct = '%s; charset=%s' % (ct, self.encoding)
             if ct:
                 headers['content-type'] = ct
-            if self.method == 'HEAD':
+            if environ['REQUEST_METHOD'] == 'HEAD':
                 self._content = ()
         # Cookies
         if (self.status_code < 400 and self._can_store_cookies and
@@ -248,16 +239,6 @@ class WsgiResponse:
             for c in self.cookies.values():
                 headers.add('set-cookie', c.OutputString())
         return headers.items()
-
-    def has_header(self, header):
-        return header in self.headers
-    __contains__ = has_header
-
-    def __setitem__(self, header, value):
-        self.headers[header] = value
-
-    def __getitem__(self, header):
-        return self.headers[header]
 
 
 def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',

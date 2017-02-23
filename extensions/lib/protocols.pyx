@@ -10,6 +10,30 @@ cdef double TIME_INTERVAL = 0.5
 cdef PROTOCOL_LOGGER = logging.getLogger('pulsar.protocols')
 
 
+cdef class TimeTracker:
+    timeHandlers = {}
+
+    cdef readonly:
+        object _loop, handler
+        int current_time
+
+    @classmethod
+    def register(cls, loop):
+        if not cls.timeHandlers.get(loop):
+            cls.timeHandlers[loop] = cls(loop)
+        return cls.timeHandlers[loop]
+
+    def __init__(self, loop):
+        self._loop = loop
+        self._time()
+
+    def _time(self):
+        try:
+            self.current_time = int(time.time())
+        finally:
+            self.handler = self._loop.call_later(TIME_INTERVAL, self._time)
+
+
 cdef class Producer(EventHandler):
     cdef readonly:
         object _loop
@@ -28,7 +52,7 @@ cdef class Producer(EventHandler):
         self.name = name or self.__class__.__name__
         self.logger = logger or PROTOCOL_LOGGER
         self._loop = loop or asyncio.get_event_loop()
-        self._time()
+        self.time = TimeTracker.register(self._loop)
 
     cpdef Protocol create_protocol(self):
         """Create a new protocol via the :meth:`protocol_factory`
@@ -39,13 +63,6 @@ cdef class Producer(EventHandler):
         cdef Protocol protocol = self.protocol_factory(self)
         protocol.copy_many_times_events(self)
         return protocol
-
-    cpdef void _time(self):
-        global _current_time_
-        try:
-            _current_time_ = int(time())
-        finally:
-            self._loop.call_later(TIME_INTERVAL, self._time)
 
 
 cdef class Protocol(EventHandler):
@@ -68,6 +85,7 @@ cdef class Protocol(EventHandler):
         self.data_received_count = 0
         self._loop = producer._loop
         self.event('connection_lost').bind(self._connection_lost)
+        self.changed()
 
     @property
     def closed(self):
@@ -129,10 +147,10 @@ cdef class Protocol(EventHandler):
             toprocess = consumer.feed_data(data)
             consumer.fire_event('data_processed', data=data, exc=None)
             data = toprocess
-        self.last_change = _current_time_
+        self.changed()
 
     cpdef int changed(self):
-        self.last_change = _current_time_
+        self.last_change = self.producer.time.current_time
         return self.last_change
 
     cpdef finished_consumer(self, ProtocolConsumer consumer):
