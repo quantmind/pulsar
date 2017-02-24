@@ -246,7 +246,7 @@ class UrlEncodedDecoder(BytesDecoder):
         forms = self.result[0]
         for key, values in mapping_iterator(data):
             for value in values:
-                forms[key] = value
+                forms.add(key, value)
         return self.result
 
 

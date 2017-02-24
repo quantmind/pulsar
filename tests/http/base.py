@@ -1,10 +1,10 @@
 import os
+import socket
+import asyncio
+import unittest
+from unittest.mock import MagicMock
 from base64 import b64decode
 from functools import wraps
-import socket
-import unittest
-import asyncio
-from asyncio import get_event_loop
 
 import examples
 
@@ -12,9 +12,10 @@ from pulsar import SERVER_SOFTWARE
 from pulsar.api import send
 from pulsar.utils.path import Path
 from pulsar.utils.system import platform
-from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
-                              HttpRequestException, HTTPDigestAuth,
-                              FORM_URL_ENCODED)
+from pulsar.apps.http import (
+    HttpClient, TooManyRedirects, HttpResponse,
+    HttpRequestException, HTTPDigestAuth, FORM_URL_ENCODED
+)
 
 
 linux = platform.name == 'posix' and not platform.isMacOSX
@@ -178,7 +179,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
         self.assertTrue(int(response.headers['content-length']))
-        self.assertFalse(response.text())
+        self.assertFalse(response.text)
         self.assertTrue(repr(response.request))
 
     async def test_home_page(self):
@@ -215,13 +216,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = await http.get(self.httpbin('get'), params={'bla': 'foo'})
         result = self.json(response, 200)
-        self.assertEqual(result['args'], {'bla': 'foo'})
+        self.assertEqual(result['args'], {'bla': ['foo']})
         self.assertEqual(response.url, '%s?bla=foo' % self.httpbin('get'))
         self._check_pool(http, response)
 
     async def test_200_get_params_list(self):
         http = self.client()
-        params = {'key1': 'value1', 'key2': ['value2', 'value3']}
+        params = {'key1': ['value1'], 'key2': ['value2', 'value3']}
         response = await http.get(self.httpbin('get'), params=params)
         result = response.json()
         self.assertEqual(response.status_code, 200)
@@ -331,7 +332,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
                          b'Request content length too large. Limit is 256.0KB')
 
     def test_HttpResponse(self):
-        r = HttpResponse(loop=get_event_loop())
+        r = HttpResponse(MagicMock())
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<Response [None]>')
         self.assertEqual(r.headers, None)
@@ -417,7 +418,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self._client
         response = await http.get(self.httpbin('status', '404'))
         self.assertEqual(response.status_code, 404)
-        self.assertTrue(response.headers.has('connection', 'close'))
+        self.assertEqual(response.headers.get('connection'), 'close')
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.content)
         self.assertRaises(HttpRequestException, response.raise_for_status)
@@ -790,7 +791,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self._client
         response = await http.get(self.httpbin('plaintext'), stream=True)
         await response.on_finished
-        self.assertEqual(response.text(), 'Hello, World!')
+        self.assertEqual(response.text, 'Hello, World!')
 
     async def test_raw_stream(self):
         http = self._client

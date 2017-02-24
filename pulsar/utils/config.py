@@ -1052,6 +1052,16 @@ class Timeout(Setting):
         killed and restarted."""
 
 
+class ExitTimeout(Setting):
+    name = "exit_timeout"
+    section = "Worker Processes"
+    flags = ["--exit-timeout"]
+    validator = validate_pos_int
+    type = int
+    default = 3
+    desc = """Tmeout when exiting an actor."""
+
+
 class ThreadWorkers(Setting):
     name = "thread_workers"
     section = "Worker Processes"

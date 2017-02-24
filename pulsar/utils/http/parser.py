@@ -157,7 +157,7 @@ class HttpParser:
 
     def is_chunked(self):
         """ return True if Transfer-Encoding header value is chunked"""
-        return self._chunked
+        return self.flags & F.CHUNKED.value
 
     def feed_data(self, data):
         # end of body can be passed manually by putting a length of 0
@@ -253,14 +253,19 @@ class HttpParser:
             #
             data = bytes(self.buf)
             self.buf.clear()
-            size = min(len(data), self._clen_rest)
-            if size:
-                if self._clen_rest != sys.maxsize:
-                    self._clen_rest -= size
-                    self._on_body(data[:size])
-            if self.is_content_finished():
+            #
+            # Content length not given
+            if self._clen_rest == sys.maxsize:
                 self._position = 3
                 self._on_message_complete()
+            else:
+                size = min(len(data), self._clen_rest)
+                if size:
+                    self._clen_rest -= size
+                    self._on_body(data[:size])
+                if not self._clen_rest:
+                    self._position = 3
+                    self._on_message_complete()
 
     def _parse_trailers(self):
         idx = self.buf.find(b'\r\n\r\n')
@@ -298,9 +303,6 @@ class HttpRequestParser(HttpParser):
         self.version_minor = int(matchv.group(2))
         self.version = '%s.%s' % (self.version_major, self.version_minor)
 
-    def is_content_finished(self):
-        return not self._clen_rest or self._clen_rest == sys.maxsize
-
 
 class HttpResponseParser(HttpParser):
 
@@ -332,6 +334,3 @@ class HttpResponseParser(HttpParser):
         self.status = bits[1]
         self.status_code = int(matchs.group(1))
         self.reason = matchs.group(2)
-
-    def is_content_finished(self):
-        return not self._clen_rest

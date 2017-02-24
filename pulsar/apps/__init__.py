@@ -117,7 +117,6 @@ async def monitor_start(self, exc=None):
     try:
         self.event('on_params').bind(monitor_params)
         self.event('on_info').bind(monitor_info)
-        self.event('stopping').waiter()
         self.event('stopping').bind(monitor_stopping)
 
         for callback in when_monitor_start:
@@ -142,23 +141,20 @@ async def monitor_start(self, exc=None):
         start_event.set_result(result)
 
 
-def monitor_stopping(self, exc=None):
-    coros = []
+def monitor_stopping(self, **kw):
     if not self.cfg.workers:
         coro = self.app.worker_stopping(self)
         if coro:
-            coros.append(coro)
+            self.stopping_waiters.append(coro)
     coro = self.app.monitor_stopping(self)
     if coro:
-        coros.append(coro)
-    if coros:
-        asyncio.ensure_future(asyncio.wait(coros, loop=self._loop))
+        self.stopping_waiters.append(coro)
 
 
-def worker_stopping(self, exc=None):
+def worker_stopping(self, **kw):
     coro = self.app.worker_stopping(self)
     if coro:
-        asyncio.ensure_future(coro, loop=self._loop)
+        self.stopping_waiters.append(coro)
 
 
 def monitor_info(self, data=None):

@@ -74,7 +74,7 @@ class BaseRouter(wsgi.Router):
                 'headers': headers,
                 'pulsar': self.pulsar_info(request)}
         if request.method in ENCODE_URL_METHODS:
-            data['args'] = dict(request.url_data)
+            data['args'] = as_dict(request.url_data)
         else:
             args, files = request.data_and_files()
             jfiles = MultiDict()

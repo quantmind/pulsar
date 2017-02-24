@@ -8,6 +8,8 @@ from collections import OrderedDict
 from multiprocessing import Process, current_process
 from multiprocessing.reduction import ForkingPickler
 
+from async_timeout import timeout
+
 import pulsar
 from ..utils.exceptions import MonitorStarted, HaltServer
 from ..utils.config import Config
@@ -219,15 +221,31 @@ class Concurrency:
                     exit_code = getattr(actor._loop, 'exit_code', 0)
             #
             actor.exit_code = exit_code
+            actor.stopping_waiters = []
             actor.event('stopping').fire()
-            if actor.logger:
-                actor.logger.debug('stopping')
-            return self._stop_actor(actor)
+
+            if actor.stopping_waiters and actor._loop.is_running():
+                actor.logger.info('asynchronous stopping')
+                actor._loop.create_task(self._async_stopping(actor))
+            else:
+                if actor.logger:
+                    actor.logger.info('stopping')
+                self._stop_actor(actor)
+
         elif actor.stopped():
             return self._stop_actor(actor, True)
 
     def _remove_signals(self, actor):
         pass
+
+    async def _async_stopping(self, actor):
+        loop = actor._loop
+        with timeout(self.cfg.exit_timeout, loop=loop):
+            await asyncio.gather(*actor.stopping_waiters,
+                                 return_exceptions=True,
+                                 loop=loop)
+
+        loop.call_soon(self._stop_actor, actor)
 
     def _stop_actor(self, actor, finished=False):
         # Stop the actor if finished is True
@@ -716,6 +734,7 @@ class ActorThread(Concurrency, Thread):
     _actor = None
 
     def before_start(self, actor):
+        actor.logger.info('Booting')
         self.set_loop(actor._loop)
 
     def run(self):
