@@ -10,7 +10,7 @@ class PulsarException(Exception):
     '''Base class of all Pulsar exceptions.'''
 
 
-class MonitorStarted(PulsarException):
+class ActorStarted(PulsarException):
     exit_code = 0
 
 

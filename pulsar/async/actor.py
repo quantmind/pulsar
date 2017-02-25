@@ -3,7 +3,7 @@ import os
 import pickle
 from threading import current_thread
 
-from ..utils.exceptions import HaltServer, CommandError, MonitorStarted
+from ..utils.exceptions import HaltServer, CommandError, ActorStarted
 from ..utils import system
 from ..utils.log import WritelnDecorator
 from ..utils.lib import EventHandler
@@ -106,7 +106,7 @@ class Actor(EventHandler, Coverage):
 
     To spawn a new actor::
 
-        >>> from pulsar import spawn
+        >>> from pulsar.api import spawn
         >>> a = spawn()
         >>> a.is_alive()
         True
@@ -124,7 +124,7 @@ class Actor(EventHandler, Coverage):
 
         Unique ID for this :class:`Actor`.
 
-    .. attribute:: impl
+    .. attribute:: concurrency
 
         The :class:`.Concurrency` implementation for this :class:`Actor`.
 
@@ -179,28 +179,28 @@ class Actor(EventHandler, Coverage):
     monitor = None
     start_event = None
 
-    def __init__(self, impl):
+    def __init__(self, concurrency):
         self.state = ACTOR_STATES.INITIAL
-        self.__impl = impl
+        self._concurrency = concurrency
         self.servers = {}
         self.extra = {}
         self.stream = get_stream(self.cfg)
         self.tid = current_thread().ident
         self.pid = os.getpid()
-        for name, value in impl.params.items():
+        for name, value in concurrency.params.items():
             if name.startswith('on_'):
                 self.event(name[3:]).bind(value)
             else:
                 setattr(self, name, value)
-        del impl.params
-        self._loop = impl.setup_event_loop(self)
+        del concurrency.params
+        self._loop = concurrency.setup_event_loop(self)
         try:
             self.cfg.post_fork(self)
         except Exception:   # pragma    nocover
             pass
 
     def __repr__(self):
-        return self.impl.unique_name
+        return self.concurrency.unique_name
 
     def __str__(self):
         return self.__repr__()
@@ -208,19 +208,19 @@ class Actor(EventHandler, Coverage):
     # ############################################################# PROPERTIES
     @property
     def name(self):
-        return self.__impl.name
+        return self._concurrency.name
 
     @property
     def aid(self):
-        return self.__impl.aid
+        return self._concurrency.aid
 
     @property
-    def impl(self):
-        return self.__impl
+    def concurrency(self):
+        return self._concurrency
 
     @property
     def cfg(self):
-        return self.__impl.cfg
+        return self._concurrency.cfg
 
     @property
     def proxy(self):
@@ -237,17 +237,20 @@ class Actor(EventHandler, Coverage):
     @property
     def monitors(self):
         '''Dictionary of monitors or None'''
-        return self.__impl.monitors
+        if self._concurrency.is_monitor():
+            return self._concurrency.monitors
 
     @property
     def managed_actors(self):
         '''Dictionary of managed actors or None'''
-        return self.__impl.managed_actors
+        if self._concurrency.is_monitor():
+            return self._concurrency.managed_actors
 
     @property
     def registered(self):
         '''Dictionary of registered actors or None'''
-        return self.__impl.registered
+        if self._concurrency.is_monitor():
+            return self._concurrency.registered
 
     #######################################################################
     #    HIGH LEVEL API METHODS
@@ -260,7 +263,12 @@ class Actor(EventHandler, Coverage):
         started. Calling this method more than once does nothing.
         '''
         if self.state == ACTOR_STATES.INITIAL:
-            self.__impl.before_start(self)
+            self._concurrency.before_start(self)
+            self._concurrency.add_events(self)
+            try:
+                self.cfg.when_ready(self)
+            except Exception:   # pragma    nocover
+                self.logger.exception('Unhandled exception in when_ready hook')
             self._started = self._loop.time()
             self._exit = exit
             self.state = ACTOR_STATES.STARTING
@@ -293,17 +301,18 @@ class Actor(EventHandler, Coverage):
     def spawn(self, **params):
         '''Spawn a new actor
         '''
-        return self.__impl.spawn(self, **params)
+        return self._concurrency.spawn(self, **params)
 
     def stop(self, exc=None, exit_code=None):
         '''Gracefully stop the :class:`Actor`.
 
-        Implemented by the :meth:`.Concurrency.stop` method of the :attr:`impl`
-        attribute.'''
-        return self.__impl.stop(self, exc, exit_code)
+        Implemented by the :meth:`.Concurrency.stop` method of the
+        :attr:`concurrency` attribute.
+        '''
+        return self._concurrency.stop(self, exc, exit_code)
 
     def add_monitor(self, monitor_name, **params):
-        return self.__impl.add_monitor(self, monitor_name, **params)
+        return self._concurrency.add_monitor(self, monitor_name, **params)
 
     def actorparams(self):
         '''Returns a dictionary of parameters for spawning actors.
@@ -352,15 +361,15 @@ class Actor(EventHandler, Coverage):
 
     def is_arbiter(self):
         '''``True`` if ``self`` is the ``arbiter``'''
-        return self.__impl.is_arbiter()
+        return self._concurrency.is_arbiter()
 
     def is_monitor(self):
         '''``True`` if ``self`` is a ``monitor``'''
-        return self.__impl.is_monitor()
+        return self._concurrency.is_monitor()
 
     def is_process(self):
         '''boolean indicating if this is an actor on a child process.'''
-        return self.__impl.is_process()
+        return self._concurrency.is_process()
 
     def __reduce__(self):
         raise pickle.PicklingError('{0} - Cannot pickle Actor instances'
@@ -373,7 +382,8 @@ class Actor(EventHandler, Coverage):
         '''Given an actor unique id return the actor proxy.
         '''
         aid = actor_identity(aid)
-        return self.__impl.get_actor(self, aid, check_monitor=check_monitor)
+        return self._concurrency.get_actor(self, aid,
+                                           check_monitor=check_monitor)
 
     def info(self):
         '''Return a nested dictionary of information related to the actor
@@ -399,7 +409,7 @@ class Actor(EventHandler, Coverage):
                  'thread_id': self.tid,
                  'process_id': self.pid,
                  'is_process': isp,
-                 'age': self.impl.age}
+                 'age': self.concurrency.age}
         data = {'actor': actor,
                 'extra': self.extra}
         if isp:
@@ -407,16 +417,11 @@ class Actor(EventHandler, Coverage):
         self.event('on_info').fire(data=data)
         return data
 
-    def _run(self, initial=True):
+    def _run(self):
         exc = None
-        if initial:
-            try:
-                self.cfg.when_ready(self)
-            except Exception:   # pragma    nocover
-                self.logger.exception('Unhandled exception in when_ready hook')
         try:
-            exc = self.__impl.run_actor(self)
-        except MonitorStarted:
+            exc = self._concurrency.run_actor(self)
+        except ActorStarted:
             return
         except (Exception, HaltServer) as exc:
             return self.stop(exc)
@@ -425,4 +430,4 @@ class Actor(EventHandler, Coverage):
         return self.stop()
 
     def _remove_actor(self, actor, log=True):
-        return self.__impl._remove_actor(self, actor, log=log)
+        return self._concurrency._remove_actor(self, actor, log=log)

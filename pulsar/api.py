@@ -24,7 +24,7 @@ from .async.clients import (
 )
 from .async.futures import chain_future, AsyncObject
 from .async.commands import async_while
-from .async.concurrency import arbiter
+from .async.monitor import arbiter
 from .apps import Application, MultiApp, get_application
 from .apps.data import data_stores
 

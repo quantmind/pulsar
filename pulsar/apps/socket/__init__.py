@@ -260,8 +260,8 @@ class SocketServer(Application):
             server.event('stop').bind(lambda _, **kw: worker.stop())
             worker.servers[self.name] = server
 
-    async def worker_stopping(self, worker, exc=None):
-        server = worker.servers.get(self.name)
+    async def worker_stopping(self, worker, **kw):
+        server = worker.servers.pop(self.name, None)
         if server:
             await server.close()
         close = getattr(self.cfg.callable, 'close', None)
@@ -270,6 +270,7 @@ class SocketServer(Application):
                 await close()
             except Exception:
                 pass
+    monitor_stopping = worker_stopping
 
     def worker_info(self, worker, data=None):
         server = worker.servers.get(self.name)

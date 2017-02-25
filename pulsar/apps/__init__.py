@@ -65,7 +65,7 @@ from functools import partial
 from collections import namedtuple, OrderedDict
 import asyncio
 
-from ..async.concurrency import arbiter
+from ..async.monitor import arbiter
 from ..async.access import get_actor, create_future
 from ..utils.config import Config
 from ..utils.exceptions import ImproperlyConfigured
