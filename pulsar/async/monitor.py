@@ -9,7 +9,7 @@ from .proxy import actor_proxy_future
 from .actor import Actor
 from .access import get_actor, set_actor, EventLoopPolicy
 from .mailbox import create_aid
-from .consts import ACTOR_STATES
+from .consts import ACTOR_STATES, MONITOR_TASK_PERIOD
 from ..utils.exceptions import HaltServer
 from ..utils.config import Config
 from ..utils import system
@@ -113,7 +113,7 @@ class MonitorMixin:
             if not actor.should_be_alive() and not stop:
                 return 1
             actor.join()
-            monitor._remove_actor(actor)
+            monitor._remove_monitored_actor(actor)
             return 0
         timeout = None
         started_stopping = bool(actor.stopping_start)
@@ -131,7 +131,7 @@ class MonitorMixin:
                     monitor.logger.warning('kill %s - could not stop '
                                            'after %.2f seconds.', actor, dt)
                 actor.kill()
-                self._remove_actor(monitor, actor)
+                self._remove_monitored_actor(monitor, actor)
                 return 0
             elif not started_stopping:
                 if timeout:
@@ -163,23 +163,36 @@ class MonitorMixin:
                         w, kage = worker, age
                 self.manage_actor(monitor, w, True)
 
-    def _remove_actor(self, monitor, actor, log=True):
+    async def periodic_task(self, monitor, **kw):
+        while not monitor.stopped():
+            interval = 0
+            if monitor.started():
+                interval = MONITOR_TASK_PERIOD
+                self.manage_actors(monitor)
+                if monitor.is_running():
+                    self.spawn_actors(monitor)
+                    self.stop_actors(monitor)
+                monitor.event('periodic_task').fire()
+            try:
+                await asyncio.sleep(interval)
+            except asyncio.CancelledError:
+                break
+
+    def _remove_monitored_actor(self, monitor, actor, log=True):
         removed = self.managed_actors.pop(actor.aid, None)
         if log and removed:
-            log = False
             monitor.logger.warning('Removed %s', actor)
-        if monitor.monitor:
-            monitor.monitor._remove_actor(actor, log)
         return removed
 
     def _stop_actor(self, actor, finished=False):
         actor.state = ACTOR_STATES.CLOSE
         if actor.managed_actors:
             actor.state = ACTOR_STATES.TERMINATE
+        _remove_monitor(actor)
         actor.logger.warning('Bye')
 
-    def _register(self, arbiter):
-        raise HaltServer('Critical error')
+    def _register(self, monitor):   # pragma nocover
+        raise HaltServer('Monitors cannot register monitor')
 
 
 class ArbiterMixin(MonitorMixin):
@@ -224,6 +237,38 @@ class ArbiterMixin(MonitorMixin):
 
         self.registered[self.identity(actor)] = actor
         return actor
+
+    async def periodic_task(self, actor, **kw):
+        """Override the :meth:`.Concurrency.periodic_task` to implement
+        the :class:`.Arbiter` :ref:`periodic task <actor-periodic-task>`.
+        """
+        while True:
+            interval = 0
+            #
+            if actor.started():
+                # managed actors job
+                self.manage_actors(actor)
+                for m in list(self.monitors.values()):
+                    _remove_monitor(m)
+
+                interval = MONITOR_TASK_PERIOD
+                #
+                actor.event('periodic_task').fire()
+
+            if actor.cfg.reload and autoreload.check_changes():
+                # reload changes
+                actor.stop(exit_code=autoreload.EXIT_CODE)
+
+            if not actor.stopped():
+                try:
+                    await asyncio.sleep(interval)
+                except asyncio.CancelledError:
+                    break
+
+    def _register(self, actor):
+        aid = actor.identity
+        self.registered[aid] = actor
+        self.monitors[aid] = actor
 
     def _stop_actor(self, actor, finished=False):
         if finished:
@@ -383,12 +428,24 @@ def _stop_monitor(actor, **kw):
         sig = actor.exit_code
         for worker in actor.managed_actors.values():
             worker.stop(sig)
-        waiters.append(_join_actors(actor))
+
+    waiters.append(_join_monitor(actor))
 
 
-async def _join_actors(actor):
+async def _join_monitor(actor):
     while True:
         if actor.concurrency.manage_actors(actor, True):
             await asyncio.sleep(0.1)
         else:
+            periodic_task = actor.concurrency.periodic_task
+            periodic_task.cancel()
+            await periodic_task
+            _remove_monitor(actor)
             break
+
+
+def _remove_monitor(monitor):
+    if monitor.stopped():
+        arbiter = monitor.monitor
+        arbiter.registered.pop(monitor.identity, None)
+        arbiter.monitors.pop(monitor.identity, None)

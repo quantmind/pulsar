@@ -30,6 +30,7 @@ TRAILERS = istr('Trailers')
 TRANSFER_ENCODING = istr('Transfer-Encoding')
 UPGRADE = istr('Upgrade')
 X_FORWARDED_FOR = istr('X-Forwarded-For')
+EXPECT = istr('Expect')
 HOP_HEADERS = frozenset((
     CONNECTION, KEEP_ALIVE, PROXY_AUTHENTICATE,
     PROXY_AUTHORIZATION, TE, TRAILERS,
@@ -139,6 +140,9 @@ class WsgiProtocol:
 
         self.environ['HTTP_%s' % header_env] = header_value
 
+        if header == EXPECT and header_value.lower() == '100-continue':
+            self.body_reader()
+
     def on_headers_complete(self):
         if 'SERVER_PROTOCOL' not in self.environ:
             self.environ['SERVER_PROTOCOL'] = (
@@ -170,16 +174,21 @@ class WsgiProtocol:
         self.connection.pipeline(self.protocol)
 
     def on_body(self, body):
-        proto = self.protocol
-        if not proto.body_reader.reader:
-            proto.body_reader.initialise(
-                self.headers, self.connection.transport,
-                self.cfg.stream_buffer
-            )
-        proto.body_reader.feed_data(body)
+        self.body_reader().feed_data(body)
 
     def on_message_complete(self):
         self.protocol.body_reader.feed_eof()
+        self.protocol.finished_reading()
+
+    def body_reader(self):
+        proto = self.protocol
+        if not proto.body_reader.reader:
+            proto.body_reader.initialise(
+                self.connection.transport,
+                self.cfg.stream_buffer,
+                self.environ
+            )
+        return proto.body_reader
 
     def start_response(self, status, response_headers, exc_info=None):
         if exc_info:

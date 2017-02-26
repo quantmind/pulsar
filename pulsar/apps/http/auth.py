@@ -33,7 +33,7 @@ class HTTPBasicAuth(Auth):
     def type(self):
         return 'basic'
 
-    def __call__(self, response, exc=None):
+    def __call__(self, response, **kw):
         # pre_request event. Must return response instance!
         response.request.headers['Authorization'] = self.header()
         return response
@@ -60,7 +60,7 @@ class HTTPDigestAuth(Auth):
     def type(self):
         return 'digest'
 
-    def __call__(self, response, exc=None):
+    def __call__(self, response, **kw):
         # pre_request event. Must return response instance!
         # If we have a saved nonce, skip the 401
         if self.last_nonce:

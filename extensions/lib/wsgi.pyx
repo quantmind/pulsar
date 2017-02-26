@@ -109,6 +109,9 @@ cdef class WsgiProtocol:
 
         self.environ['HTTP_%s' % header_env] = header_value
 
+        if header == EXPECT and header_value.lower() == '100-continue':
+            self.body_reader()
+
     cpdef void on_headers_complete(self):
         cdef str forward = self.headers.get(X_FORWARDED_FOR)
         cdef object client_address = self.client_address
@@ -141,16 +144,20 @@ cdef class WsgiProtocol:
         self.connection.pipeline(self.protocol)
 
     cpdef on_body(self, bytes body):
-        cdef object proto = self.protocol
-        if not proto.body_reader.reader:
-            proto.body_reader.initialise(
-                self.headers, self.connection.transport,
-                self.cfg.stream_buffer
-            )
-        proto.body_reader.feed_data(body)
+        self.body_reader().feed_data(body)
 
     cpdef on_message_complete(self):
         self.protocol.body_reader.feed_eof()
+
+    cpdef body_reader(self):
+        cdef object proto = self.protocol
+        if not proto.body_reader.reader:
+            proto.body_reader.initialise(
+                self.connection.transport,
+                self.cfg.stream_buffer,
+                self.environ
+            )
+        return proto.body_reader
 
     cpdef start_response(self, str status, object response_headers, object exc_info=None):
         cdef str value

@@ -101,6 +101,24 @@ class WebSocketClient(WebSocketProtocol):
                                  (self.__class__.__name__, name))
 
 
+class Expect:
+
+    @noerror
+    def __call__(self, response, **kw):
+        if response.status_code == 100:
+            if response.request.headers.get('expect') == '100-continue':
+                response.write_body()
+                response.request_again = self._response
+
+    def _response(self, response):
+        request = response.request
+        request.encode = self.empty
+        return start_request(request, response.connection)
+
+    def empty(self):
+        return b''
+
+
 class Redirect:
 
     @noerror

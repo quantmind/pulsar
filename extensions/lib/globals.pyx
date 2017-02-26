@@ -18,6 +18,7 @@ cdef object CONNECTION = istr('Connection')
 cdef object CONTENT_LENGTH = istr('Content-Length')
 cdef object CONTENT_TYPE = istr('Content-Type')
 cdef object DATE = istr('Date')
+cdef object EXPECT = istr('Expect')
 cdef object HOST = istr('Host')
 cdef object KEEP_ALIVE = istr('Keep-Alive')
 cdef object LOCATION = istr('Location')
@@ -34,6 +35,7 @@ cdef object X_FORWARDED_FOR = istr('X-Forwarded-For')
 cdef object X_FORWARDED_PROTOCOL = istr("X-Forwarded-Protocol")
 cdef object X_FORWARDED_PROTO = istr("X-Forwarded-Proto")
 cdef object X_FORWARDED_SSL = istr("X-Forwarded-Ssl")
+
 cdef object HOP_HEADERS = frozenset((
     CONNECTION, KEEP_ALIVE, PROXY_AUTHENTICATE,
     PROXY_AUTHORIZATION, TE, TRAILERS,

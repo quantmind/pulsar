@@ -46,7 +46,7 @@ from pulsar.utils.httpurl import (
 
 from .plugins import (
     handle_cookies, WebSocket, Redirect, Tunneling, start_request,
-    keep_alive, InfoHeaders
+    keep_alive, InfoHeaders, Expect
 )
 from .auth import Auth, HTTPBasicAuth
 from .stream import HttpStream
@@ -684,17 +684,11 @@ class HttpResponse(ProtocolConsumer):
 
     def on_headers_complete(self):
         request = self.request
-        status_code = self.parser.get_status_code()
-        if (request.headers.get('expect') == '100-continue' and
-                status_code == 100):
-            self.parser = request.new_parser(self)
-            self.write_body()
-        else:
-            self.status_code = status_code
-            self.version = self.parser.get_http_version()
-            self.event('on_headers').fire()
-            if request.method == 'HEAD':
-                self.event('post_request').fire()
+        self.status_code = self.parser.get_status_code()
+        self.version = self.parser.get_http_version()
+        self.event('on_headers').fire()
+        if request.method == 'HEAD':
+            self.event('post_request').fire()
 
     def on_body(self, body):
         if self.request.stream:
@@ -708,7 +702,7 @@ class HttpResponse(ProtocolConsumer):
         self.fire_event('post_request')
 
     def write_body(self):
-        self.request.write_body(self.connection.transport)
+        self.request.write_body(self.connection)
 
 
 class HttpClient(AbstractClient):
@@ -837,6 +831,7 @@ class HttpClient(AbstractClient):
         self.event('pre_request').bind(WebSocket())
         self.event('on_headers').bind(handle_cookies)
         self.event('post_request').bind(Redirect())
+        self.event('post_request').bind(Expect())
 
     # API
     def connect(self, address):

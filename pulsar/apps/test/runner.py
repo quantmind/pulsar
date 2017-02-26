@@ -4,8 +4,6 @@ from unittest import SkipTest, TestCase
 
 from async_timeout import timeout
 
-from pulsar.api import HaltServer
-
 from .utils import (TestFailure, skip_test, skip_reason,
                     expecting_failure, get_test_timeout)
 
@@ -36,10 +34,18 @@ class Runner:
         self.tests = list(reversed(tests))
         #
         self.runner.on_start()
-        self._loop.call_soon(self._next_file)
+        self.running_tests = None
+
+    def start(self):
+        self._next_file()
+
+    def close(self):
+        if self.running_tests and not self.running_tests.done():
+            self.running_tests.cancel()
+        self.running_tests = None
 
     def _exit(self, exit_code):
-        raise HaltServer(exit_code=exit_code)
+        self.monitor.monitor.stop(exit_code=exit_code)
 
     def _check_abort(self):
         if getattr(self._loop, 'exit_code', None):
@@ -90,7 +96,7 @@ class Runner:
                              len(all_tests), tag, test_cls.__name__)
             self.runner.startTestClass(test_cls)
             coro = self._run_test_cls(test_cls, test_classes, all_tests)
-            asyncio.ensure_future(coro, loop=self._loop)
+            self.running_tests = self._loop.create_task(coro)
         else:
             self._loop.call_soon(self._next_class, tag, test_classes)
 
@@ -157,7 +163,6 @@ class Runner:
         * Run the test function
         * Run :meth:`tearDown` method in :attr:`testcls`
         '''
-        error = None
         runner = self.runner
         runner.startTest(test)
         test_name = test._testMethodName

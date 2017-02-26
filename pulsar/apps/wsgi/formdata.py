@@ -33,14 +33,15 @@ def http_protocol(parser):
 
 
 class HttpBodyReader:
+    _expect_sent = None
     reader = None
 
-    def initialise(self, headers, transport, limit, **kw):
-        self.headers = headers
+    def initialise(self, transport, limit, environ, **kw):
         self.limit = limit
         self.reader = asyncio.StreamReader(**kw)
         self.reader.set_transport(transport)
         self.feed_data = self.reader.feed_data
+        self.environ = environ
         self._expect_sent = None
         self._waiting = None
 
@@ -83,15 +84,14 @@ class HttpBodyReader:
         '''``True`` when the client is waiting for 100 Continue.
         '''
         if self._expect_sent is None:
-            if (not self.reader.at_eof() and
-                    self.headers.get('expect', '').lower() == '100-continue'):
+            if self.environ.get('HTTP_EXPECT', '').lower() == '100-continue':
                 return True
             self._expect_sent = ''
         return False
 
     def _can_continue(self):
         if self._waiting_expect():
-            protocol = self.request.get('SERVER_PROTOCOL')
+            protocol = self.environ.get('SERVER_PROTOCOL')
             if protocol == 'HTTP/1.0':
                 raise HttpException(status=417)
             else:

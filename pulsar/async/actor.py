@@ -215,6 +215,10 @@ class Actor(EventHandler, Coverage):
         return self._concurrency.aid
 
     @property
+    def identity(self):
+        return self._concurrency.identity(self)
+
+    @property
     def concurrency(self):
         return self._concurrency
 

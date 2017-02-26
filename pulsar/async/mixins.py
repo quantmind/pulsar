@@ -150,17 +150,12 @@ class Timeout:
 class Pipeline:
     """Pipeline protocol consumers once reading is finished
 
-    This mixin can be used by server-side TCP connections
-    once a given request has finished processing the input data and is ready
-    to write data back to the client.
+    This mixin can be used by TCP connections to pipeline response writing
     """
     _pipeline = None
 
     def pipeline(self, consumer):
-        """Add a consumer to the pipeline.
-
-        When adding a consumer to a pipeline, the consumer is no longer
-        the connection current consumer.
+        """Add a consumer to the pipeline
         """
         if self._pipeline is None:
             self._pipeline = ResponsePipeline(self)
@@ -181,7 +176,6 @@ class ResponsePipeline:
         self.worker = self.queue._loop.create_task(self._process())
 
     def put(self, consumer):
-        consumer.connection.finished_consumer(consumer)
         self.queue.put_nowait(consumer)
 
     async def _process(self):
@@ -189,7 +183,7 @@ class ResponsePipeline:
             try:
                 consumer = await self.queue.get()
                 await consumer.write_response()
-            except CancelledError:
+            except (CancelledError, GeneratorExit):
                 break
             except Exception:
                 self.logger.exception('Critical exception in %s '

@@ -254,7 +254,7 @@ class ProtocolConsumer(EventHandler):
         """
         self.connection.processed += 1
         self.producer.requests_processed += 1
-        self.event('post_request').bind(self._finished)
+        self.event('post_request').bind(self.finished_reading)
         self.request = request or self.create_request()
         try:
             self.fire_event('pre_request')
@@ -287,7 +287,10 @@ class ProtocolConsumer(EventHandler):
         """
         pass
 
-    def _finished(self, _, **kw):
+    def finished_reading(self, *args, **kw):
+        """Call this method when the consumer has finished reading
+        from the connection
+        """
         self.connection.finished_consumer(self)
 
     def get(self, attr):

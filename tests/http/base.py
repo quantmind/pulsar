@@ -2,7 +2,6 @@ import os
 import socket
 import asyncio
 import unittest
-from unittest.mock import MagicMock
 from base64 import b64decode
 from functools import wraps
 
@@ -14,7 +13,8 @@ from pulsar.utils.path import Path
 from pulsar.utils.system import platform
 from pulsar.apps.http import (
     HttpClient, TooManyRedirects, HttpResponse,
-    HttpRequestException, HTTPDigestAuth, FORM_URL_ENCODED
+    HttpRequestException, HTTPDigestAuth, FORM_URL_ENCODED,
+    HttpWsgiClient
 )
 
 
@@ -331,8 +331,9 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.content,
                          b'Request content length too large. Limit is 256.0KB')
 
-    def test_HttpResponse(self):
-        r = HttpResponse(MagicMock())
+    async def test_HttpResponse(self):
+        c = await HttpWsgiClient().create_connection('127.0.0.1')
+        r = HttpResponse(c)
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<Response [None]>')
         self.assertEqual(r.headers, None)

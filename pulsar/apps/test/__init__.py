@@ -152,6 +152,7 @@ class TestSuite(Application):
         apps=['test'],
         log_level=['none']
     )
+    runner = None
 
     @lazyproperty
     def loader(self):
@@ -186,14 +187,19 @@ class TestSuite(Application):
             coveralls()
             return False
 
-    def monitor_start(self, monitor):
+    def monitor_start(self, monitor, **kw):
         '''When the monitor starts load all test classes into the queue'''
         self.cfg.set('workers', 0)
 
         if self.cfg.callable:
             self.cfg.callable()
+        self.runner = Runner(monitor, self)
+        monitor._loop.call_soon(self.runner.start)
 
-        monitor._loop.call_soon(Runner, monitor, self)
+    def monitor_stopping(self, monitor, **kw):
+        if self.runner:
+            self.runner.close()
+            self.runner = None
 
     @classmethod
     def create_config(cls, *args, **kwargs):

@@ -204,6 +204,9 @@ cdef class ProtocolConsumer(EventHandler):
     cpdef feed_data(self, data):
         pass
 
+    cpdef finished_reading(self):
+        self.connection.finished_consumer(self)
+
     cpdef _finished(self, object _, object exc=None, object data=None):
         self.connection.finished_consumer(self)
 

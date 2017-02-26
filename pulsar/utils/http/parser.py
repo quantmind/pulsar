@@ -245,10 +245,13 @@ class HttpParser:
                     raise HttpParserError(
                         'Invalid chunk size %s' % size) from None
                 if size == 0:
+                    self.buf = rest
                     self._parse_trailers()
                 elif len(rest) < size + 2:
                     self._on_body(bytes(self.buf[:size]))
                     self.buf = rest[size:]
+                else:
+                    break
         else:
             #
             data = bytes(self.buf)

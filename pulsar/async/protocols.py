@@ -228,6 +228,7 @@ class TcpServer(Producer):
             coro = self._close_connections()
             if coro:
                 await coro
+            self.logger.debug('%s closed', self)
             self.event('stop').fire()
 
     def info(self):

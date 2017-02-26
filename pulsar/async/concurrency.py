@@ -10,7 +10,6 @@ from async_timeout import timeout
 
 from ..utils.exceptions import ActorStarted
 from ..utils import system
-from ..utils import autoreload
 
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import set_actor, logger
@@ -19,8 +18,7 @@ from .mailbox import MailboxClient, mailbox_protocol, ProxyMailbox, create_aid
 from .futures import ensure_future
 from .protocols import TcpServer
 from .actor import Actor
-from .consts import (ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY,
-                     MONITOR_TASK_PERIOD)
+from .consts import ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY
 from .process import ProcessMixin
 from .monitor import MonitorMixin, ArbiterMixin, concurrency_models
 
@@ -46,7 +44,7 @@ class Concurrency:
         constructor.
     '''
     actor_class = Actor
-    _periodic_task = None
+    periodic_task = None
 
     @classmethod
     def make(cls, kind, cfg, name, aid, **kw):
@@ -178,8 +176,8 @@ class Concurrency:
             await asyncio.sleep(min(next, MAX_NOTIFY))
 
     def stop(self, actor, exc=None, exit_code=None):
-        '''Gracefully stop the ``actor``.
-        '''
+        """Gracefully stop the ``actor``.
+        """
         if actor.state <= ACTOR_STATES.RUN:
             # The actor has not started the stopping process. Starts it now.
             actor.state = ACTOR_STATES.STOPPING
@@ -261,14 +259,11 @@ class Concurrency:
     def _switch_to_run(self, actor, exc=None):
         if exc is None and actor.state < ACTOR_STATES.RUN:
             actor.state = ACTOR_STATES.RUN
-            self._periodic_task = actor._loop.create_task(
+            self.periodic_task = actor._loop.create_task(
                 self.periodic_task(actor)
             )
         elif exc:
             actor.stop(exc)
-
-    def _remove_actor(self, monitor, actor, log=True):
-        raise RuntimeError('Cannot remove actor')
 
 
 ############################################################################
@@ -298,20 +293,6 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
 
     def create_mailbox(self, actor, loop):
         raise NotImplementedError
-
-    async def periodic_task(self, monitor, **kw):
-        while not monitor.closed():
-            interval = 0
-            if monitor.started():
-                interval = MONITOR_TASK_PERIOD
-                self.manage_actors(monitor)
-                if monitor.is_running():
-                    self.spawn_actors(monitor)
-                    self.stop_actors(monitor)
-                elif monitor.cfg.debug:
-                    monitor.logger.debug('still stopping')
-                monitor.event('periodic_task').fire()
-            await asyncio.sleep(interval)
 
 
 class ArbiterConcurrency(ArbiterMixin, ProcessMixin, Concurrency):
@@ -348,47 +329,6 @@ class ArbiterConcurrency(ArbiterMixin, ProcessMixin, Concurrency):
             lambda _, **kw: loop.call_soon(self.hand_shake, actor)
         )
         return mailbox
-
-    async def periodic_task(self, actor, **kw):
-        """Override the :meth:`.Concurrency.periodic_task` to implement
-        the :class:`.Arbiter` :ref:`periodic task <actor-periodic-task>`.
-        """
-        while True:
-            interval = 0
-            #
-            if actor.started():
-                # managed actors job
-                self.manage_actors(actor)
-                for m in list(self.monitors.values()):
-                    if m.closed():
-                        actor._remove_actor(m)
-
-                interval = MONITOR_TASK_PERIOD
-                if not actor.is_running() and actor.cfg.debug:
-                    actor.logger.debug('still stopping')
-                #
-                actor.event('periodic_task').fire()
-
-            if actor.cfg.reload and autoreload.check_changes():
-                # reload changes
-                actor.stop(exit_code=autoreload.EXIT_CODE)
-
-            if not actor.closed():
-                await asyncio.sleep(interval)
-
-    def _remove_actor(self, arbiter, actor, log=True):
-        a = super()._remove_actor(arbiter, actor, False)
-        b = self.registered.pop(self.identity(actor), None)
-        c = self.monitors.pop(self.identity(actor), None)
-        removed = a or b or c
-        if removed and log:
-            arbiter.logger.warning('Removed %s', actor)
-        return removed
-
-    def _register(self, actor):
-        aid = self.identity(actor)
-        self.registered[aid] = actor
-        self.monitors[aid] = actor
 
 
 def run_actor(self):
@@ -432,7 +372,10 @@ class ActorMultiProcess(ProcessMixin, Concurrency, Process):
         run_actor(self)
 
     def kill(self, sig):
-        system.kill(self.pid, sig)
+        try:
+            system.kill(self.pid, sig)
+        except ProcessLookupError:
+            pass
 
 
 class ActorSubProcess(ProcessMixin, Concurrency):
