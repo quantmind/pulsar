@@ -158,9 +158,8 @@ uses them to add additional functionalities or improve performance:
 * uvloop_: if available it is possible to use it as the default event loop
   for actors by passing ``--io uv`` in the command line (or ``event_loop="uv"``
   in the config file)
-* http-parser_: if available, the default HttpParser for both client and server
-  is replaced by the C implementation in this package (about three times faster
-  than pulsar python version)
+* httptools_: if available, the default Http Parser for both client and server
+  is replaced by the C implementation in this package
 * setproctitle_: if installed, pulsar can use it to change the processes names
   of the running application
 * psutil_: if installed, a ``system`` key is available in the dictionary
@@ -247,6 +246,6 @@ file in the top distribution directory for the full license text.
 .. _`python-pulsar`: http://stackoverflow.com/questions/tagged/python-pulsar
 .. _`Web Sockets`: http://quantmind.github.io/pulsar/apps/websockets.html
 .. _uvloop: https://github.com/MagicStack/uvloop
-.. _http-parser: https://github.com/benoitc/http-parser
+.. _httptools: https://github.com/MagicStack/httptools
 .. _`Asynchronous WSGI server`: http://quantmind.github.io/pulsar/apps/wsgi/index.html
 .. _`Asynchronous Test suite`: http://quantmind.github.io/pulsar/apps/test.html

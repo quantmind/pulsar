@@ -36,9 +36,6 @@ The :class:`EchoProtocol` is needed for two reasons:
 * It listens for incoming data from the remote server via the
   :meth:`~EchoProtocol.data_received` method.
 
-To wait for the response message one can ``await`` from the
-:attr:`.ProtocolConsumer.on_finished` event.
-
 
 
 Implementation
@@ -119,10 +116,6 @@ class EchoProtocol(ProtocolConsumer):
         self.connection.transport.write(self.request + self.separator)
 
     def response(self, data, rest):
-        '''Clients return the message so that the
-        :attr:`.ProtocolConsumer.on_finished` is called back with the
-        message value, while servers sends the message back to the client.
-        '''
         if rest:
             raise ProtocolError
         return data[:-len(self.separator)]

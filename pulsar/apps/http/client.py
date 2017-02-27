@@ -385,9 +385,7 @@ class HttpRequest(RequestBase):
         if not self.body:
             return
         if is_streamed(self.body):
-            asyncio.ensure_future(
-                self._write_streamed_data(transport), loop=self._loop
-            )
+            self._loop.create_task(self._write_streamed_data(transport))
         else:
             self._write_body_data(transport, self.body, True)
 
@@ -526,18 +524,6 @@ class HttpResponse(ProtocolConsumer):
     """A :class:`.ProtocolConsumer` for the HTTP client protocol.
 
     Initialised by a call to the :class:`HttpClient.request` method.
-
-    There are two events you can yield in a coroutine:
-
-    .. attribute:: on_headers
-
-        fired once the response headers are received.
-
-    .. attribute:: on_finished
-
-        Fired once the whole request has finished
-
-    Public API:
     """
     _tunnel_host = None
     _has_proxy = False
@@ -624,8 +610,7 @@ class HttpResponse(ProtocolConsumer):
         """Decode content as a string.
         """
         data = self.content
-        if data is not None:
-            return data.decode(self.encoding or 'utf-8')
+        return data.decode(self.encoding or 'utf-8') if data else ''
 
     def json(self):
         """Decode content as a JSON object.
@@ -691,12 +676,18 @@ class HttpResponse(ProtocolConsumer):
             self.event('post_request').fire()
 
     def on_body(self, body):
-        if self.request.stream:
-            self.raw(body)
+        if self.request.stream or self._raw:
+            self.raw.feed_data(body)
         elif self.content is None:
             self.content = body
         else:
             self.content += body
+
+    def recv_body(self):
+        content = self.content
+        if content:
+            self.content = b''
+        return content or b''
 
     def on_message_complete(self):
         self.fire_event('post_request')

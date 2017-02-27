@@ -113,7 +113,7 @@ class MonitorMixin:
             if not actor.should_be_alive() and not stop:
                 return 1
             actor.join()
-            monitor._remove_monitored_actor(actor)
+            self._remove_monitored_actor(monitor, actor)
             return 0
         timeout = None
         started_stopping = bool(actor.stopping_start)
@@ -179,10 +179,8 @@ class MonitorMixin:
                 break
 
     def _remove_monitored_actor(self, monitor, actor, log=True):
-        removed = self.managed_actors.pop(actor.aid, None)
-        if log and removed:
+        if log and self.managed_actors.pop(actor.aid, None):
             monitor.logger.warning('Removed %s', actor)
-        return removed
 
     def _stop_actor(self, actor, finished=False):
         actor.state = ACTOR_STATES.CLOSE
@@ -435,9 +433,9 @@ def _stop_monitor(actor, **kw):
 async def _join_monitor(actor):
     while True:
         if actor.concurrency.manage_actors(actor, True):
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.05)
         else:
-            periodic_task = actor.concurrency.periodic_task
+            periodic_task = actor.concurrency.running_periodic_task
             periodic_task.cancel()
             await periodic_task
             _remove_monitor(actor)

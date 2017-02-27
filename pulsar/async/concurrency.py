@@ -44,7 +44,7 @@ class Concurrency:
         constructor.
     '''
     actor_class = Actor
-    periodic_task = None
+    running_periodic_task = None
 
     @classmethod
     def make(cls, kind, cfg, name, aid, **kw):
@@ -259,7 +259,7 @@ class Concurrency:
     def _switch_to_run(self, actor, exc=None):
         if exc is None and actor.state < ACTOR_STATES.RUN:
             actor.state = ACTOR_STATES.RUN
-            self.periodic_task = actor._loop.create_task(
+            self.running_periodic_task = actor._loop.create_task(
                 self.periodic_task(actor)
             )
         elif exc:

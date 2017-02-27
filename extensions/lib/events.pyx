@@ -157,4 +157,6 @@ cdef class Event:
     cpdef object waiter(self):
         if not self._waiter:
             self._waiter = get_event_loop().create_future()
+            if self.fired():
+                self._waiter.set_result(None)
         return self._waiter

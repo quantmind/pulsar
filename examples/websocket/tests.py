@@ -85,7 +85,6 @@ class TestWebSocket(unittest.TestCase):
         self.assertEqual(ws.connection, response.connection)
         self.assertEqual(ws.handler, handler)
         #
-        # on_finished
         self.assertTrue(response.event('post_request').fired())
         self.assertFalse(ws.event('post_request').fired())
         # Send a message to the websocket

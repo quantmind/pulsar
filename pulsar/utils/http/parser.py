@@ -247,9 +247,11 @@ class HttpParser:
                 if size == 0:
                     self.buf = rest
                     self._parse_trailers()
-                elif len(rest) < size + 2:
-                    self._on_body(bytes(self.buf[:size]))
-                    self.buf = rest[size:]
+                    self._on_message_complete()
+                    break
+                elif len(rest) >= size + 2:
+                    self._on_body(bytes(rest[:size]))
+                    self.buf = rest[size+2:]
                 else:
                     break
         else:

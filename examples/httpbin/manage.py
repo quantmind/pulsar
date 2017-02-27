@@ -210,7 +210,12 @@ class HttpBin(BaseRouter):
             headers = None
 
             def __call__(self, server, data=None):
-                self.headers = bytes(data)
+                headers = {}
+                for hv in bytes(data).decode('utf-8').split('\r\n'):
+                    hv = hv.split(':')
+                    if len(hv) >= 2:
+                        headers[hv[0].strip()] = (':'.join(hv[1:])).strip()
+                self.headers = json.dumps(headers).encode('utf-8')
 
             def generate(self):
                 # yield a byte so that headers are sent
@@ -218,10 +223,9 @@ class HttpBin(BaseRouter):
                 # we must have the headers now
                 yield self.headers
         gen = Gen()
-        request.cache.connection.current_consumer().event(
-            'on_headers').bind(gen)
+        request.cache.event('on_headers').bind(gen)
         request.response.content = gen.generate()
-        request.response.content_type = 'text/plain'
+        request.response.content_type = 'application/json'
         return request.response
 
     @route('basic-auth/<username>/<password>',

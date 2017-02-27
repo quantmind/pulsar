@@ -6,4 +6,4 @@ unidecode
 sphinxcontrib-spelling
 uvloop
 pyslink
-http-parser
+httptools

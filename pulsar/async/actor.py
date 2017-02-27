@@ -432,6 +432,3 @@ class Actor(EventHandler, Coverage):
         except BaseException:
             pass
         return self.stop()
-
-    def _remove_actor(self, actor, log=True):
-        return self._concurrency._remove_actor(self, actor, log=log)
