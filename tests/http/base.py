@@ -157,7 +157,7 @@ class TestHttpClientBase:
         http = self._client
         response = await http.get(self.httpbin('stream/%d/%d' % (siz, rep)))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.parser.is_chunked())
+        self.assertEqual(response.headers.get('transfer-encoding'), 'chunked')
         body = response.content
         self.assertEqual(len(body), siz*rep)
 
@@ -460,7 +460,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = response.json()
         self.assertEqual(data['size'], 600000)
         self.assertEqual(len(data['data']), 600000)
-        self.assertFalse(response.parser.is_chunked())
+        self.assertEqual(response.headers.get('transfer-encoding'), None)
 
     async def test_too_many_redirects(self):
         http = self._client
@@ -599,7 +599,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     async def test_missing_host_400(self):
         http = self._client
 
-        def remove_host(response, exc=None):
+        def remove_host(response, **kw):
             r = response.request
             self.assertTrue(r.has_header('host'))
             response.request.remove_header('host')
@@ -611,7 +611,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     async def test_missing_host_10(self):
         http = self.client(version='HTTP/1.0')
 
-        def remove_host(response, exc=None):
+        def remove_host(response, **kw):
             request = response.request
             if not hasattr(request, '_test_host'):
                 request._test_host = request.remove_header('host')
@@ -812,7 +812,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = await raw.read()
         self.assertTrue(len(data), 300000)
 
-    async def __test_post_iterator(self):
+    async def test_post_iterator(self):
         http = self._client
         fut = asyncio.Future()
 

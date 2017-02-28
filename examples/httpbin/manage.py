@@ -26,7 +26,6 @@ from functools import partial
 from itertools import repeat, chain
 from random import random
 from base64 import b64encode
-from asyncio import ensure_future
 
 from pulsar import version, JAPANESE, CHINESE, HINDI
 from pulsar.api import HttpRedirect, HttpException
@@ -79,8 +78,8 @@ class BaseRouter(wsgi.Router):
             args, files = request.data_and_files()
             jfiles = MultiDict()
             if files:
-                for name, parts in files.items():
-                    for part in parts:
+                for name in files:
+                    for part in files.getall(name):
                         try:
                             part = part.string()
                         except UnicodeError:
@@ -322,10 +321,7 @@ class HttpBin(BaseRouter):
 class Upload(BaseRouter):
     response_content_types = ['multipart/form-data']
 
-    def put(self, request):
-        return ensure_future(self._async_put(request))
-
-    async def _async_put(self, request):
+    async def put(self, request):
         headers = self.getheaders(request)
         data = {'method': request.method,
                 'headers': headers,

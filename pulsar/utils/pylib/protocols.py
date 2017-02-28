@@ -193,7 +193,7 @@ class Protocol(EventHandler):
         # let everyone know we have a connection with endpoint
         self.event('connection_made').fire()
 
-    def connection_lost(self, _, exc=None):
+    def connection_lost(self, exc=None):
         """Fires the ``connection_lost`` event.
         """
         if self._loop.get_debug():

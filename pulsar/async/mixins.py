@@ -183,7 +183,7 @@ class ResponsePipeline:
             try:
                 consumer = await self.queue.get()
                 await consumer.write_response()
-            except (CancelledError, GeneratorExit):
+            except (CancelledError, GeneratorExit, RuntimeError):
                 break
             except Exception:
                 self.logger.exception('Critical exception in %s '

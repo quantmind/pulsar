@@ -69,7 +69,7 @@ cdef class WsgiProtocol:
         self.parser = protocol.create_parser(self)
         self.header_wsgi = Headers()
 
-    cpdef void on_url(self, bytes url):
+    cpdef on_url(self, bytes url):
         cdef object proto = self.protocol
         cdef object transport = self.connection.transport
         cdef object parsed_url = proto.parse_url(url)
@@ -86,7 +86,7 @@ cdef class WsgiProtocol:
             ('wsgi.url_scheme', scheme)
         ))
 
-    cpdef void on_header(self, bytes name, bytes value):
+    cpdef on_header(self, bytes name, bytes value):
         cdef object header = istr(name.decode(CHARSET))
         cdef str header_value = value.decode(CHARSET)
         cdef str header_env = header.upper().replace('-', '_')
@@ -112,7 +112,7 @@ cdef class WsgiProtocol:
         if header == EXPECT and header_value.lower() == '100-continue':
             self.body_reader()
 
-    cpdef void on_headers_complete(self):
+    cpdef on_headers_complete(self):
         cdef str forward = self.headers.get(X_FORWARDED_FOR)
         cdef object client_address = self.client_address
         cdef str path_info
@@ -251,7 +251,7 @@ cdef class WsgiProtocol:
         return headers
 
 
-cdef void chunk_encoding(bytearray chunks, bytes chunk):
+cdef chunk_encoding(bytearray chunks, bytes chunk):
     '''Write a chunk::
 
         chunk-size(hex) CRLF
@@ -264,7 +264,7 @@ cdef void chunk_encoding(bytearray chunks, bytes chunk):
     chunks.extend(CRLF)
 
 
-cdef void http_chunks(bytearray chunks, bytes data, object finish=False):
+cdef http_chunks(bytearray chunks, bytes data, object finish=False):
     cdef bytes chunk
     while len(data) >= MAX_CHUNK_SIZE:
         chunk, data = data[:MAX_CHUNK_SIZE], data[MAX_CHUNK_SIZE:]
@@ -294,7 +294,7 @@ cpdef has_empty_content(int status, str method=None):
             method == 'HEAD')
 
 
-cdef void reraise(object tp, object value, object tb=None):
+cdef reraise(object tp, object value, object tb=None):
     if value.__traceback__ is not tb:
         raise value.with_traceback(tb)
     raise value

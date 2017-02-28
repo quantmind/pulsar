@@ -44,6 +44,7 @@ from pulsar.api import (
     HttpException, ensure_future, create_future, ProtocolConsumer
 )
 from pulsar.apps import wsgi, http
+from pulsar.apps.wsgi import wsgi_request
 from pulsar.apps.http.plugins import noerror
 from pulsar.utils.httpurl import ENCODE_BODY_METHODS
 from pulsar.utils.log import LocalMixin, local_property
@@ -58,7 +59,7 @@ logger = logging.getLogger('pulsar.proxyserver')
 
 def x_forwarded_for(environ, headers):
     '''Add *x-forwarded-for* header'''
-    headers.add_header('x-forwarded-for', environ['REMOTE_ADDR'])
+    headers.add('x-forwarded-for', environ['REMOTE_ADDR'])
 
 
 class ProxyServerWsgiHandler(LocalMixin):
@@ -98,6 +99,7 @@ class TunnelResponse:
     def __init__(self, wsgi, environ, start_response):
         self.wsgi = wsgi
         self.environ = environ
+        self.connection = wsgi_request(self.environ).cache.connection
         self.start_response = start_response
         self.future = create_future()
 
@@ -157,7 +159,7 @@ class TunnelResponse:
             # proxy - server connection
             upstream = response.connection
             # client - proxy connection
-            dostream = self.environ['pulsar.connection']
+            dostream = self.connection
             # Upgrade downstream connection
             dostream.upgrade(partial(StreamTunnel, upstream))
             # Upgrade upstream connection
@@ -171,7 +173,7 @@ class TunnelResponse:
             response.event('post_request').bind(self.post_request)
 
     def data_processed(self, response, data=None, **kw):
-        self.environ['pulsar.connection'].write(data)
+        self.connection.write(data)
 
     def post_request(self, _, exc=None):
         self.future.set_exception(wsgi.AbortWsgi())

@@ -8,6 +8,7 @@ from pulsar.utils.http import HttpRequestParser
 from pulsar.api import Protocol, Producer
 from pulsar.apps.wsgi import HttpServerResponse
 from pulsar.async.access import cfg
+from pulsar.async.mixins import Pipeline
 
 
 class DummyTransport(Transport):
@@ -21,10 +22,10 @@ class DummyTransport(Transport):
         return False
 
     def close(self):
-        pass
+        self.connection.connection_lost(None)
 
     def abort(self):
-        pass
+        self.connection.connection_lost(None)
 
     def write(self, chunk):
         consumer = self.connection.current_consumer()
@@ -37,7 +38,7 @@ class DummyTransport(Transport):
                 consumer.finished()
 
 
-class DummyConnection:
+class DummyConnection(Pipeline):
     other_side = None
 
     def write(self, data):
@@ -47,13 +48,14 @@ class DummyConnection:
         return self
 
     def __exit__(self, type, value, traceback):
-        pass
+        self.close()
 
     def detach(self, discard=True):
-        pass
+        self.close()
 
     def close(self):
-        pass
+        if self.transport:
+            self.transport.close()
 
 
 class DummyClientConnection(DummyConnection, Protocol):

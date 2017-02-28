@@ -127,7 +127,7 @@ cdef class Protocol(EventHandler):
         # let everyone know we have a connection with endpoint
         self.event('connection_made').fire()
 
-    def connection_lost(self, _, exc=None):
+    def connection_lost(self, exc=None):
         """Fires the ``connection_lost`` event.
         """
         self.event('connection_lost').fire()
@@ -164,7 +164,9 @@ cdef class Protocol(EventHandler):
 
     cpdef _connection_lost(self, _, exc=None, data=None):
         if self._current_consumer:
-            self._current_consumer.event('post_request').fire(exc=exc)
+            event = self._current_consumer.event('post_request')
+            if not event.fired():
+                event.fire(exc=exc)
 
 
 cdef class ProtocolConsumer(EventHandler):
