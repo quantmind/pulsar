@@ -92,9 +92,9 @@ _converter_args_re = re.compile(r'''
 
 
 _PYTHON_CONSTANTS = {
-    'None':     None,
-    'True':     True,
-    'False':    False
+    'None': None,
+    'True': True,
+    'False': False
 }
 
 
@@ -407,7 +407,7 @@ class Route:
             rule = rule[:-1]
         if not rule:
             return Route('/'), None
-        bits = ('/'+rule).split('/')
+        bits = ('/' + rule).split('/')
         last = Route(bits[-1] if self.is_leaf else bits[-1] + '/')
         if len(bits) > 1:
             return Route('/'.join(bits[:-1]) + '/'), last
@@ -592,10 +592,10 @@ def get_converter(name, parameters):
 
 #: the default converter mapping for the map.
 _CONVERTERS = {
-    'default':          StringConverter,
-    'string':           StringConverter,
-    'any':              AnyConverter,
-    'path':             PathConverter,
-    'int':              IntegerConverter,
-    'float':            FloatConverter
+    'default': StringConverter,
+    'string': StringConverter,
+    'any': AnyConverter,
+    'path': PathConverter,
+    'int': IntegerConverter,
+    'float': FloatConverter
 }

@@ -140,6 +140,7 @@ class WebSocket(wsgi.Router):
         if not headers_parser:
             raise HttpException(status=404)
         headers, parser = headers_parser
+        self.protocol_class.request = request
         response = request.response
         response.status_code = 101
         response.content = b''
@@ -201,5 +202,5 @@ class WebSocket(wsgi.Router):
         return headers, parser
 
     def challenge_response(self, key):
-        sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
+        sha1 = hashlib.sha1(to_bytes(key + WEBSOCKET_GUID))
         return native_str(base64.b64encode(sha1.digest()))
