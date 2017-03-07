@@ -592,7 +592,7 @@ class MultiApp(Configurator):
             apps = self._apps
             self._apps = []
             for App, name, callable, cfg in self._iter_app(apps):
-                settings = self.cfg.settings
+                settings = cfg.settings.copy()
                 new_settings = {}
                 for key in cfg:
                     setting = settings[key].copy()
