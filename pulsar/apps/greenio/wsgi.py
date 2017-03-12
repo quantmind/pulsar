@@ -39,7 +39,7 @@ class GreenWSGI:
         if not getattr(response, '__wsgi_started__', True):
             for middleware in self.response_middleware:
                 response = wait(middleware(environ, response)) or response
-            response.start(start_response)
+            response.start(environ, start_response)
         return response
 
 

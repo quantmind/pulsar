@@ -29,7 +29,7 @@ try:
 except ImportError:
     pass
 
-logger = logging.getLogger('pulsar.autoreload')
+LOGGER = logging.getLogger('pulsar.autoreload')
 
 EXIT_CODE = 5
 
@@ -206,8 +206,8 @@ def restart_with_reloader():
             args = ['"%s"' % arg for arg in args]
         new_environ = os.environ.copy()
         new_environ["RUN_MAIN"] = 'true'
+        LOGGER.info('Start autoreload monitor')
         exit_code = os.spawnve(os.P_WAIT, sys.executable, args, new_environ)
-        logger.info('main execution exited with code %d', exit_code)
         if exit_code != EXIT_CODE:
             return exit_code
 

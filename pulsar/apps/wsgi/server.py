@@ -17,7 +17,7 @@ from pulsar.api import BadRequest, ProtocolConsumer
 from pulsar.utils.lib import WsgiProtocol
 from pulsar.utils import http
 
-from .utils import handle_wsgi_error, wsgi_request, log_wsgi_info, get_logger
+from .utils import handle_wsgi_error, wsgi_request, log_wsgi_info, LOGGER
 from .formdata import HttpBodyReader
 from .wrappers import FileWrapper, close_object
 from .headers import CONTENT_LENGTH
@@ -58,6 +58,7 @@ class HttpServerResponse(ProtocolConsumer):
         self.parse_url = http.parse_url
         self.create_parser = http.HttpRequestParser
         self.cfg = producer.cfg
+        self.logger = LOGGER
         wsgi = WsgiProtocol(self, producer.cfg, FileWrapper)
         return wsgi
 
@@ -144,7 +145,7 @@ class HttpServerResponse(ProtocolConsumer):
                     self.event('post_request').fire()
                 except Exception:
                     if wsgi_request(environ).cache.get('handle_wsgi_error'):
-                        get_logger(environ).exception(
+                        self.logger.exception(
                             'Exception while handling WSGI error'
                         )
                         wsgi.keep_alive = False
@@ -156,10 +157,9 @@ class HttpServerResponse(ProtocolConsumer):
                         exc_info = sys.exc_info()
                 else:
                     if loop.get_debug():
-                        logger = get_logger(environ)
-                        log_wsgi_info(logger.info, environ, wsgi.status)
+                        log_wsgi_info(self.logger.info, environ, wsgi.status)
                         if not wsgi.keep_alive:
-                            logger.debug(
+                            self.logger.debug(
                                 'No keep alive, closing connection %s',
                                 self.connection
                             )

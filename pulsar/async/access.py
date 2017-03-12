@@ -8,7 +8,7 @@ from threading import current_thread
 from inspect import isawaitable
 from asyncio import Future, ensure_future
 
-from ..utils.config import Global
+from ..utils.config import Config, Global
 from ..utils.system import current_process, platform
 
 
@@ -171,14 +171,12 @@ def cfg():
     actor = get_actor()
     if actor:
         return actor.cfg
+    else:
+        return Config()
 
 
 def cfg_value(setting, value=None):
-    if value is None:
-        actor = get_actor()
-        if actor:
-            return actor.cfg.get(setting)
-    return value
+    return cfg().get(setting) if value is None else value
 
 
 class EventLoopPolicy(asyncio.DefaultEventLoopPolicy):

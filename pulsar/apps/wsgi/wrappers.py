@@ -408,13 +408,15 @@ class WsgiRequest:
                 raise HttpException(status=415, msg=request_content_types)
             self.response.content_type = ct
 
-    def json_response(self, data):
+    def json_response(self, data, status_code=None):
         ct = 'application/json'
         content_types = self.content_types
         if not content_types or ct in content_types:
             response = self.response
             response.content_type = ct
             response.content = json.dumps(data)
+            if status_code:
+                response.status_code = status_code
             return response
         else:
             raise HttpException(status=415, msg=content_types)

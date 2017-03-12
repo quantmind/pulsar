@@ -163,7 +163,8 @@ class Pipeline:
         self._pipeline.put(consumer)
 
     def _close_pipeline(self, _, **kw):
-        self._pipeline.worker.cancel()
+        if self._pipeline.worker:
+            self._pipeline.worker.cancel()
         self._pipeline = None
 
 
