@@ -139,12 +139,12 @@ class WSGIServer(SocketServer):
     '''
     name = 'wsgi'
 
-    def server_factory(self, *args, **kw):
+    def server_factory(self, *args, idx=0, **kw):
         server = super().server_factory(*args, **kw)
         cfg = self.cfg
         server.keep_alive = cfg.http_keep_alive
-        server.wsgi_callable = cfg.callable
+        server.wsgi_callable = self.callable(idx)
         return server
 
-    def protocol_factory(self):
+    def protocol_factory(self, idx=0):
         return partial(Connection, HttpServerResponse)

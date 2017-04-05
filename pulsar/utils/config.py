@@ -614,21 +614,22 @@ class Setting(metaclass=SettingMeta):
         :attr:`nargs` and :attr:`name` are defined.
         """
         default = self.default if set_default else None
-        kwargs = {'nargs': self.nargs}
+        kwargs = dict(
+            nargs=self.nargs,
+            default=default,
+            help="%s [%s]" % (self.short, default)
+        )
         kwargs.update(self.extra)
         if self.flags:
             args = tuple(self.flags)
             kwargs.update({'dest': self.name,
-                           'action': self.action or "store",
-                           'default': default,
-                           'help': "%s [%s]" % (self.short, self.default)})
+                           'action': self.action or "store"})
             if kwargs["action"] != "store":
                 kwargs.pop("type", None)
                 kwargs.pop("nargs", None)
         elif self.nargs and self.name:
             args = (self.name,)
-            kwargs.update({'metavar': self.meta or None,
-                           'help': self.short})
+            kwargs.update({'metavar': self.meta or None})
         else:
             # Not added to argparser
             return

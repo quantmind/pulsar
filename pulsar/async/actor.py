@@ -429,6 +429,8 @@ class Actor(EventHandler, Coverage):
             return
         except (Exception, HaltServer) as exc:
             return self.stop(exc)
+        except SystemExit as exc:
+            return self.stop(exit_code=exc.code)
         except BaseException:
             pass
         return self.stop()

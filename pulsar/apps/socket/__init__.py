@@ -147,6 +147,7 @@ class Bind(SocketSetting):
         A string of the form: ``HOST``, ``HOST:PORT``, ``unix:PATH``.
         An IP is a valid HOST. Specify ``:PORT`` to listen for connections
         from all the network interfaces available on the server.
+        It can also be a comma delimited string above form.
         """
 
 
@@ -211,12 +212,41 @@ class SocketServer(Application):
     name = 'socket'
     cfg = Config(apps=['socket'], server_software=SERVER_SOFTWARE)
 
-    def protocol_factory(self):
+    def protocol_factory(self, idx=0):
         '''Factory of :class:`.ProtocolConsumer` used by the server.
 
         By default it returns the :meth:`.Application.callable`.
         '''
-        return partial(Connection, self.cfg.callable)
+        return partial(Connection, self.callable(idx))
+
+    def callable(self, idx=0):
+        callables = self.cfg.callable
+        if not isinstance(callables, (list, tuple)):
+            callables = [callables]
+        return callables[idx]
+
+    async def binds(self, worker, sockets=None):
+        servers = {}
+        for idx, bind in enumerate(self.cfg.bind.split(',')):
+            name = self.name
+            if idx:
+                name = '%s%s' % (name, idx)
+            protocol_factory = self.protocol_factory(idx)
+            if sockets:
+                server = await self.create_server(
+                    worker, protocol_factory, sockets=sockets[name], idx=idx
+                )
+            else:
+                address = parse_address(bind)
+                try:
+                    server = await self.create_server(
+                        worker, protocol_factory, address=address, idx=idx
+                    )
+                except socket.error as e:
+                    raise ImproperlyConfigured(e) from None
+            servers[name] = server
+        worker.servers.update(servers)
+        return servers
 
     async def monitor_start(self, monitor):
         '''Create the socket listening to the ``bind`` address.
@@ -228,10 +258,6 @@ class SocketServer(Application):
         if (not platform.has_multiProcessSocket or
                 cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
-        if not cfg.address:
-            raise ImproperlyConfigured('Could not open a socket. '
-                                       'No address to bind to')
-        address = parse_address(self.cfg.address)
         if cfg.cert_file or cfg.key_file:
             if not ssl:
                 raise RuntimeError('No support for ssl')
@@ -241,24 +267,26 @@ class SocketServer(Application):
             if cfg.key_file and not os.path.exists(cfg.key_file):
                 raise ImproperlyConfigured('key_file "%s" does not exist' %
                                            cfg.key_file)
-        try:
-            server = await self.create_server(monitor, address)
-        except socket.error as e:
-            raise ImproperlyConfigured(e) from None
-        else:
-            monitor.servers[self.name] = server
-            self.cfg.addresses = server.addresses
+        servers = await self.binds(monitor)
+        if not servers:
+            raise ImproperlyConfigured('Could not open a socket. '
+                                       'No address to bind to')
+        addresses = []
+        for server in servers.values():
+            addresses.extend(server.addresses)
+        self.cfg.addresses = addresses
 
     def actorparams(self, monitor, params):
-        params['sockets'] = monitor.servers[self.name].sockets
+        params['sockets'] = dict(((name, server.sockets) for
+                                  name, server in monitor.servers.items()))
 
     async def worker_start(self, worker, exc=None):
         '''Start the worker by invoking the :meth:`create_server` method.
         '''
         if not exc and self.name not in worker.servers:
-            server = await self.create_server(worker)
-            server.event('stop').bind(lambda _, **kw: worker.stop())
-            worker.servers[self.name] = server
+            servers = await self.binds(worker, worker.sockets)
+            for server in servers.values():
+                server.event('stop').bind(lambda _, **kw: worker.stop())
 
     async def worker_stopping(self, worker, **kw):
         server = worker.servers.pop(self.name, None)
@@ -278,24 +306,24 @@ class SocketServer(Application):
             data['%sserver' % self.name] = server.info()
         return data
 
-    def server_factory(self, *args, **kw):
+    def server_factory(self, *args, idx=0, **kw):
         '''Create a :class:`.TcpServer`.
         '''
         return TcpServer(*args, **kw)
 
     #   INTERNALS
-    async def create_server(self, worker, address=None):
+    async def create_server(self, worker, protocol_factory, address=None,
+                            sockets=None, idx=0):
         '''Create the Server which will listen for requests.
 
         :return: a :class:`.TcpServer`.
         '''
-        sockets = worker.sockets if not address else None
         cfg = self.cfg
         max_requests = cfg.max_requests
         if max_requests:
             max_requests = int(lognormvariate(log(max_requests), 0.2))
         server = self.server_factory(
-            self.protocol_factory(),
+            protocol_factory,
             loop=worker._loop,
             sockets=sockets,
             address=address,
@@ -304,7 +332,8 @@ class SocketServer(Application):
             name=self.name,
             logger=self.logger,
             server_software=cfg.server_software,
-            cfg=cfg
+            cfg=cfg,
+            idx=idx
         )
         for event in ('connection_made', 'pre_request', 'post_request',
                       'connection_lost'):
