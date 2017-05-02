@@ -116,6 +116,7 @@ import socket
 from math import log
 from random import lognormvariate
 from functools import partial
+from collections import Sequence
 try:
     import ssl
 except ImportError:     # pragma    nocover
@@ -221,8 +222,8 @@ class SocketServer(Application):
 
     def callable(self, idx=0):
         callables = self.cfg.callable
-        if not isinstance(callables, (list, tuple)):
-            callables = [callables]
+        if not isinstance(callables, Sequence):
+            callables = callables,
         return callables[idx]
 
     async def binds(self, worker, sockets=None):

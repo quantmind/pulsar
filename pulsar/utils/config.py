@@ -33,6 +33,7 @@ from .string import camel_to_dash, to_bytes
 from .internet import parse_address
 from .importer import import_system_file
 from .log import configured_logger
+from .structures import as_tuple
 
 
 __all__ = [
@@ -536,15 +537,17 @@ class Setting(metaclass=SettingMeta):
 
     def __init__(self, name=None, flags=None, action=None, type=None,
                  default=None, nargs=None, desc=None, validator=None,
-                 app=None, meta=None, choices=None, const=None):
+                 app=None, meta=None, choices=None, const=None,
+                 required=None):
         self.extra = e = {}
         self.app = app or self.app
         set_if_avail(e, 'choices', choices or self.choices)
         set_if_avail(e, 'const', const or self.const)
         set_if_avail(e, 'type', type or self.type, 'string')
+        set_if_avail(e, 'required', required)
         self.default = default if default is not None else self.default
         self.desc = desc or self.desc
-        self.flags = flags or self.flags
+        self.flags = as_tuple(flags or self.flags)
         self.action = action or self.action
         self.meta = meta or self.meta
         self.name = name or self.name

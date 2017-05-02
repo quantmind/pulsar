@@ -50,7 +50,7 @@ from .skiplist import Skiplist
 from .zset import Zset
 from .misc import (
     AttributeDictionary, FrozenDict, Dict, Deque, recursive_update,
-    mapping_iterator, inverse_mapping, aslist
+    mapping_iterator, inverse_mapping, aslist, as_tuple
 )
 
 
@@ -64,5 +64,6 @@ __all__ = [
     'recursive_update',
     'mapping_iterator',
     'inverse_mapping',
-    'aslist'
+    'aslist',
+    'as_tuple'
 ]

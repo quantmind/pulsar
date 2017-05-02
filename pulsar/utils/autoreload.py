@@ -5,11 +5,6 @@ import subprocess
 from itertools import chain
 from asyncio import get_event_loop
 
-try:
-    from watchdog.observers import Observer
-    from watchdog.events import FileSystemEventHandler
-except ImportError:     # pragma    nocover
-    Observer = FileSystemEventHandler = None
 
 LOGGER = logging.getLogger('pulsar.autoreload')
 EXIT_CODE = 5
@@ -86,64 +81,6 @@ class StatReloader(Reloader):
         self.sleep()
 
 
-class WatchdogReloader(Reloader):
-    name = 'watchdog'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.observable_paths = set()
-        self.observer = Observer()
-        self.event_handler = CustomHandler(self)
-        self.watches = {}
-        self.should_reload = False
-
-    def trigger_reload(self, filename):
-        # This is called inside an event handler, which means throwing
-        # SystemExit has no effect.
-        # https://github.com/gorakhargosh/watchdog/issues/294
-        if self.log_reload(filename):
-            self.should_reload = True
-
-    def start(self):
-        self.observer.start()
-        self.run()
-
-    def run(self):
-        if self.should_reload:
-            self.exit()
-        if self.is_closed():
-            return
-        to_delete = set(self.watches)
-        paths = _find_observable_paths(self.extra_files)
-        for path in paths:
-            if path not in self.watches:
-                try:
-                    self.watches[path] = self.observer.schedule(
-                        self.event_handler, path, recursive=True)
-                except OSError:
-                    # Clear this path from list of watches We don't want
-                    # the same error message showing again in the next
-                    # iteration.
-                    self.watches[path] = None
-            to_delete.discard(path)
-        for path in to_delete:
-            watch = self.watches.pop(path, None)
-            if watch is not None:
-                self.observer.unschedule(watch)
-        self.observable_paths = paths
-        self.sleep()
-
-    def check_modification(self, filename):
-        if filename in self.extra_files:
-            self.trigger_reload(filename)
-        dirname = os.path.dirname(filename)
-        if dirname.startswith(tuple(self.observable_paths)):
-            if filename.endswith(('.pyc', '.pyo')):
-                self.trigger_reload(filename[:-1])
-            elif filename.endswith('.py'):
-                self.trigger_reload(filename)
-
-
 def start(reloader_type='auto', interval=None):
     reloader = reloaders[reloader_type](interval=interval)
     try:
@@ -156,35 +93,9 @@ def start(reloader_type='auto', interval=None):
 
 
 reloaders = dict(
-    stat=StatReloader
+    stat=StatReloader,
+    auto=StatReloader
 )
-
-if Observer:
-    reloaders['watchdog'] = WatchdogReloader
-    reloaders['auto'] = reloaders['watchdog']
-
-    class CustomHandler(FileSystemEventHandler):
-
-        def __init__(self, reloader):
-            self.reloader = reloader
-            super().__init__()
-
-        def on_created(self, event):
-            self.reloader.check_modification(event.src_path)
-
-        def on_modified(self, event):
-            self.reloader.check_modification(event.src_path)
-
-        def on_moved(self, event):
-            self.reloader.check_modification(event.src_path)
-            self.reloader.check_modification(event.dest_path)
-
-        def on_deleted(self, event):
-            self.reloader.check_modification(event.src_path)
-
-else:   # pragma    nocover
-    reloaders['auto'] = reloaders['stat']
-
 
 # INTERNALS
 

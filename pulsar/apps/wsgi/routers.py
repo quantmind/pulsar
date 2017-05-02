@@ -415,7 +415,7 @@ class Router(metaclass=RouterType):
                 continue
             return view_args
 
-    def add_child(self, router, index=None):
+    def add_route(self, router, index=None):
         '''Add a new :class:`Router` to the :attr:`routes` list.
         '''
         assert isinstance(router, Router), 'Not a valid Router'
@@ -437,6 +437,7 @@ class Router(metaclass=RouterType):
         else:
             self.routes.insert(index, router)
         return router
+    add_child = add_route
 
     def remove_child(self, router):
         '''remove a :class:`Router` from the :attr:`routes` list.'''

@@ -4,6 +4,9 @@ import collections
 Mapping = collections.Mapping
 
 
+COLLECTIONS = (list, tuple, set, frozenset)
+
+
 def mapping_iterator(iterable):
     if isinstance(iterable, Mapping):
         return iterable.items()
@@ -22,12 +25,25 @@ def isgenerator(value):
 
 
 def aslist(value):
-    if isinstance(value, list):
+    if value is None:
+        return []
+    elif isinstance(value, list):
         return value
-    if isgenerator(value) or isinstance(value, (tuple, set, frozenset)):
+    elif isgenerator(value) or isinstance(value, COLLECTIONS):
         return list(value)
     else:
         return [value]
+
+
+def as_tuple(value):
+    if value is None:
+        return ()
+    elif isinstance(value, tuple):
+        return value
+    elif isgenerator(value) or isinstance(value, COLLECTIONS):
+        return tuple(value)
+    else:
+        return value,
 
 
 class AttributeDictionary(collections.Mapping):
