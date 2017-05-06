@@ -637,10 +637,18 @@ class HttpResponse(ProtocolConsumer):
         """Raises stored :class:`HTTPError` or :class:`URLError`, if occurred.
         """
         if not self.ok:
-            if self.status_code:
-                raise HttpRequestException(response=self)
+            reason = self.reason or 'No response from %s' % self.url
+            if not self.status_code:
+                raise HttpConnectionError(reason, response=self)
+
+            if 400 <= self.status_code < 500:
+                http_error_msg = '%s Client Error - %s - %s %s' % (
+                    self.status_code, reason, self.request.method, self.url)
             else:
-                raise HttpConnectionError(response=self)
+                http_error_msg = '%s Server Error - %s - %s %s' % (
+                    self.status_code, reason, self.request.method, self.url)
+
+            raise HttpRequestException(http_error_msg, response=self)
 
     def info(self):
         """Required by python CookieJar.
