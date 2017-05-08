@@ -164,8 +164,10 @@ def handle_wsgi_error(environ, exc):
         exc_info = True
     request = wsgi_request(environ)
     request.cache.handle_wsgi_error = True
-    request.cache.pop('response', None)
+    old_response = request.cache.pop('response', None)
     response = request.response
+    if old_response:
+        response.content_type = old_response.content_type
     logger = get_logger(environ)
     #
     if isinstance(exc, HTTPError):

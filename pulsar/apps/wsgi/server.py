@@ -17,7 +17,7 @@ from pulsar.api import BadRequest, ProtocolConsumer
 from pulsar.utils.lib import WsgiProtocol
 from pulsar.utils import http
 
-from .utils import handle_wsgi_error, wsgi_request, log_wsgi_info, LOGGER
+from .utils import handle_wsgi_error, log_wsgi_info, LOGGER
 from .formdata import HttpBodyReader
 from .wrappers import FileWrapper, close_object
 from .headers import CONTENT_LENGTH
@@ -144,7 +144,7 @@ class HttpServerResponse(ProtocolConsumer):
                 except (IOError, AbortWsgi, RuntimeError):
                     self.event('post_request').fire()
                 except Exception:
-                    if wsgi_request(environ).cache.get('handle_wsgi_error'):
+                    if self.get('handle_wsgi_error'):
                         self.logger.exception(
                             'Exception while handling WSGI error'
                         )
