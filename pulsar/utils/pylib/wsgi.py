@@ -7,9 +7,11 @@ from multidict import istr, CIMultiDict
 
 CHARSET = 'ISO-8859-1'
 CRLF = b'\r\n'
+HEAD = 'HEAD'
 MAX_CHUNK_SIZE = 65536
 TLS_SCHEMES = frozenset(('https', 'wss'))
 NO_CONTENT_CODES = frozenset((204, 304))
+NO_BODY_VERBS = frozenset((HEAD, 'OPTIONS'))
 URL_SCHEME = os.environ.get('wsgi.url_scheme', 'http')
 OS_SCRIPT_NAME = os.environ.get("SCRIPT_NAME", "")
 PULSAR_CACHE = 'pulsar.cache'
@@ -111,6 +113,7 @@ class WsgiProtocol:
 
         self.parsed_url = parsed_url
         self.environ.update((
+            ('RAW_URI', url.decode(CHARSET)),
             ('RAW_URI', url.decode(CHARSET)),
             ('REQUEST_METHOD', self.parser.get_method().decode(CHARSET)),
             ('QUERY_STRING', query.decode(CHARSET)),
@@ -266,7 +269,7 @@ class WsgiProtocol:
 
         if (content_length or
                 self.status == '200 Connection established' or
-                has_empty_content(status) or
+                has_empty_content(status, self.environ['REQUEST_METHOD']) or
                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
             chunked = False
             headers.pop(TRANSFER_ENCODING, None)
@@ -318,7 +321,7 @@ def has_empty_content(status, method=None):
     """204, 304 and 1xx codes have no content, same for HEAD requests"""
     return (status in NO_CONTENT_CODES or
             100 <= status < 200 or
-            method == 'HEAD')
+            method in NO_BODY_VERBS)
 
 
 def reraise(tp, value, tb=None):

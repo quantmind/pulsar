@@ -56,8 +56,8 @@ PUT = 'PUT'
 TRACE = 'TRACE'
 
 
-ENCODE_URL_METHODS = frozenset([DELETE, GET, HEAD, OPTIONS])
-ENCODE_BODY_METHODS = frozenset([PATCH, POST, PUT, TRACE])
+ENCODE_URL_METHODS = frozenset((DELETE, GET, HEAD, OPTIONS))
+ENCODE_BODY_METHODS = frozenset((PATCH, POST, PUT, TRACE))
 REDIRECT_CODES = (301, 302, 303, 305, 307)
 NO_CONTENT_CODES = frozenset((204, 304))
 
@@ -176,13 +176,6 @@ def remove_double_slash(route):
     if '//' in route:
         route = re.sub('/+', '/', route)
     return route
-
-
-def has_empty_content(status, method=None):
-    """204, 304 and 1xx codes have no content, same for HEAD requests"""
-    return (status in NO_CONTENT_CODES or
-            100 <= status < 200 or
-            method == HEAD)
 
 
 def is_succesful(status):

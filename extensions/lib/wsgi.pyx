@@ -291,7 +291,7 @@ cpdef has_empty_content(int status, str method=None):
     """204, 304 and 1xx codes have no content, same for HEAD requests"""
     return (status in NO_CONTENT_CODES or
             100 <= status < 200 or
-            method == 'HEAD')
+            method in NO_BODY_VERBS)
 
 
 cdef reraise(object tp, object value, object tb=None):

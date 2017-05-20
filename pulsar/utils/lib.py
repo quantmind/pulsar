@@ -8,7 +8,7 @@ else:
         from .clib import (
             EventHandler, ProtocolConsumer, Protocol, Producer, WsgiProtocol,
             AbortEvent, RedisParser, WsgiResponse, wsgi_cached, http_date,
-            FrameParser
+            FrameParser, has_empty_content
         )
     except ImportError:
         HAS_C_EXTENSIONS = False
@@ -17,7 +17,7 @@ else:
 if not HAS_C_EXTENSIONS:
     from .pylib.protocols import  ProtocolConsumer, Protocol, Producer  # noqa
     from .pylib.events import EventHandler, AbortEvent          # noqa
-    from .pylib.wsgi import WsgiProtocol, http_date             # noqa
+    from .pylib.wsgi import WsgiProtocol, http_date, has_empty_content  # noqa
     from .pylib.wsgiresponse import WsgiResponse, wsgi_cached   # noqa
     from .pylib.redisparser import RedisParser                  # noqa
     from .pylib.websocket import FrameParser                    # noqa
@@ -33,5 +33,6 @@ __all__ = [
     'WsgiResponse',
     'wsgi_cached',
     'http_date',
+    'has_empty_content',
     'RedisParser'
 ]

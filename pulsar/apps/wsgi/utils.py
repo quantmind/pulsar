@@ -5,13 +5,14 @@ from urllib.parse import parse_qsl
 
 from multidict import MultiDict
 
+from pulsar.utils.lib import has_empty_content
 from pulsar.utils.exceptions import format_traceback
 from pulsar.utils.system import json
 from pulsar.utils.html import escape
 from pulsar.utils.string import to_string
-from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES,
-                                  HTTPError, parse_dict_header,
-                                  JSON_CONTENT_TYPES)
+from pulsar.utils.httpurl import (
+    REDIRECT_CODES, HTTPError, parse_dict_header, JSON_CONTENT_TYPES
+)
 
 from .structures import Accept, RequestCacheControl
 from .content import Html, HtmlDocument

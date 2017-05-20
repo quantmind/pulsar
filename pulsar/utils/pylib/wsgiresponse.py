@@ -7,7 +7,7 @@ from wsgiref.handlers import format_date_time as http_date
 
 from multidict import CIMultiDict
 
-from ..httpurl import has_empty_content
+from .wsgi import has_empty_content, HEAD
 
 
 PULSAR_CACHE = 'pulsar.cache'
@@ -215,7 +215,9 @@ class WsgiResponse:
         """The list of headers for this response
         """
         headers = self.headers
-        if has_empty_content(self.status_code):
+        method = environ['REQUEST_METHOD']
+
+        if has_empty_content(self.status_code, method) and method != HEAD:
             headers.pop('content-type', None)
             headers.pop('content-length', None)
             self._content = ()
@@ -231,7 +233,7 @@ class WsgiResponse:
                     ct = '%s; charset=%s' % (ct, self.encoding)
             if ct:
                 headers['content-type'] = ct
-            if environ['REQUEST_METHOD'] == 'HEAD':
+            if method == HEAD:
                 self._content = ()
         # Cookies
         if (self.status_code < 400 and self._can_store_cookies and
