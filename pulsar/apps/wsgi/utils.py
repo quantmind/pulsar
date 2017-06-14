@@ -201,6 +201,7 @@ error_messages = {
 
 class dump_environ:
     __slots__ = ('environ',)
+    FILTERED_KEYS = ['HTTP_COOKIE']
 
     def __init__(self, environ):
         self.environ = environ
@@ -208,6 +209,8 @@ class dump_environ:
     def __str__(self):
         def _():
             for k, v in self.environ.items():
+                if k in self.FILTERED_KEYS:
+                    continue
                 try:
                     v = str(v)
                 except Exception as e:
