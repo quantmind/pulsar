@@ -273,6 +273,8 @@ class WsgiProtocol:
                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
             chunked = False
             headers.pop(TRANSFER_ENCODING, None)
+            if not content_length:
+                headers[CONTENT_LENGTH] = 0
         elif not chunked and not content_length:
             chunked = True
             headers[TRANSFER_ENCODING] = 'chunked'

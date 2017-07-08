@@ -100,7 +100,7 @@ http://jython.xhaus.com/http-compression-in-python-and-jython
     def available(self, environ, response):
         # It's not worth compressing non-OK or really short responses
         if response.status_code == 200:
-            if response.length() or 0 < self.min_length:
+            if (response.length() or 0) < self.min_length:
                 return False
             headers = response.headers
             ctype = headers.get('Content-Type', '').lower()

@@ -240,8 +240,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.json()
         self.assertTrue(content['gzipped'])
-        if 'content-encoding' in response.headers:
-            self.assertTrue(response.headers['content-encoding'], 'gzip')
+        # if 'content-encoding' in response.headers:
+        self.assertTrue(response.headers['content-encoding'], 'gzip')
 
     async def test_post_json(self):
         http = self._client

@@ -382,7 +382,7 @@ class Router(metaclass=RouterType):
             try:
                 request = wsgi_request(environ, hnd.router, hnd.urlargs)
                 return hnd.handler(request)
-            except SkipRoute:
+            except self.SkipRoute:
                 pass
 
     @lru_cache(maxsize=1024)

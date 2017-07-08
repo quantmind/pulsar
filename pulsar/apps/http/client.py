@@ -50,6 +50,7 @@ from .plugins import (
 )
 from .auth import Auth, HTTPBasicAuth
 from .stream import HttpStream
+from .decompress import GzipDecompress, DeflateDecompress
 
 
 scheme_host = namedtuple('scheme_host', 'scheme netloc')
@@ -698,6 +699,7 @@ class HttpResponse(ProtocolConsumer):
         return content or b''
 
     def on_message_complete(self):
+        self.producer.maybe_decompress(self)
         self.fire_event('post_request')
 
     def write_body(self):
@@ -831,6 +833,10 @@ class HttpClient(AbstractClient):
         self.event('on_headers').bind(handle_cookies)
         self.event('post_request').bind(Redirect())
         self.event('post_request').bind(Expect())
+        self._decompressors = dict(
+            gzip=GzipDecompress(),
+            deflate=DeflateDecompress()
+        )
 
     # API
     def connect(self, address):
@@ -930,6 +936,14 @@ class HttpClient(AbstractClient):
             waiters.append(p.close())
         self.connection_pools.clear()
         return asyncio.gather(*waiters, loop=self._loop)
+
+    def maybe_decompress(self, response):
+        encoding = response.headers.get('content-encoding')
+        if response.request.decompress and encoding:
+            deco = self._decompressors.get(encoding)
+            if not deco:
+                self.logger.warning('Cannot decompress %s', encoding)
+            response.content = deco(response.content)
 
     async def __aenter__(self):
         await self.close()
