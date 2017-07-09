@@ -53,9 +53,10 @@ class PulsarProtocol(Protocol, FlowControl, Timeout, Pipeline):
                     except Exception:
                         pass
                 try:
+                    worker = self.close_pipeline()
                     self.transport.close()
                     closed = self._loop.create_task(
-                        self._close(event.waiter())
+                        self._close(event.waiter(), worker)
                     )
                 except Exception:
                     pass
@@ -81,9 +82,11 @@ class PulsarProtocol(Protocol, FlowControl, Timeout, Pipeline):
             info.update(self.producer.info())
         return info
 
-    async def _close(self, waiter):
+    async def _close(self, waiter, pipeline_worker):
         try:
             with timeout(CLOSE_TIMEOUT, loop=self._loop):
+                if pipeline_worker:
+                    await pipeline_worker
                 await waiter
         except asyncio.TimeoutError:
             self.logger.warning('Abort connection %s', self)

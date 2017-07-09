@@ -384,11 +384,10 @@ def _info_monitor(actor, data=None, **kw):
     if actor.monitors:
         monitors = {}
 
-        for m in actor.monitors.values():
+        for name, m in actor.monitors.items():
             info = m.info()
             if info:
-                actor = info['actor']
-                monitors[actor['name']] = info
+                monitors[name] = info
 
         data['monitors'] = monitors
         server['number_of_monitors'] = len(monitors)

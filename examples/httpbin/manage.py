@@ -78,13 +78,12 @@ class BaseRouter(wsgi.Router):
             args, files = request.data_and_files()
             jfiles = MultiDict()
             if files:
-                for name in files:
-                    for part in files.getall(name):
-                        try:
-                            part = part.string()
-                        except UnicodeError:
-                            part = part.base64()
-                        jfiles.add(name, part)
+                for name, part in files.items():
+                    try:
+                        part = part.string()
+                    except UnicodeError:
+                        part = part.base64()
+                    jfiles.add(name, part)
             data.update((('args', as_dict(args)),
                          ('files', as_dict(jfiles))))
         data.update(params)

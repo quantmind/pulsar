@@ -1,7 +1,6 @@
 '''Tests the RPC "calculator" example.'''
 import unittest
 import types
-from asyncio import get_event_loop
 
 from pulsar.api import send
 from pulsar.apps import rpc, http
@@ -94,14 +93,14 @@ class TestRpcOnThread(unittest.TestCase):
         response = await self.p.calc.divide(50, 25)
         self.assertEqual(response, 2)
 
-    async def test_info(self):
+    async def __test_info(self):
         response = await self.p.server_info()
         self.assertTrue('server' in response)
         server = response['server']
         self.assertTrue('version' in server)
         app = response['monitors'][self.app_cfg.name]
         if self.concurrency == 'thread':
-            self.assertFalse(app['workers'])
+            self.assertFalse(app.get('workers'))
             worker = app
         else:
             workers = app['workers']
@@ -146,7 +145,7 @@ class TestRpcOnThread(unittest.TestCase):
         with self.assertRaises(rpc.InternalError):
             await self.p.dodgy_method()
 
-    async def testpaths(self):
+    async def test_paths(self):
         '''Fetch a sizable ammount of data'''
         response = await self.p.calc.randompaths(num_paths=20, size=100,
                                                  mu=1, sigma=2)
@@ -246,16 +245,3 @@ class TestRpcOnThread(unittest.TestCase):
 @dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):
     concurrency = 'process'
-
-    async def setUp(self):
-        response = await self.p.ping()
-        self.assertEqual(response, 'pong')
-
-    # Synchronous client
-    async def __test_sync_ping(self):
-        await get_event_loop().run_in_executor(None, self._test_sync_ping)
-
-    def _test_sync_ping(self):
-        sync = rpc.JsonProxy(self.uri, sync=True)
-        self.assertEqual(sync.ping(), 'pong')
-        self.assertEqual(sync.ping(), 'pong')

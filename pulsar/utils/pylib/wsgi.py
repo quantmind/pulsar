@@ -143,13 +143,16 @@ class WsgiProtocol:
 
         self.environ['HTTP_%s' % header_env] = header_value
 
+        #
+        # handle expect=100-continue
         if header == EXPECT and header_value.lower() == '100-continue':
             self.body_reader()
 
     def on_headers_complete(self):
         if 'SERVER_PROTOCOL' not in self.environ:
             self.environ['SERVER_PROTOCOL'] = (
-                "HTTP/%s" % self.parser.get_http_version())
+                "HTTP/%s" % self.parser.get_http_version()
+            )
 
         forward = self.headers.get(X_FORWARDED_FOR)
         client_address = self.client_address
@@ -259,6 +262,7 @@ class WsgiProtocol:
         chunked = headers.get(TRANSFER_ENCODING) == 'chunked'
         content_length = CONTENT_LENGTH in headers
         status = int(self.status.split()[0])
+        empty = has_empty_content(status, self.environ['REQUEST_METHOD'])
 
         if status >= 400:
             self.keep_alive = False
@@ -267,13 +271,12 @@ class WsgiProtocol:
             # we are sending headers but the start_response was not called
             raise RuntimeError('Headers not set.')
 
-        if (content_length or
+        if (content_length or empty or
                 self.status == '200 Connection established' or
-                has_empty_content(status, self.environ['REQUEST_METHOD']) or
                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
             chunked = False
             headers.pop(TRANSFER_ENCODING, None)
-            if not content_length:
+            if not empty and not content_length:
                 headers[CONTENT_LENGTH] = 0
         elif not chunked and not content_length:
             chunked = True

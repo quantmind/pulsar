@@ -18,7 +18,7 @@ from .structures import Accept, RequestCacheControl
 from .content import Html, HtmlDocument
 
 
-DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
+DEFAULT_RESPONSE_CONTENT_TYPES = ('text/plain', 'text/html',
                                   ) + JSON_CONTENT_TYPES
 
 

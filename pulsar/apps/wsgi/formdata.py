@@ -10,6 +10,7 @@ from functools import reduce
 from cgi import valid_boundary, parse_header
 from inspect import isawaitable
 from asyncio import ensure_future
+from typing import Dict, Callable
 
 from multidict import MultiDict
 
@@ -33,6 +34,11 @@ def http_protocol(parser):
 
 
 class HttpBodyReader:
+    """Asynchronous body reader and parser
+
+    An instance of this class is injected into the wsgi.input key
+    of the WSGI environment
+    """
     _expect_sent = None
     reader = None
 
@@ -139,8 +145,9 @@ def parse_form_data(request, stream=None, **kw):
 
 
 class FormDecoder:
-
-    def __init__(self, request, options, stream):
+    """Base class for decoding HTTP body data
+    """
+    def __init__(self, request, options: Dict, stream: Callable) -> None:
         self.request = request
         self.options = options
         self.stream = stream
@@ -156,14 +163,20 @@ class FormDecoder:
         return self.options.get('charset', 'utf-8')
 
     def parse(self):
+        """Parse data
+        """
         raise NotImplementedError
 
 
 class MultipartDecoder(FormDecoder):
-    boundary = None
+    buffer = None
+
+    @property
+    def boundary(self):
+        return self.options.get('boundary', '')
 
     def parse(self):
-        boundary = self.options.get('boundary', '')
+        boundary = self.boundary
         if not valid_boundary(boundary):
             raise HttpException("Invalid boundary for multipart/form-data",
                                 status=422)
@@ -171,7 +184,7 @@ class MultipartDecoder(FormDecoder):
         self.buffer = bytearray()
 
         if isinstance(inp, HttpBodyReader):
-            return inp.reader._loop.create_task(self._consume(inp, boundary))
+            return self._consume(inp, boundary)
         else:
             producer = BytesProducer(inp)
             return producer(self._consume, boundary)
@@ -321,6 +334,7 @@ class MultipartPart:
         return self._done
 
     def feed_data(self, data):
+        """Feed new data into the MultiPart parser or the data stream"""
         if data:
             self._bytes.append(data)
             if self.parser.stream:

@@ -158,7 +158,7 @@ class HttpTunnel(RequestBase):
         self.url = '%s://%s:%s' % scheme_host_port(url)
         self.parser = request.parser
         request.new_parser()
-        self.headers = request.client.tunnel_headers.copy()
+        self.headers = CIMultiDict(request.client.DEFAULT_TUNNEL_HEADERS)
 
     def __repr__(self):
         return 'Tunnel %s' % self.url
@@ -247,7 +247,7 @@ class HttpRequest(RequestBase):
                  allow_redirects=False, decompress=True, version=None,
                  wait_continue=False, websocket_handler=None, cookies=None,
                  params=None, stream=False, proxies=None, verify=True,
-                 **ignored):
+                 cert=None, **ignored):
         self.client = client
         self.method = method.upper()
         self.inp_params = inp_params or {}
@@ -263,6 +263,7 @@ class HttpRequest(RequestBase):
         self.source_address = source_address
         self.stream = stream
         self.verify = verify
+        self.cert = cert
         if auth and not isinstance(auth, Auth):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
@@ -499,10 +500,23 @@ class HttpRequest(RequestBase):
     # PROXY INTERNALS
     def _set_proxy(self, proxies, ignored):
         url = urlparse(self.url)
-        self.unredirected_headers['host'] = host_no_default_port(url.scheme,
-                                                                 url.netloc)
+        self.unredirected_headers['host'] = host_no_default_port(
+            url.scheme, url.netloc
+        )
         if url.scheme in tls_schemes:
-            self._ssl = self.client._ssl_context(verify=self.verify, **ignored)
+            certfile = None
+            keyfile = None
+            if self.cert:
+                if isinstance(self.cert, tuple):
+                    certfile, keyfile = self.cert
+                else:
+                    certfile = self.cert
+            self._ssl = self.client.ssl_context(
+                verify=self.verify,
+                certfile=certfile,
+                keyfile=keyfile,
+                **ignored
+            )
 
         request_proxies = self.client.proxies.copy()
         if proxies:
@@ -768,23 +782,31 @@ class HttpClient(AbstractClient):
 
     It can be overwritten on :meth:`request`.
     """
-    DEFAULT_HTTP_HEADERS = CIMultiDict((
+    DEFAULT_HTTP_HEADERS = (
         ('Connection', 'Keep-Alive'),
         ('Accept', '*/*'),
         ('Accept-Encoding', 'deflate'),
-        ('Accept-Encoding', 'gzip')))
-    DEFAULT_TUNNEL_HEADERS = CIMultiDict((
+        ('Accept-Encoding', 'gzip')
+    )
+    DEFAULT_TUNNEL_HEADERS = (
         ('Connection', 'Keep-Alive'),
-        ('Proxy-Connection', 'Keep-Alive')))
-    request_parameters = ('max_redirects', 'decompress',
-                          'websocket_handler', 'version',
-                          'verify', 'stream')
+        ('Proxy-Connection', 'Keep-Alive')
+    )
+    request_parameters = (
+        'max_redirects',
+        'decompress',
+        'websocket_handler',
+        'version',
+        'verify',
+        'stream',
+        'cert'
+    )
     # Default hosts not affected by proxy settings. This can be overwritten
     # by specifying the "no" key in the proxies dictionary
     no_proxy = set(('localhost', platform.node()))
 
     def __init__(self, proxies=None, headers=None, verify=True,
-                 cookies=None, store_cookies=True,
+                 cookies=None, store_cookies=True, cert=None,
                  max_redirects=10, decompress=True, version=None,
                  websocket_handler=None, parser=None, trust_env=True,
                  loop=None, client_version=None, timeout=None, stream=False,
@@ -806,11 +828,16 @@ class HttpClient(AbstractClient):
         self.cookies = cookiejar_from_dict(cookies)
         self.decompress = decompress
         self.version = version or self.version
+        # SSL Verification default
         self.verify = verify
+        # SSL client certificate default, if String, path to ssl client
+        # cert file (.pem). If Tuple, ('cert', 'key') pair
+        self.cert = cert
         self.stream = stream
         self.close_connections = close_connections
-        dheaders = self.DEFAULT_HTTP_HEADERS.copy()
+        dheaders = CIMultiDict(self.DEFAULT_HTTP_HEADERS)
         dheaders['user-agent'] = self.client_version
+        # override headers
         if headers:
             for name, value in mapping_iterator(headers):
                 if value is None:
@@ -818,7 +845,6 @@ class HttpClient(AbstractClient):
                 else:
                     dheaders[name] = value
         self.headers = dheaders
-        self.tunnel_headers = self.DEFAULT_TUNNEL_HEADERS.copy()
         self.proxies = dict(proxies or ())
         if not self.proxies and self.trust_env:
             self.proxies = get_environ_proxies()
@@ -914,13 +940,10 @@ class HttpClient(AbstractClient):
 
         :param method: request method for the :class:`HttpRequest`.
         :param url: URL for the :class:`HttpRequest`.
-        :parameter response: optional pre-existing :class:`.HttpResponse` which
-            starts a new request (for redirects, digest authentication and
-            so forth).
         :param params: optional parameters for the :class:`HttpRequest`
             initialisation.
 
-        :rtype: a :class:`.Future`
+        :rtype: a coroutine
         """
         response = self._request(method, url, **params)
         if not self._loop.is_running():
@@ -1005,14 +1028,20 @@ class HttpClient(AbstractClient):
     def get_headers(self, request, headers):
         # Returns a :class:`Header` obtained from combining
         # :attr:`headers` with *headers*. Can handle websocket requests.
-        d = self.headers.copy()
+        # TODO: this is a buf in CIMultiDict
+        # d = self.headers.copy()
+        d = CIMultiDict(self.headers.items())
         if headers:
             d.update(headers)
         return d
 
-    def _ssl_context(self, verify=True, cert_reqs=None,
-                     check_hostname=False, certfile=None, keyfile=None,
-                     cafile=None, capath=None, cadata=None, **kw):
+    def ssl_context(self, verify=True, cert_reqs=None,
+                    check_hostname=False, certfile=None, keyfile=None,
+                    cafile=None, capath=None, cadata=None, **kw):
+        """Create a SSL context object.
+
+        This method should not be called by from user code
+        """
         assert ssl, 'SSL not supported'
         cafile = cafile or DEFAULT_CA_BUNDLE_PATH
 

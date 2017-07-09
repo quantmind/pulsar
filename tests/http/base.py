@@ -328,8 +328,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = await http.put(self.httpbin('upload'), data=data,
                                   files={'test': file_data})
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.content,
-                         b'Request content length too large. Limit is 256.0KB')
+        self.assertEqual(response.text,
+                         'Request content length too large. Limit is 256.0KB')
 
     async def test_HttpResponse(self):
         c = await HttpWsgiClient().create_connection('127.0.0.1')
@@ -387,9 +387,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         self.assertEqual(http.version, 'HTTP/1.1')
         response = await http.get(
-            self.httpbin(), headers={'connection': 'close'})
+            self.httpbin(),
+            headers={'connection': 'close'}
+        )
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
+        response = await http.get(self.httpbin())
+        self._check_pool(http, response, sessions=2, processed=2)
 
     async def test_post(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
@@ -667,7 +671,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             self.httpbin('media/httpbin.js'),
             headers={'If-modified-since': modified})
         self.assertEqual(response.status_code, 304)
-        self.assertFalse('Content-length' in response.headers)
+        self.assertFalse('content-length' in response.headers)
 
     async def test_http_get_timeit(self):
         N = 10

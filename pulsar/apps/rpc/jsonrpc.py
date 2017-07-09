@@ -167,15 +167,14 @@ class JsonProxy(AsyncObject):
 
     :param url: server location
     :param version: JSON-RPC server version. Default ``2.0``
-    :param id: optional request id, generated if not provided.
-        Default ``None``.
-    :param data: Extra data to include in all requests. Default ``None``.
+    :param data: Extra data to include in all requests. Default ``None``
+    :param headers: optional HTTP headers to send with requests
     :param full_response: return the full Http response rather than
         just the content.
     :param http: optional http client. If provided it must have the ``request``
         method available which must be of the form::
 
-            http.request(url, body=..., method=...)
+            http.post(url, data=..., headers=...)
 
         Default ``None``.
     :param encoding: encoding of the request. Default ``ascii``.
@@ -192,11 +191,16 @@ class JsonProxy(AsyncObject):
     separator = '.'
     default_version = '2.0'
     default_timeout = 30
+    default_headers = {
+        'accept': 'application/json, text/*; q=0.5',
+        'content-type': 'application/json'
+    }
 
-    def __init__(self, url, version=None, data=None,
+    def __init__(self, url, version=None, data=None, headers=None,
                  full_response=False, http=None, timeout=None, sync=False,
                  loop=None, encoding='ascii', **kw):
         self.sync = sync
+        self.headers = headers
         self._url = url
         self._version = version or self.__class__.default_version
         self._full_response = full_response
@@ -206,9 +210,7 @@ class JsonProxy(AsyncObject):
             if sync and not loop:
                 loop = asyncio.new_event_loop()
             http = HttpClient(timeout=timeout, loop=loop, **kw)
-        http.headers['accept'] = 'application/json, text/*; q=0.5'
-        http.headers['content-type'] = 'application/json'
-        self._http = http
+        self.http = http
         self._encoding = encoding
 
     @property
@@ -221,7 +223,7 @@ class JsonProxy(AsyncObject):
 
     @property
     def _loop(self):
-        return self._http._loop
+        return self.http._loop
 
     def makeid(self):
         '''Can be re-implemented by your own Proxy'''
@@ -239,8 +241,13 @@ class JsonProxy(AsyncObject):
     async def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
         is_ascii = self._encoding == 'ascii'
-        body = json.dumps(data, ensure_ascii=is_ascii).encode(self._encoding)
-        resp = await self._http.post(self._url, data=body)
+        data = json.dumps(data, ensure_ascii=is_ascii).encode(self._encoding)
+        return await self._send(data)
+
+    async def _send(self, data):
+        headers = self.default_headers.copy()
+        headers.update(self.headers or ())
+        resp = await self.http.post(self._url, data=data, headers=headers)
         if self._full_response:
             return resp
         else:
@@ -271,15 +278,19 @@ class JsonProxy(AsyncObject):
         else:
             return kwargs
 
-    @staticmethod
-    def loads(obj):
+    @classmethod
+    def loads(cls, obj):
         if isinstance(obj, dict):
             if 'error' in obj:
                 error = obj['error']
-                raise exception(error.get('code'), error.get('message'))
+                raise cls.exception(error.get('code'), error.get('message'))
             else:
                 return obj.get('result')
         return obj
+
+    @classmethod
+    def exception(cls, code, msg):
+        return exception(code, msg)
 
 
 class JsonBatchProxy(JsonProxy):
@@ -311,62 +322,44 @@ class JsonBatchProxy(JsonProxy):
         >>> a.ping()
         'i71a9b79eef9b48eea2fb9d691c8e897e'
 
-        >>> for each in (await a):
+        >>> for each in (await a()):
         >>>     print(each.id, each.result, each.exception)
 
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._batch = []
-
-    def discard(self):
-        """Clear pool of batch requests."""
-        self._batch = []
+    _batch = None
 
     def __len__(self):
-        return len(self._batch)
+        return len(self._batch or ())
+
+    async def __call__(self):
+        if not self._batch:
+            return ()
+        data = b'[' + b','.join(self._batch) + b']'
+        self._batch = None
+        return await self._send(data)
 
     def _call(self, name, *args, **kwargs):
         data = self._get_data(name, *args, **kwargs)
         is_ascii = self._encoding == 'ascii'
         body = json.dumps(data, ensure_ascii=is_ascii).encode(self._encoding)
+        if not self._batch:
+            self._batch = []
         self._batch.append(body)
         return data['id']
 
-    async def __call__(self):
-        if not self._batch:
-            return
+    @classmethod
+    def loads(cls, obj):
+        if not isinstance(obj, list):
+            obj = [obj]
 
-        resp = await self._http.post(
-            self._url, data=b'[' + b','.join(self._batch) + b']')
-
-        if self._full_response:
-            self.discard()
-            return resp
-        else:
-            content = resp.json()
-            if not resp.ok:
-                if 'error' not in content:
-                    resp.raise_for_status()
-            self.discard()
-            return self._response_gen(content)
-
-    @staticmethod
-    def _response_gen(content):
-        if not isinstance(content, list):
-            content = [content]
-
-        for resp in content:
+        for resp in obj:
             try:
                 yield BatchResponse(
                     id=resp['id'],
-                    result=JsonBatchProxy.loads(resp),
+                    result=JsonProxy.loads(resp),
                     exception=None
                 )
             except Exception as err:
                 yield BatchResponse(
                     id=resp['id'], result=None, exception=err
                 )
-
-    def __iter__(self):
-        return self()

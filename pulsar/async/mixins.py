@@ -162,14 +162,18 @@ class Pipeline:
             self.event('connection_lost').bind(self._close_pipeline)
         self._pipeline.put(consumer)
 
+    def close_pipeline(self):
+        if self._pipeline:
+            p, self._pipeline = self._pipeline, None
+            return p.close()
+
     def _close_pipeline(self, _, **kw):
-        if self._pipeline.worker:
-            self._pipeline.worker.cancel()
-        self._pipeline = None
+        self.close_pipeline()
 
 
 class ResponsePipeline:
-
+    """Maintains a queue of responses to send back to the client
+    """
     def __init__(self, connection):
         self.connection = connection
         self.queue = Queue(loop=connection._loop)
@@ -195,3 +199,7 @@ class ResponsePipeline:
         self.connection = None
         self.queue = None
         self.worker = None
+
+    def close(self):
+        self.worker.cancel()
+        return self.worker
