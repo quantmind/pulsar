@@ -17,7 +17,7 @@
 :Keywords: client, server, asynchronous, concurrency, actor, thread, process,
     socket, wsgi, websocket, redis, json-rpc
 
-.. |pypiversion| image:: https://img.shields.io/pypi/v/requests.svg
+.. |pypiversion| image:: https://img.shields.io/pypi/v/pulsar.svg
     :target: https://pypi.python.org/pypi/pulsar
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/pulsar.svg
   :target: https://pypi.python.org/pypi/pulsar
@@ -37,8 +37,8 @@
   :target: https://coveralls.io/github/quantmind/pulsar?branch=dev
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/w2ip01j07qm161ei?svg=true
     :target: https://ci.appveyor.com/project/lsbardel/pulsar
-.. |contributors| image:: https://img.shields.io/github/contributors/pulsar/pulsar.svg
-    :target: https://github.com/requests/requests/graphs/pulsar
+.. |contributors| image:: https://img.shields.io/github/contributors/quantmind/pulsar.svg
+    :target: https://github.com/quantmind/pulsar/graphs/contributors
 
 
 An example of a web server written with ``pulsar`` which responds with
