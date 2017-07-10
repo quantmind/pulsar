@@ -66,8 +66,7 @@ class TestEchoServerThread(unittest.TestCase):
     async def test_info(self):
         info = await send(self.server_cfg.name, 'info')
         self.assertIsInstance(info, dict)
-        self.assertEqual(info['actor']['name'], self.server_cfg.name)
-        self.assertEqual(info['actor']['concurrency'], self.concurrency)
+        self.assertEqual(info['server']['name'], self.server_cfg.name)
 
     async def test_connection(self):
         client = Echo(self.server_cfg.addresses[0], full_response=True)

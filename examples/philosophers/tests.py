@@ -7,7 +7,9 @@ from pulsar.apps.test import test_timeout
 from examples.philosophers.manage import DiningPhilosophers
 
 
-class TestPhylosophers(unittest.TestCase):
+class TestPhilosophers(unittest.TestCase):
+    """Integration tests for the philosophers app
+    """
     app_cfg = None
 
     @classmethod

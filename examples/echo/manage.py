@@ -196,7 +196,7 @@ class Echo(AbstractClient):
 
     async def _call(self, message):
         connection = await self.pool.connect()
-        with connection:
+        async with connection:
             consumer = connection.current_consumer()
             consumer.start(message)
             await consumer.event('post_request').waiter()

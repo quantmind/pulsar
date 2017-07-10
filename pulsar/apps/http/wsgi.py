@@ -1,6 +1,6 @@
 """Classes for testing WSGI servers using the HttpClient
 """
-from asyncio import Transport
+from asyncio import Transport, gather
 
 import pulsar
 from pulsar.apps import http
@@ -64,10 +64,23 @@ class DummyConnection(Pipeline):
         if waiter:
             await waiter
 
-    async def close(self):
+    def close(self, other_side=True):
+        """Close the connection
+
+        Close the pipeline if open and make sure the other connection
+        is closed too.
+
+        :param other_side: if True close the other_side connection too.
+            used to avoid infinite loop
+        """
+        waiters = [self.close_pipeline()]
+        if self.other_side and other_side:
+            waiters.append(self.other_side.close(False))
         if self.transport:
             self.transport.close()
-        return self.close_pipeline()
+        waiters = [w for w in waiters if w]
+        if waiters:
+            return waiters[0] if len(waiters) == 1 else gather(*waiters)
 
 
 class DummyClientConnection(DummyConnection, Protocol):
