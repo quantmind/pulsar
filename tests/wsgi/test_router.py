@@ -70,9 +70,9 @@ class TestRouter(unittest.TestCase):
 
     def router(self, path='/'):
         class testRouter(Router):
-            response_content_types = RouterParam(('text/html',
-                                                  'text/plain',
-                                                  'application/json'))
+            response_content_types = RouterParam(
+                ('text/html', 'text/plain', 'application/json')
+            )
 
             def get(self, request):
                 return 'Hello World!'

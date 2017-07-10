@@ -1002,7 +1002,7 @@ class HttpClient(AbstractClient):
             except ConnectionRefusedError as e:
                 raise HttpConnectionError(str(e), response=self) from None
 
-            with conn:
+            async with conn:
                 try:
                     response = await start_request(request, conn)
                     status_code = response.status_code
@@ -1017,7 +1017,7 @@ class HttpClient(AbstractClient):
                         (response.request.stream and not
                          response.event('post_request').fired()) or
                         self.close_connections):
-                    conn.detach()
+                    await conn.detach()
 
             # Handle a possible redirect
             if response and isinstance(response.request_again, tuple):

@@ -45,10 +45,6 @@ def set_wsgi_request_class(RequestClass):
     _RequestClass = RequestClass
 
 
-def get_logger(environ):
-    return getattr(environ.get(PULSAR_CACHE), 'logger', LOGGER)
-
-
 def log_wsgi_info(log, environ, status, exc=None):
     if not environ.get('pulsar.logged'):
         environ['pulsar.logged'] = True
@@ -57,7 +53,8 @@ def log_wsgi_info(log, environ, status, exc=None):
             environ.get('REQUEST_METHOD'),
             environ.get('RAW_URI'),
             environ.get('SERVER_PROTOCOL'),
-            status, msg)
+            status,
+            msg)
 
 
 _accept_re = re.compile(r'([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?')
@@ -170,7 +167,7 @@ def handle_wsgi_error(environ, exc):
     response = request.response
     if old_response:
         response.content_type = old_response.content_type
-    logger = get_logger(environ)
+    logger = request.logger
     #
     if isinstance(exc, HTTPError):
         response.status_code = exc.code or 500

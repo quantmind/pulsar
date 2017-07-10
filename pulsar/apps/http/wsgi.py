@@ -12,16 +12,25 @@ from pulsar.async.mixins import Pipeline
 
 
 class DummyTransport(Transport):
+    """A Dummy Transport
 
+    data is not sent through the wire, instead it is passed to
+    the connection other side object.
+    """
     def __init__(self, connection, address, ssl=None):
         super().__init__()
         self.connection = connection
+        self._is_closing = False
         self._extra['sockname'] = address
 
     def can_write_eof(self):
         return False
 
+    def is_closing(self):
+        return self._is_closing
+
     def close(self):
+        self._is_closing = True
         self.connection.connection_lost(None)
 
     def abort(self):
@@ -44,18 +53,21 @@ class DummyConnection(Pipeline):
     def write(self, data):
         self.transport.write(data)
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, type, value, traceback):
-        self.close()
+    async def __aexit__(self, type, value, traceback):
+        await self.detach()
 
-    def detach(self, discard=True):
-        self.close()
+    async def detach(self, discard=True):
+        waiter = self.close()
+        if waiter:
+            await waiter
 
-    def close(self):
+    async def close(self):
         if self.transport:
             self.transport.close()
+        return self.close_pipeline()
 
 
 class DummyClientConnection(DummyConnection, Protocol):

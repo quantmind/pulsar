@@ -132,8 +132,11 @@ if __name__ == '__main__':
         AgileManager(description='Release manager for pulsar',
                      argv=sys.argv[2:]).start()
     else:
+        err = None
         try:
             run_setup(True)
         except ext.BuildFailed as exc:
-            print('WARNING: C extensions could not be compiled: %s' % exc.msg)
+            err = exc.msg
+        if err:
+            print('WARNING: C extensions could not be compiled: %s' % err)
             run_setup(False)

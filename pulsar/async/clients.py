@@ -204,7 +204,7 @@ class PoolConnection:
             conn, self.connection = self.connection, None
             return conn
 
-    def detach(self, discard=True):
+    async def detach(self, discard=True):
         '''Remove the underlying :attr:`connection` from the connection
         :attr:`pool`.
         '''
@@ -214,10 +214,10 @@ class PoolConnection:
             self.connection._exit_ = False
             return self
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, type, value, traceback):
+    async def __aexit__(self, type, value, traceback):
         if getattr(self.connection, '_exit_', True):
             self.close()
         else:
