@@ -17,7 +17,7 @@ class TestArbiterProcess(ActorTestMixin, unittest.TestCase):
         arbiter = get_actor()
         self.assertEqual(arbiter, get_arbiter())
         self.assertTrue(arbiter.is_arbiter())
-        self.assertEqual(arbiter.impl.kind, 'arbiter')
+        self.assertEqual(arbiter.concurrency.kind, 'arbiter')
         self.assertEqual(arbiter.aid, 'arbiter')
         self.assertEqual(arbiter.name, 'arbiter')
         self.assertTrue(arbiter.monitors)

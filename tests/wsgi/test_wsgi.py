@@ -194,7 +194,7 @@ class WsgiRequestTests(unittest.TestCase):
         except ValueError as exc:
             response = wsgi.handle_wsgi_error(request.environ, exc)
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.content_type, 'text/html')
+        self.assertEqual(response.content_type, 'text/plain')
         self.assertEqual(len(response.content), 1)
 
     async def test_handle_wsgi_error_debug_html(self):
@@ -202,6 +202,7 @@ class WsgiRequestTests(unittest.TestCase):
         cfg.set('debug', True)
         request = await test_wsgi_request()
         request.environ['pulsar.cfg'] = cfg
+        request.environ['default.content_type'] = 'text/html'
         try:
             raise ValueError('just a test for debug wsgi error handler')
         except ValueError as exc:

@@ -10,6 +10,7 @@ from pulsar.utils.exceptions import format_traceback
 from pulsar.utils.system import json
 from pulsar.utils.html import escape
 from pulsar.utils.string import to_string
+from pulsar.utils.structures import as_tuple
 from pulsar.utils.httpurl import (
     REDIRECT_CODES, HTTPError, parse_dict_header, JSON_CONTENT_TYPES
 )
@@ -207,7 +208,8 @@ def render_error(request, exc):
     if not response.content_type:
         content_type = request.get('default.content_type')
         response.content_type = request.content_types.best_match(
-            content_type or DEFAULT_RESPONSE_CONTENT_TYPES)
+            as_tuple(content_type or DEFAULT_RESPONSE_CONTENT_TYPES)
+        )
     content_type = None
     if response.content_type:
         content_type = response.content_type.split(';')[0]

@@ -33,8 +33,7 @@ class TestGreenIO(unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
-                   concurrency=cls.cfg.concurrency)
+        s = server(name=cls.__name__.lower(), bind='127.0.0.1:0')
         cls.server_cfg = await send('arbiter', 'run', s)
         cls.client = EchoGreen(cls.server_cfg.addresses[0])
 
@@ -166,7 +165,7 @@ class TestGreenIO(unittest.TestCase):
         http = greenio.GreenHttp()
         response = http.get('http://quantmind.com')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.text())
+        self.assertTrue(response.text)
 
 
 async def async_function(test):

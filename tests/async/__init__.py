@@ -57,7 +57,7 @@ def cause_timeout(actor):
 
 def cause_terminate(actor):
     actor.cfg.set('timeout', 100*actor.cfg.timeout)
-    actor.impl.kill = kill_hack(actor.impl.kill)
+    actor.concurrency.kill = kill_hack(actor.concurrency.kill)
     actor.stop = lambda exc=None, exit_code=None: False
 
 
