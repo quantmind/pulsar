@@ -96,6 +96,19 @@ class PulsarProtocol(Protocol, FlowControl, Timeout, Pipeline):
 class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
     """An ``asyncio.DatagramProtocol`` with events`
     """
+    def datagram_received(self, data, addr):
+        self.data_received_count += 1
+        while data:
+            consumer = self.current_consumer()
+            if not consumer.request:
+                consumer.start()
+            toprocess = consumer.feed_data(data)
+            consumer.fire_event('data_processed', data=data, exc=None)
+            data = toprocess
+        self.changed()
+
+    def write(self, data):
+        self.transport.sendto(data)
 
 
 class Connection(PulsarProtocol, asyncio.Protocol):
@@ -124,19 +137,34 @@ class Connection(PulsarProtocol, asyncio.Protocol):
         return info
 
 
-class ServerMixin:
-    _server = None
-    _started = None
+class TcpServer(Producer):
+    """A :class:`.Producer` of server :class:`Connection` for TCP servers.
 
-    def __init__(self, address=None, sockets=None, logger=None,
-                 max_requests=None, cfg=None, server_software=None):
+    .. attribute:: _server
+
+        A :class:`.Server` managed by this Tcp wrapper.
+
+        Available once the :meth:`start_serving` method has returned.
+    """
+    ONE_TIME_EVENTS = ('start', 'stop')
+
+    def __init__(self, protocol_factory, *, loop=None,
+                 name=None, keep_alive=None, logger=None,
+                 max_requests=None, cfg=None,
+                 server_software=None, **kwargs):
+        super().__init__(protocol_factory, loop=loop, name=name)
+        self.keep_alive = max(keep_alive or 0, 0)
+        self._concurrent_connections = set()
+        self._server = None
+        self._started = None
         self.max_requests = max_requests
         self.logger = logger or LOGGER
         self.cfg = cfg
         self.server_software = server_software or pulsar.SERVER_SOFTWARE
-        self._params = {'address': address, 'sockets': sockets}
         if max_requests:
             self.events('connection_made').bind(self._max_requests)
+        self.event('connection_made').bind(self._connection_made)
+        self.event('connection_lost').bind(self._connection_lost)
 
     def __repr__(self):
         address = self.address
@@ -144,6 +172,7 @@ class ServerMixin:
             return '%s %s' % (self.__class__.__name__, address)
         else:
             return self.__class__.__name__
+
     __str_ = __repr__
 
     @property
@@ -179,62 +208,38 @@ class ServerMixin:
                              'Stop serving.' % self.max_requests)
             self.close()
 
-
-class TcpServer(Producer, ServerMixin):
-    """A :class:`.Producer` of server :class:`Connection` for TCP servers.
-
-    .. attribute:: _server
-
-        A :class:`.Server` managed by this Tcp wrapper.
-
-        Available once the :meth:`start_serving` method has returned.
-    """
-    ONE_TIME_EVENTS = ('start', 'stop')
-
-    def __init__(self, protocol_factory, *, loop=None,
-                 name=None, keep_alive=None, **kwargs):
-        super().__init__(protocol_factory, loop=loop, name=name)
-        ServerMixin.__init__(self, **kwargs)
-        self.keep_alive = max(keep_alive or 0, 0)
-        self.event('connection_made').bind(self._connection_made)
-        self.event('connection_lost').bind(self._connection_lost)
-        self._concurrent_connections = set()
-
-    async def start_serving(self, backlog=100, sslcontext=None):
+    async def start_serving(self, address=None, sockets=None,
+                            backlog=100, sslcontext=None):
         """Start serving.
 
+        :param address: optional address to bind to
+        :param sockets: optional list of sockets to bind to
         :param backlog: Number of maximum connections
-        :param sslcontext: optional SSLContext object.
-        :return: a :class:`.Future` called back when the server is
-            serving the socket.
+        :param sslcontext: optional SSLContext object
         """
-        assert not self._server
-        if hasattr(self, '_params'):
-            address = self._params['address']
-            sockets = self._params['sockets']
-            del self._params
-            create_server = self._loop.create_server
-            if sockets:
-                server = None
-                for sock in sockets:
-                    srv = await create_server(self.create_protocol,
-                                              sock=sock,
-                                              backlog=backlog,
-                                              ssl=sslcontext)
-                    if server:
-                        server.sockets.extend(srv.sockets)
-                    else:
-                        server = srv
-            else:
-                if isinstance(address, tuple):
-                    server = await create_server(self.create_protocol,
-                                                 host=address[0],
-                                                 port=address[1],
-                                                 backlog=backlog,
-                                                 ssl=sslcontext)
+        if self._server:
+            raise RuntimeError('Already serving')
+        create_server = self._loop.create_server
+        server = None
+        if sockets:
+            for sock in sockets:
+                srv = await create_server(self.create_protocol,
+                                          sock=sock,
+                                          backlog=backlog,
+                                          ssl=sslcontext)
+                if server:
+                    server.sockets.extend(srv.sockets)
                 else:
-                    raise NotImplementedError
-            self._set_server(server)
+                    server = srv
+        elif isinstance(address, tuple):
+            server = await create_server(self.create_protocol,
+                                         host=address[0],
+                                         port=address[1],
+                                         backlog=backlog,
+                                         ssl=sslcontext)
+        else:
+            raise RuntimeError('sockets or address must be supplied')
+        self._set_server(server)
 
     async def close(self):
         """Stop serving the :attr:`.Server.sockets`.
@@ -322,43 +327,27 @@ class DGServer:
             transport.close()
 
 
-class DatagramServer(Producer, ServerMixin):
-    """An :class:`.Producer` for serving UDP sockets.
+class DatagramServer(TcpServer):
 
-    .. attribute:: _transports
-
-        A list of :class:`.DatagramTransport`.
-
-        Available once the :meth:`create_endpoint` method has returned.
-    """
-    ONE_TIME_EVENTS = ('start', 'stop')
-
-    def __init__(self, protocol_factory, loop=None, name=None, **kwargs):
-        super().__init__(protocol_factory, loop=loop, name=name)
-        ServerMixin.__init__(self, **kwargs)
-
-    async def create_endpoint(self, **kw):
+    async def start_serving(self, address=None, sockets=None, **kw):
         """create the server endpoint.
-
-        :return: a :class:`~asyncio.Future` called back when the server is
-            serving the socket.
         """
-        if hasattr(self, '_params'):
-            address = self._params['address']
-            sockets = self._params['sockets']
-            del self._params
-            server = DGServer(self._loop)
-            loop = self._loop
-            if sockets:
-                for sock in sockets:
-                    transport, _ = await loop.create_datagram_endpoint(
-                        self.create_protocol, sock=sock)
-                    server.transports.append(transport)
-            else:
+        if self._server:
+            raise RuntimeError('Already serving')
+        server = DGServer(self._loop)
+        loop = self._loop
+        if sockets:
+            for sock in sockets:
                 transport, _ = await loop.create_datagram_endpoint(
-                    self.create_protocol, local_addr=address)
+                    self.create_protocol, sock=sock)
                 server.transports.append(transport)
-            self._set_server(server)
+        elif isinstance(address, tuple):
+            transport, _ = await loop.create_datagram_endpoint(
+                self.create_protocol, local_addr=address)
+            server.transports.append(transport)
+        else:
+            raise RuntimeError('sockets or address must be supplied')
+        self._set_server(server)
 
     async def close(self):
         """Stop serving the :attr:`.Server.sockets` and close all
@@ -368,20 +357,3 @@ class DatagramServer(Producer, ServerMixin):
             self._server.close()
             self._server = None
             self.event('stop').fire()
-
-    def info(self):
-        sockets = []
-        up = int(self._loop.time() - self._started) if self._started else 0
-        server = {'uptime_in_seconds': up,
-                  'sockets': sockets,
-                  'max_requests': self.max_requests}
-        clients = {'requests_processed': self.requests_processed}
-        if self._transports:
-            for transport in self._transports:
-                sock = transport.get_extra_info('socket')
-                if sock:
-                    sockets.append({
-                        'address': format_address(sock.getsockname())
-                    })
-        return {'server': server,
-                'clients': clients}

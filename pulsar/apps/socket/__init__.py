@@ -127,7 +127,9 @@ from ...utils.internet import parse_address
 from ...utils.system import platform
 from ...utils.exceptions import ImproperlyConfigured
 from ...utils.config import pass_through, validate_pos_int, Config, Setting
-from ...async.protocols import TcpServer, DatagramServer, Connection
+from ...async.protocols import (
+    TcpServer, DatagramServer, Connection, DatagramProtocol
+)
 from .. import Application
 
 
@@ -211,6 +213,8 @@ class SocketServer(Application):
         The socket address, available once the application has started.
     '''
     name = 'socket'
+    support_ssl = ssl
+    server_factory = TcpServer
     cfg = Config(apps=['socket'], server_software=SERVER_SOFTWARE)
 
     def protocol_factory(self, idx=0):
@@ -259,15 +263,6 @@ class SocketServer(Application):
         if (not platform.has_multiProcessSocket or
                 cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
-        if cfg.cert_file or cfg.key_file:
-            if not ssl:
-                raise RuntimeError('No support for ssl')
-            if cfg.cert_file and not os.path.exists(cfg.cert_file):
-                raise ImproperlyConfigured('cert_file "%s" does not exist' %
-                                           cfg.cert_file)
-            if cfg.key_file and not os.path.exists(cfg.key_file):
-                raise ImproperlyConfigured('key_file "%s" does not exist' %
-                                           cfg.key_file)
         servers = await self.binds(monitor)
         if not servers:
             raise ImproperlyConfigured('Could not open a socket. '
@@ -307,11 +302,6 @@ class SocketServer(Application):
             data['%sserver' % self.name] = server.info()
         return data
 
-    def server_factory(self, *args, idx=0, **kw):
-        '''Create a :class:`.TcpServer`.
-        '''
-        return TcpServer(*args, **kw)
-
     #   INTERNALS
     async def create_server(self, worker, protocol_factory, address=None,
                             sockets=None, idx=0):
@@ -326,8 +316,6 @@ class SocketServer(Application):
         server = self.server_factory(
             protocol_factory,
             loop=worker._loop,
-            sockets=sockets,
-            address=address,
             max_requests=max_requests,
             keep_alive=cfg.keep_alive,
             name=self.name,
@@ -341,80 +329,39 @@ class SocketServer(Application):
             callback = getattr(cfg, event)
             if callback != pass_through:
                 server.event(event).bind(callback)
-        await server.start_serving(cfg.backlog, sslcontext=self.sslcontext())
+        await server.start_serving(
+            sockets=sockets,
+            address=address,
+            backlog=cfg.backlog,
+            sslcontext=self.sslcontext()
+        )
         return server
 
     def sslcontext(self):
         cfg = self.cfg
-        if cfg.cert_file and cfg.key_file:
+        if cfg.cert_file and cfg.key_file and self.support_ssl:
+            if cfg.cert_file and not os.path.exists(cfg.cert_file):
+                raise ImproperlyConfigured('cert_file "%s" does not exist' %
+                                           cfg.cert_file)
+            if cfg.key_file and not os.path.exists(cfg.key_file):
+                raise ImproperlyConfigured('key_file "%s" does not exist' %
+                                           cfg.key_file)
             ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
             ctx.load_cert_chain(certfile=cfg.cert_file, keyfile=cfg.key_file)
             return ctx
 
 
 class UdpSocketServer(SocketServer):
-    '''A :class:`.SocketServer` which serves application on a UDP sockets.
+    """A :class:`.SocketServer` which serves application on a UDP sockets.
 
     It binds a socket to a given address and listen for requests. The request
     handler is constructed from the callable passed during initialisation.
-
-    .. attribute:: address
-
-        The socket address, available once the application has started.
-    '''
+    """
     name = 'udpsocket'
-    cfg = Config(apps=['socket'])
+    support_ssl = False
+    server_factory = DatagramServer
 
-    def protocol_factory(self):
+    def protocol_factory(self, idx=0):
         '''Return the :class:`.DatagramProtocol` factory.
         '''
-        return self.cfg.callable
-
-    async def monitor_start(self, monitor):
-        '''Create the socket listening to the ``bind`` address.
-
-        If the platform does not support multiprocessing sockets set the
-        number of workers to 0.
-        '''
-        cfg = self.cfg
-        if (not platform.has_multiProcessSocket or
-                cfg.concurrency == 'thread'):
-            cfg.set('workers', 0)
-        if not cfg.address:
-            raise ImproperlyConfigured('Could not open a socket. '
-                                       'No address to bind to')
-        address = parse_address(self.cfg.address)
-        server = await self.create_server(monitor, address)
-        monitor.servers[self.name] = server
-        self.cfg.addresses = server.addressesw
-
-    def server_factory(self, *args, **kw):
-        '''By default returns a new :class:`.DatagramServer`.ww
-        '''
-        return DatagramServer(*args, **kw)
-
-    #   INTERNALS
-    async def create_server(self, worker, address=None):
-        '''Create the Server which will listen for requests.
-
-        :return: the server obtained from :meth:`server_factory`.
-        '''
-        sockets = worker.sockets if not address else None
-        cfg = self.cfg
-        max_requests = cfg.max_requests
-        if max_requests:
-            max_requests = int(lognormvariate(log(max_requests), 0.2))
-        server = self.server_factory(self.protocol_factory(),
-                                     loop=worker._loop,
-                                     sockets=sockets,
-                                     address=address,
-                                     max_requests=max_requests,
-                                     name=self.name,
-                                     logger=self.logger)
-        server.event('stop').bind(lambda _, **kw: worker.stop())
-        for event in ('pre_request', 'post_request'):
-            callback = getattr(cfg, event)
-            if callback != pass_through:
-                server.event(event).bind(callback)
-        await server.create_endpoint()
-        return server
+        return partial(DatagramProtocol, self.callable(idx))

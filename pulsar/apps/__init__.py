@@ -66,7 +66,7 @@ from collections import namedtuple, OrderedDict
 import asyncio
 
 from ..async.monitor import arbiter
-from ..async.access import get_actor, create_future
+from ..async.access import get_actor
 from ..utils.config import Config
 from ..utils.exceptions import ImproperlyConfigured
 
@@ -133,10 +133,13 @@ async def monitor_start(self, exc=None):
                 await coro
         result = self.cfg
     except Exception as exc:
-        coro = self.stop(exc)
-        if coro:
-            await coro
-        start_event.set_result(None)
+        start_event.set_exception(exc)
+        try:
+            coro = self.stop(exc)
+            if coro:
+                await coro
+        except Exception:
+            self.logger.exception('Could not stop cleanly')
     else:
         start_event.set_result(result)
 
@@ -472,9 +475,9 @@ class Application(Configurator):
             if not self.cfg.exc_id:
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
-                start_event = create_future(actor._loop)
+                start_event = actor._loop.create_future()
                 start = actor.event('start')
-                if start.fired():
+                if start.fired():   # actor already started
                     self._add_monitor(start_event, actor)
                 else:
                     start.bind(partial(self._add_monitor, start_event))

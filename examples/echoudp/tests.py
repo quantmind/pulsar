@@ -4,7 +4,7 @@ from asyncio import new_event_loop, get_event_loop
 from pulsar.api import send, get_application, get_actor
 from pulsar.apps.test import dont_run_with_thread
 
-from examples.echoudp.manage import server, Echo, EchoUdpServerProtocol
+from examples.echoudp.manage import server, Echo
 
 
 @unittest.skipIf(get_actor().cfg.event_loop == 'uv',
@@ -15,8 +15,11 @@ class TestEchoUdpServerThread(unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
-                   concurrency=cls.concurrency)
+        s = server(
+            name=cls.__name__.lower(),
+            bind='127.0.0.1:0',
+            concurrency=cls.concurrency
+        )
         cls.server_cfg = await send('arbiter', 'run', s)
         cls.client = Echo(cls.server_cfg.addresses[0])
 
@@ -36,7 +39,6 @@ class TestEchoUdpServerThread(unittest.TestCase):
     def test_server(self):
         server = self.server_cfg.app()
         self.assertTrue(server)
-        self.assertEqual(server.cfg.callable, EchoUdpServerProtocol)
         self.assertTrue(server.cfg.addresses)
 
     #    TEST CLIENT INTERACTION

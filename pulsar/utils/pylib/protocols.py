@@ -1,3 +1,7 @@
+"""Pure python implementation of Pulsar Producer and Protocol
+
+For the cython implementation check the extensions/lib/protocols.pyx module
+"""
 import time
 import asyncio
 import logging
@@ -15,6 +19,8 @@ dummyRequest = object()
 
 
 class TimeTracker:
+    """Track time in an efficient way
+    """
     timeHandlers = {}
 
     @classmethod
@@ -38,10 +44,19 @@ class TimeTracker:
 
 class Producer(EventHandler):
     """An Abstract :class:`.EventHandler` class for all producers of
-    socket (client and servers)
+    sockets (client and servers)
     """
     def __init__(self, protocol_factory, loop=None, name=None,
                  keep_alive=0, logger=None):
+        """initialze the Producer
+
+        :param protocol_factory: a callable accepting one parameter only,
+            this producer instance and returning a producer protocol
+        :param loop: optional event loop
+        :param name: optional producer name
+        :param keep_alive: optional keep alive timeout for protocols
+        :param logger: optional logging instance
+        """
         self.protocol_factory = protocol_factory
         self.requests_processed = 0
         self.sessions = 0
@@ -56,7 +71,7 @@ class Producer(EventHandler):
         return self._time.current_time
 
     def create_protocol(self):
-        """Create a new protocol via the :meth:`protocol_factory`
+        """Create a new protocol via the :attr:`protocol_factory`
 
         This method increase the count of :attr:`sessions` and build
         the protocol passing ``self`` as the producer.
@@ -84,7 +99,7 @@ class Protocol(EventHandler):
     """A mixin class for both :class:`.Protocol` and
     :class:`.DatagramProtocol`.
 
-    A :class:`PulsarProtocol` is an :class:`.EventHandler` which has
+    A :class:`.Protocol` is an :class:`.EventHandler` which has
     two :ref:`one time events <one-time-event>`:
 
     * ``connection_made``

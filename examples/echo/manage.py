@@ -1,8 +1,5 @@
 '''
 This example illustrates how to write a simple TCP Echo server and client pair.
-The example is simple because the client and server protocols are symmetrical
-and therefore the :class:`EchoProtocol` will also be used as based class for
-:class:`EchoServerProtocol`.
 The code for this example is located in the :mod:`examples.echo.manage`
 module.
 
@@ -111,9 +108,9 @@ class EchoProtocol(ProtocolConsumer):
 
     def start_request(self):
         '''Override :meth:`~.ProtocolConsumer.start_request` to write
-        the message ended by the :attr:`separator` into the transport.
+        the message ended by the :attr:`separator`
         '''
-        self.connection.transport.write(self.request + self.separator)
+        self.connection.write(self.request + self.separator)
 
     def response(self, data, rest):
         if rest:
@@ -131,12 +128,12 @@ class EchoServerProtocol(EchoProtocol):
         '''Override :meth:`~EchoProtocol.response` method by writing the
         ``data`` received back to the client.
         '''
-        self.connection.transport.write(data)
+        self.connection.write(data)
         data = data[:-len(self.separator)]
-        # If we get a QUIT message, close the transport.
+        # If we get a QUIT message, close the connection
         # Used by the test suite.
         if data == b'QUIT':
-            self.transport.close()
+            self.connection.close()
         return data
 
 
@@ -171,9 +168,11 @@ class Echo(AbstractClient):
 
         Default: ``False``
     '''
+    protocol_type = Connection
+
     def __init__(self, address, full_response=False, pool_size=10, loop=None):
         super().__init__(
-            partial(Connection, EchoProtocol),
+            partial(self.protocol_type, EchoProtocol),
             loop=loop
         )
         self.address = address

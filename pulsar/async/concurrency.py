@@ -15,7 +15,6 @@ from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import set_actor, logger
 from .threads import Thread
 from .mailbox import MailboxClient, mailbox_protocol, ProxyMailbox, create_aid
-from .futures import ensure_future
 from .protocols import TcpServer
 from .actor import Actor
 from .consts import ACTOR_STATES, ACTOR_TIMEOUT_TOLE, MIN_NOTIFY, MAX_NOTIFY
@@ -101,7 +100,10 @@ class Concurrency:
         '''
         set_actor(actor)
         if not actor.mailbox.address:
-            ensure_future(actor.mailbox.start_serving(), loop=actor._loop)
+            address = ('127.0.0.1', 0)
+            actor._loop.create_task(
+                actor.mailbox.start_serving(address=address)
+            )
         actor._loop.run_forever()
 
     def add_monitor(self, actor, monitor_name, **params):
@@ -320,9 +322,7 @@ class ArbiterConcurrency(ArbiterMixin, ProcessMixin, Concurrency):
         '''Override :meth:`.Concurrency.create_mailbox` to create the
         mailbox server.
         '''
-        mailbox = TcpServer(mailbox_protocol,
-                            address=('127.0.0.1', 0),
-                            loop=loop, name='mailbox')
+        mailbox = TcpServer(mailbox_protocol, loop=loop, name='mailbox')
         # when the mailbox stop, close the event loop too
         mailbox.event('stop').bind(lambda _, **kw: loop.stop())
         mailbox.event('start').bind(
@@ -385,7 +385,7 @@ class ActorSubProcess(ProcessMixin, Concurrency):
 
     def start(self):
         loop = asyncio.get_event_loop()
-        return ensure_future(self._start(loop), loop=loop)
+        return loop.create_task(self._start(loop))
 
     async def _start(self, loop):
         import inspect

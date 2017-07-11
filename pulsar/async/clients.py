@@ -277,6 +277,17 @@ class AbstractClient(Producer, ClientMixin):
                                       str(address))
         return protocol
 
+    async def create_datagram_endpoint(self, protocol_factory=None, **kw):
+        '''Helper method for creating a connection to an ``address``.
+        '''
+        protocol_factory = protocol_factory or self.create_protocol
+        _, protocol = await self._loop.create_datagram_endpoint(
+            protocol_factory, **kw)
+        event = protocol.event('connection_made')
+        if not event.fired():
+            await event.waiter()
+        return protocol
+
     def timeit(self, method, times, *args, **kwargs):
         '''Useful utility for benchmarking an asynchronous ``method``.
 
@@ -293,21 +304,3 @@ class AbstractClient(Producer, ClientMixin):
         '''
         bench = Bench(times, loop=self._loop)
         return bench(getattr(self, method), *args, **kwargs)
-
-
-class AbstractUdpClient(Producer, ClientMixin):
-    '''A :class:`.Producer` for a client udp connections.
-    '''
-    def create_endpoint(self):
-        '''Abstract method for creating the endpoint
-        '''
-        raise NotImplementedError
-
-    async def create_datagram_endpoint(self, protocol_factory=None, **kw):
-        '''Helper method for creating a connection to an ``address``.
-        '''
-        protocol_factory = protocol_factory or self.create_protocol
-        _, protocol = await self._loop.create_datagram_endpoint(
-            protocol_factory, **kw)
-        await protocol.event('connection_made')
-        return protocol

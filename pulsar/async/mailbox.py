@@ -55,6 +55,7 @@ import pickle
 import logging
 from functools import partial
 from collections import namedtuple
+from inspect import isawaitable
 
 from ..utils.exceptions import CommandError
 from ..utils.internet import nice_address
@@ -86,7 +87,8 @@ async def command_in_context(command, caller, target, args, kwargs,
     try:
         result = await result
     except TypeError:
-        pass
+        if isawaitable(result):
+            raise
     return result
 
 

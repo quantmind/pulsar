@@ -19,9 +19,7 @@ from .async.lock import Lock, LockBase
 from .async.protocols import (
     Connection, DatagramProtocol, TcpServer, DatagramServer
 )
-from .async.clients import (
-    Pool, PoolConnection, AbstractClient, AbstractUdpClient
-)
+from .async.clients import Pool, PoolConnection, AbstractClient
 from .async.futures import chain_future, AsyncObject
 from .async.commands import async_while
 from .async.monitor import arbiter
@@ -68,7 +66,6 @@ __all__ = [
     'Pool',
     'PoolConnection',
     'AbstractClient',
-    'AbstractUdpClient',
     #
     # Async Locks
     'Lock',
