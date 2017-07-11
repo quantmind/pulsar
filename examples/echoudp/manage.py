@@ -171,7 +171,7 @@ class Echo(AbstractUdpClient):
 
     async def _call(self, message):
         protocol = await self.pool.connect()
-        with protocol:
+        async with protocol:
             result = await protocol.send(message)
             return result
 

@@ -386,10 +386,10 @@ class UdpSocketServer(SocketServer):
         address = parse_address(self.cfg.address)
         server = await self.create_server(monitor, address)
         monitor.servers[self.name] = server
-        self.cfg.addresses = server.addresses
+        self.cfg.addresses = server.addressesw
 
     def server_factory(self, *args, **kw):
-        '''By default returns a new :class:`.DatagramServer`.
+        '''By default returns a new :class:`.DatagramServer`.ww
         '''
         return DatagramServer(*args, **kw)
 
@@ -405,7 +405,7 @@ class UdpSocketServer(SocketServer):
         if max_requests:
             max_requests = int(lognormvariate(log(max_requests), 0.2))
         server = self.server_factory(self.protocol_factory(),
-                                     worker._loop,
+                                     loop=worker._loop,
                                      sockets=sockets,
                                      address=address,
                                      max_requests=max_requests,

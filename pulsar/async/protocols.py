@@ -124,35 +124,19 @@ class Connection(PulsarProtocol, asyncio.Protocol):
         return info
 
 
-class TcpServer(Producer):
-    """A :class:`.Producer` of server :class:`Connection` for TCP servers.
-
-    .. attribute:: _server
-
-        A :class:`.Server` managed by this Tcp wrapper.
-
-        Available once the :meth:`start_serving` method has returned.
-    """
-    ONE_TIME_EVENTS = ('start', 'stop')
+class ServerMixin:
     _server = None
     _started = None
 
-    def __init__(self, protocol_factory, *, loop=None, address=None,
-                 name=None, sockets=None, max_requests=None,
-                 keep_alive=None, logger=None, cfg=None,
-                 server_software=None):
-        super().__init__(protocol_factory, loop=loop, name=name)
+    def __init__(self, address=None, sockets=None, logger=None,
+                 max_requests=None, cfg=None, server_software=None):
         self.max_requests = max_requests
-        self.keep_alive = max(keep_alive or 0, 0)
         self.logger = logger or LOGGER
         self.cfg = cfg
         self.server_software = server_software or pulsar.SERVER_SOFTWARE
+        self._params = {'address': address, 'sockets': sockets}
         if max_requests:
             self.events('connection_made').bind(self._max_requests)
-        self.event('connection_made').bind(self._connection_made)
-        self.event('connection_lost').bind(self._connection_lost)
-        self._params = {'address': address, 'sockets': sockets}
-        self._concurrent_connections = set()
 
     def __repr__(self):
         address = self.address
@@ -179,6 +163,42 @@ class TcpServer(Producer):
     def sockets(self):
         if self._server is not None:
             return self._server.sockets
+
+    def _set_server(self, server):
+        self._server = server
+        self._started = self._loop.time()
+        for sock in server.sockets:
+            address = sock.getsockname()
+            self.logger.info('%s serving on %s', self.name,
+                             format_address(address))
+        self._loop.call_soon(self.event('start').fire)
+
+    def _max_requests(self, _, exc):
+        if self._server and self.sessions >= self.max_requests:
+            self.logger.info('Reached maximum number of connections %s. '
+                             'Stop serving.' % self.max_requests)
+            self.close()
+
+
+class TcpServer(Producer, ServerMixin):
+    """A :class:`.Producer` of server :class:`Connection` for TCP servers.
+
+    .. attribute:: _server
+
+        A :class:`.Server` managed by this Tcp wrapper.
+
+        Available once the :meth:`start_serving` method has returned.
+    """
+    ONE_TIME_EVENTS = ('start', 'stop')
+
+    def __init__(self, protocol_factory, *, loop=None,
+                 name=None, keep_alive=None, **kwargs):
+        super().__init__(protocol_factory, loop=loop, name=name)
+        ServerMixin.__init__(self, **kwargs)
+        self.keep_alive = max(keep_alive or 0, 0)
+        self.event('connection_made').bind(self._connection_made)
+        self.event('connection_lost').bind(self._connection_lost)
+        self._concurrent_connections = set()
 
     async def start_serving(self, backlog=100, sslcontext=None):
         """Start serving.
@@ -214,13 +234,7 @@ class TcpServer(Producer):
                                                  ssl=sslcontext)
                 else:
                     raise NotImplementedError
-            self._server = server
-            self._started = self._loop.time()
-            for sock in server.sockets:
-                address = sock.getsockname()
-                self.logger.info('%s serving on %s', self.name,
-                                 format_address(address))
-            self._loop.call_soon(self.event('start').fire)
+            self._set_server(server)
 
     async def close(self):
         """Stop serving the :attr:`.Server.sockets`.
@@ -259,12 +273,6 @@ class TcpServer(Producer):
     def _connection_lost(self, connection, exc=None):
         self._concurrent_connections.discard(connection)
 
-    def _max_requests(self, _, exc):
-        if (self._server and self.sessions >= self._max_requests):
-            self.logger.info('Reached maximum number of connections %s. '
-                             'Stop serving.' % self._max_requests)
-            self.close()
-
     def _close_connections(self, connection=None, timeout=5):
         """Close ``connection`` if specified, otherwise close all connections.
 
@@ -290,7 +298,31 @@ class TcpServer(Producer):
             return asyncio.wait(all, timeout=timeout, loop=self._loop)
 
 
-class DatagramServer(Producer):
+class DGServer:
+
+    def __init__(self, loop):
+        self._loop = loop
+        self.transports = []
+
+    @property
+    def sockets(self):
+        sockets = []
+        for t in self.transports:
+            sock = t.get_extra_info('socket')
+            if sock:
+                sockets.append(sock)
+        return sockets
+
+    def close(self):
+        """Stop serving the :attr:`.Server.sockets` and close all
+        concurrent connections.
+        """
+        transports, self.transports = self.transports, []
+        for transport in transports:
+            transport.close()
+
+
+class DatagramServer(Producer, ServerMixin):
     """An :class:`.Producer` for serving UDP sockets.
 
     .. attribute:: _transports
@@ -299,31 +331,11 @@ class DatagramServer(Producer):
 
         Available once the :meth:`create_endpoint` method has returned.
     """
-    _transports = None
-    _started = None
-
     ONE_TIME_EVENTS = ('start', 'stop')
 
-    def __init__(self, protocol_factory, loop=None, address=None,
-                 name=None, sockets=None, max_requests=None,
-                 logger=None):
-        super().__init__(loop, protocol_factory, name=name,
-                         max_requests=max_requests, logger=logger)
-        self._params = {'address': address, 'sockets': sockets}
-
-    @property
-    def addresses(self):
-        return [sock.getsockname() for sock in self.sockets or ()]
-
-    @property
-    def sockets(self):
-        sockets = []
-        if self._transports is not None:
-            for t in self._transports:
-                sock = t.get_extra_info('socket')
-                if sock:
-                    sockets.append(sock)
-        return sockets
+    def __init__(self, protocol_factory, loop=None, name=None, **kwargs):
+        super().__init__(protocol_factory, loop=loop, name=name)
+        ServerMixin.__init__(self, **kwargs)
 
     async def create_endpoint(self, **kw):
         """create the server endpoint.
@@ -335,33 +347,26 @@ class DatagramServer(Producer):
             address = self._params['address']
             sockets = self._params['sockets']
             del self._params
-            transports = []
+            server = DGServer(self._loop)
             loop = self._loop
             if sockets:
                 for sock in sockets:
                     transport, _ = await loop.create_datagram_endpoint(
                         self.create_protocol, sock=sock)
-                    transports.append(transport)
+                    server.transports.append(transport)
             else:
                 transport, _ = await loop.create_datagram_endpoint(
                     self.create_protocol, local_addr=address)
-                transports.append(transport)
-            self._transports = transports
-            self._started = loop.time()
-            for transport in self._transports:
-                address = transport.get_extra_info('sockname')
-                self.logger.info('%s serving on %s', self.name,
-                                 format_address(address))
-            self.event('start').fire()
+                server.transports.append(transport)
+            self._set_server(server)
 
     async def close(self):
         """Stop serving the :attr:`.Server.sockets` and close all
         concurrent connections.
         """
-        transports, self._transports = self._transports, None
-        if transports:
-            for transport in transports:
-                transport.close()
+        if self._server:
+            self._server.close()
+            self._server = None
             self.event('stop').fire()
 
     def info(self):
