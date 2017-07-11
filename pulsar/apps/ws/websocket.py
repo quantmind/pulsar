@@ -201,5 +201,5 @@ class WebSocket(wsgi.Router):
         return headers, parser
 
     def challenge_response(self, key):
-        sha1 = hashlib.sha1(to_bytes(key+WEBSOCKET_GUID))
+        sha1 = hashlib.sha1(to_bytes(key + WEBSOCKET_GUID))
         return native_str(base64.b64encode(sha1.digest()))

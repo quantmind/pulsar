@@ -224,6 +224,26 @@ class TestRouter(unittest.TestCase):
         self.assertTrue(child.get.__name__, 'get_elem')
         self.assertTrue(child.post.__name__, 'post_elem')
 
+    def test_router_decorator(self):
+        rt = MyRouter('/')
+
+        @rt.router('/sync', methods=['get', 'post'])
+        def sync_case(request):
+            return request.response
+
+        @rt.router('/async', methods=['delete', 'put'])
+        def async_case(request):
+            return request.response
+
+        sync_child = rt.get_route('sync_case')
+        async_child = rt.get_route('async_case')
+        self.assertTrue(sync_child)
+        self.assertTrue(async_child)
+        self.assertTrue(async_child.delete)
+        self.assertTrue(async_child.put)
+        self.assertTrue(sync_child.get)
+        self.assertTrue(sync_child.post)
+
     def test_response_wrapper(self):
 
         def response_wrapper(callable, response):

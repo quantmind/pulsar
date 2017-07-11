@@ -92,9 +92,9 @@ _converter_args_re = re.compile(r'''
 
 
 _PYTHON_CONSTANTS = {
-    'None':     None,
-    'True':     True,
-    'False':    False
+    'None': None,
+    'True': True,
+    'False': False
 }
 
 
@@ -205,8 +205,8 @@ class route:
     def order(self):
         return self.creation_count if self.position is None else self.position
 
-    def __call__(self, callable):
-        bits = callable.__name__.split('_')
+    def __call__(self, fn):
+        bits = fn.__name__.split('_')
         method = None
         if len(bits) > 1:
             m = bits[0].upper()
@@ -221,9 +221,9 @@ class route:
         else:
             method = method.lower()
         rule = Route(self.rule or name, defaults=self.defaults, is_re=self.re)
-        callable.rule_method = rule_info(rule, method, self.parameters,
-                                         self.position, self.order)
-        return callable
+        fn.rule_method = rule_info(rule, method, self.parameters,
+                                   self.position, self.order)
+        return fn
 
 
 class Route:
@@ -407,7 +407,7 @@ class Route:
             rule = rule[:-1]
         if not rule:
             return Route('/'), None
-        bits = ('/'+rule).split('/')
+        bits = ('/' + rule).split('/')
         last = Route(bits[-1] if self.is_leaf else bits[-1] + '/')
         if len(bits) > 1:
             return Route('/'.join(bits[:-1]) + '/'), last
@@ -592,10 +592,10 @@ def get_converter(name, parameters):
 
 #: the default converter mapping for the map.
 _CONVERTERS = {
-    'default':          StringConverter,
-    'string':           StringConverter,
-    'any':              AnyConverter,
-    'path':             PathConverter,
-    'int':              IntegerConverter,
-    'float':            FloatConverter
+    'default': StringConverter,
+    'string': StringConverter,
+    'any': AnyConverter,
+    'path': PathConverter,
+    'int': IntegerConverter,
+    'float': FloatConverter
 }
