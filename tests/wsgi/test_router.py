@@ -247,7 +247,7 @@ class TestRouter(unittest.TestCase):
             return request.response
 
         @rt.router('/async', methods=['delete', 'put'])
-        def async_case(request):
+        async def async_case(request):
             return request.response
 
         sync_child = rt.get_route('sync_case')
