@@ -1,6 +1,6 @@
 from pulsar.apps.wsgi import Router
 from pulsar.apps.wsgi.handlers import WsgiHandler
-from pulsar.apps.wsgi import WSGIServer
+from pulsar.apps.wsgi import WSGIServer, WsgiResponse
 
 
 blueprint = Router('/')
@@ -8,12 +8,12 @@ blueprint = Router('/')
 
 @blueprint.router('sync', methods=['get', 'post'])
 def sync_case(request):
-    return request.response('sync')
+    return WsgiResponse(200, 'sync')
 
 
 @blueprint.router('async', methods=['delete', 'put'])
 async def async_cast(request):
-    return request.response('async')
+    return WsgiResponse(200, 'async')
 
 
 def server(**kwargs):
