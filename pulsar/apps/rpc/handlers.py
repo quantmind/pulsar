@@ -67,6 +67,7 @@ def rpc_method(func, doc=None, format='json', request_handler=None):
         It can be used to add additional parameters based on request and
         format.
     '''
+
     def _(self, *args, **kwargs):
         request = args[0]
         if request_handler:
@@ -200,7 +201,7 @@ class RpcHandler(metaclass=MetaRpcHandler):
         for name, data in self.listFunctions():
             link = '.. _functions-{0}:'.format(name)
             title = name
-            under = (2+len(title))*'-'
+            under = (2 + len(title)) * '-'
             yield '\n'.join((link, '', title, under, '', data['doc'], '\n'))
 
     def docs(self):

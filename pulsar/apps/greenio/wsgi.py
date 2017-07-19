@@ -7,6 +7,7 @@ from .utils import wait
 class GreenWSGI:
     '''Wraps a WSGI application to be executed on a :class:`.GreenPool`
     '''
+
     def __init__(self, middleware, pool, response_middleware=None):
         if not isinstance(middleware, (list, tuple)):
             middleware = [middleware]

@@ -202,7 +202,7 @@ async def async_while(timeout, while_clause, *args):
     result = while_clause(*args)
 
     while result:
-        interval = min(interval+di, MAX_ASYNC_WHILE)
+        interval = min(interval + di, MAX_ASYNC_WHILE)
         try:
             await sleep(interval, loop=loop)
         except TimeoutError:

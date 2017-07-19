@@ -23,8 +23,8 @@ class String:
         length = self._length
         if length >= 0:
             b = parser._inbuffer
-            if len(b) >= length+2:
-                parser._inbuffer, chunk = b[length+2:], bytes(b[:length])
+            if len(b) >= length + 2:
+                parser._inbuffer, chunk = b[length + 2:], bytes(b[:length])
                 if parser.encoding:
                     return chunk.decode(parser.encoding)
                 else:
@@ -170,7 +170,7 @@ class RedisParser:
         b = self._inbuffer
         length = b.find(b'\r\n')
         if length >= 0:
-            self._inbuffer, response = b[length+2:], bytes(b[:length])
+            self._inbuffer, response = b[length + 2:], bytes(b[:length])
             rtype, response = response[:1], response[1:]
             if rtype == b'-':
                 return self.responseError(response.decode('utf-8'))

@@ -26,6 +26,7 @@ class WsgiHandler:
         :ref:`response middlewares <wsgi-response-middleware>`.
 
     '''
+
     def __init__(self, middleware=None, response_middleware=None, async=True):
         if middleware:
             middleware = list(middleware)
@@ -97,6 +98,7 @@ class LazyWsgi(LocalMixin):
     its wsgi :attr:`handler` every time is pickled and un-pickled without
     causing serialisation issues.
     '''
+
     def __call__(self, environ, start_response):
         if not hasattr(self, '_local'):
             return self.handler(environ)(environ, start_response)

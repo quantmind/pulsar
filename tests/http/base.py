@@ -159,7 +159,7 @@ class TestHttpClientBase:
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers.get('transfer-encoding'), 'chunked')
         body = response.content
-        self.assertEqual(len(body), siz*rep)
+        self.assertEqual(len(body), siz * rep)
 
 
 class TestHttpClient(TestHttpClientBase, unittest.TestCase):
@@ -821,11 +821,11 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         fut = asyncio.Future()
 
         def gen():
-            yield b'a'*100
+            yield b'a' * 100
             yield fut
-            yield b'z'*100
+            yield b'z' * 100
 
-        result = b'f'*100
+        result = b'f' * 100
         fut._loop.call_later(0.5, fut.set_result, result)
         response = await http.post(
             self.httpbin('post_chunks'),

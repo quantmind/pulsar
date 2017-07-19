@@ -92,8 +92,8 @@ class RedisCommands(StoreMixin):
         self.assertTrue(value)
         await self.wait(
             ResponseError, c.restore, key, 0, 'bla')
-        eq(await c.restore(key+'2', 0, value), True)
-        eq(await c.get(key+'2'), b'hello')
+        eq(await c.restore(key + '2', 0, value), True)
+        eq(await c.get(key + '2'), b'hello')
 
     async def test_exists(self):
         key = self.randomkey()
@@ -172,7 +172,7 @@ class RedisCommands(StoreMixin):
         key = self.randomkey()
         c = self.client
         eq = self.assertEqual
-        eq(await c.mset(key, 1, key+'a', 2, key+'b', 3), True)
+        eq(await c.mset(key, 1, key + 'a', 2, key + 'b', 3), True)
         key = await c.randomkey()
         eq(await c.exists(key), True)
 
@@ -188,7 +188,7 @@ class RedisCommands(StoreMixin):
         eq(await c.get(des), b'hello')
         eq(await c.set(key, 'ciao'), True)
         eq(await c.renamenx(key, des), False)
-        eq(await c.renamenx(key, des+'a'), True)
+        eq(await c.renamenx(key, des + 'a'), True)
         eq(await c.exists(key), False)
 
     ###########################################################################
@@ -274,9 +274,9 @@ class RedisCommands(StoreMixin):
         eq = self.assertEqual
         test_str = b'\x01\x02\xFF'
         eq(await c.set(key, test_str), True)
-        eq(await c.bitop('and', key+'1', key), 3)
-        eq(await c.bitop('or', key+'2', key), 3)
-        eq(await c.bitop('xor', key+'3', key), 3)
+        eq(await c.bitop('and', key + '1', key), 3)
+        eq(await c.bitop('or', key + '2', key), 3)
+        eq(await c.bitop('xor', key + '3', key), 3)
         eq(await c.get(key + '1'), test_str)
         eq(await c.get(key + '2'), test_str)
         eq(await c.get(key + '3'), test_str)
@@ -1148,7 +1148,7 @@ class RedisCommands(StoreMixin):
     async def test_time(self):
         t = await self.client.time()
         self.assertIsInstance(t, tuple)
-        total = t[0] + 0.000001*t[1]
+        total = t[0] + 0.000001 * t[1]
         self.assertTrue(total)
 
     ###########################################################################

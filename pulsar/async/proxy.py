@@ -39,6 +39,7 @@ class command:
     :parameter ack: ``True`` if the command acknowledge the sender with a
         response. Usually is set to ``True`` (which is also the default value).
     '''
+
     def __init__(self, ack=True):
         self.ack = ack
 
@@ -94,6 +95,7 @@ class ActorProxy:
         the socket address of the underlying :attr:`.Actor.mailbox`.
 
     '''
+
     def __init__(self, impl):
         self.aid = impl.aid
         self.name = impl.name

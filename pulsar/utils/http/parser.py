@@ -177,7 +177,7 @@ class HttpParser:
                 else:
                     self._position = 1
                     self.parse_first_line(bytes(self.buf[:idx]))
-                    self.buf = self.buf[idx+2:]
+                    self.buf = self.buf[idx + 2:]
             elif not self.is_headers_complete():
                 if not self._parse_headers():
                     break
@@ -191,7 +191,7 @@ class HttpParser:
             if idx < 0:
                 return False
             chunk = bytes(self.buf[:idx])
-            self.buf = self.buf[idx+2:]
+            self.buf = self.buf[idx + 2:]
             if not idx:
                 break
 
@@ -237,7 +237,7 @@ class HttpParser:
                 if idx < 0:
                     break
                 line = bytes(self.buf[:idx])
-                rest = self.buf[idx+2:]
+                rest = self.buf[idx + 2:]
                 size = line.split(b';', 1)[0].strip()
                 try:
                     size = int(size, 16)
@@ -251,7 +251,7 @@ class HttpParser:
                     break
                 elif len(rest) >= size + 2:
                     self._on_body(bytes(rest[:size]))
-                    self.buf = rest[size+2:]
+                    self.buf = rest[size + 2:]
                 else:
                     break
         else:

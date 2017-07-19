@@ -270,6 +270,7 @@ class Channel:
     .. attribute:: callbacks
         dictionary mapping events to callbacks
     """
+
     def __init__(self, channels, name):
         self.channels = channels
         self.name = name

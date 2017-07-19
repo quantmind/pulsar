@@ -34,6 +34,7 @@ class HttpAuthenticate(HttpException):
     This HttpException is raised with status code ``401`` and the extra
     ``WWW_Authenticate`` header if ``type`` is either ``basic`` or ``digest``.
     '''
+
     def __init__(self, type, realm=None, **options):
         realm = realm or 'authentication required'
         if type == 'basic':

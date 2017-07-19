@@ -73,7 +73,7 @@ class PulsarService(win32serviceutil.ServiceFramework):
         args = sys.argv[:1]
         if len(sys.argv) > 2:
             args += sys.argv[2:]
-        f = open(cls._command_lines+'.py', 'w')
+        f = open(cls._command_lines + '.py', 'w')
         f.write('argv = {0}'.format(args))
         f.close()
         argv = argv[:2]

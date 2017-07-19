@@ -250,7 +250,7 @@ def render_error_debug(request, exception, is_html):
                 if is_html:
                     line = Html('p', escape(line), cn='text-danger')
                     if counter:
-                        line.css({'margin-left': '%spx' % (20*counter)})
+                        line.css({'margin-left': '%spx' % (20 * counter)})
                 error.append(line)
     if is_html:
         error = Html('div', Html('h1', request.response.status), error)

@@ -21,6 +21,7 @@ class Pool(AsyncObject):
 
     This class is not thread safe.
     '''
+
     def __init__(self, creator, pool_size=10, loop=None, timeout=None, **kw):
         '''
         Construct an asynchronous Pool.
@@ -254,6 +255,7 @@ class ClientMixin:
 class AbstractClient(Producer, ClientMixin):
     """A :class:`.Producer` for client connections.
     """
+
     def connect(self):
         '''Abstract method for creating a connection.
         '''

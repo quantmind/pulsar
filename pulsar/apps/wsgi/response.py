@@ -45,6 +45,7 @@ class ResponseMiddleware:
     The focus of this class is the :meth:`execute` method where
     the middleware logic is implemented.
     '''
+
     def version(self, environ):
         return environ.get('wsgi.version')
 
@@ -74,6 +75,7 @@ class AccessControl(ResponseMiddleware):
     '''A response middleware which add the ``Access-Control-Allow-Origin``
     response header.
     '''
+
     def __init__(self, origin='*', methods=None):
         self.origin = origin
         self.methods = methods
@@ -94,6 +96,7 @@ allows gzip compression. It sets the Vary header accordingly.
 The compression implementation is from
 http://jython.xhaus.com/http-compression-in-python-and-jython
     """
+
     def __init__(self, min_length=200):
         self.min_length = min_length
 

@@ -19,6 +19,7 @@ def check_input(request, failed):
 class command:
     '''Decorator for pulsar-ds server commands
     '''
+
     def __init__(self, group, write=False, name=None,
                  script=1, supported=True, subcommands=None):
         self.group = group
@@ -163,6 +164,7 @@ class PulsarStoreClient(ProtocolConsumer):
 class Blocked:
     '''Handle blocked keys for a client
     '''
+
     def __init__(self, client, command, keys, timeout, dest=None):
         self.command = command
         self.keys = set(keys)

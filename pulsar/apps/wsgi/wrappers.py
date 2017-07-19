@@ -440,6 +440,7 @@ class FileWrapper:
     dictionary. Alternatively one can use the :func:`~.file_response`
     high level function for serving local files.
     """
+
     def __init__(self, file, block=None):
         self.file = file
         self.block = max(block or ONEMB, MAX_BUFFER_SIZE)

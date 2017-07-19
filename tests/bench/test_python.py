@@ -1,8 +1,8 @@
 import unittest
 
 
-string1 = 'a'*20
-string2 = 'b'*100
+string1 = 'a' * 20
+string2 = 'b' * 100
 A_STRING = 'this-is-a-string'
 
 

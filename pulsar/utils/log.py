@@ -144,6 +144,7 @@ class WritelnDecorator:
     """Used to decorate file-like objects with a handy 'writeln' method.
     taken from python.
     """
+
     def __init__(self, stream):
         self.stream = stream
 

@@ -12,7 +12,7 @@ class FlowControl:
     This implements the protocol methods :meth:`pause_writing`,
     :meth:`resume_writing`.
     """
-    _b_limit = 2*DEFAULT_LIMIT
+    _b_limit = 2 * DEFAULT_LIMIT
     _paused = False
     _buffer_size = 0
     _waiter = None
@@ -128,7 +128,7 @@ class Timeout:
             gap = time.time() - self.last_change
             if gap < self._timeout:
                 self._timeout_handler = None
-                return self._add_timeout(None, timeout=self._timeout-gap)
+                return self._add_timeout(None, timeout=self._timeout - gap)
         self.close()
         self.logger.debug('Closed idle %s.', self)
 
@@ -174,6 +174,7 @@ class Pipeline:
 class ResponsePipeline:
     """Maintains a queue of responses to send back to the client
     """
+
     def __init__(self, connection):
         self.connection = connection
         self.queue = Queue(loop=connection._loop)

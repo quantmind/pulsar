@@ -63,9 +63,9 @@ class BenchTest(WrapTest):
         self.repeat = repeat
 
     def update_summary(self, info, repeat, total_time, total_time2):
-        mean = total_time/repeat
-        std = math.sqrt((total_time2 - total_time*mean)/repeat)
-        std = round(100*std/mean, 2)
+        mean = total_time / repeat
+        std = math.sqrt((total_time2 - total_time * mean) / repeat)
+        std = round(100 * std / mean, 2)
         info.update({'repeat': repeat,
                      'times': self.number,
                      'mean': '%.5f' % mean,
@@ -96,7 +96,7 @@ class BenchTest(WrapTest):
                 testGetInfo(info, delta, dt)
                 DT += dt
             t += DT
-            t2 += DT*DT
+            t2 += DT * DT
         self.update_summary(info, self.repeat, t, t2)
         self.set_test_attribute('bench_info',
                                 testGetSummary(info, self.repeat, t, t2))

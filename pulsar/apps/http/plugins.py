@@ -225,6 +225,7 @@ class Tunneling:
     the writing of the actual request until headers from the proxy server
     are received.
     '''
+
     def __init__(self, loop):
         assert loop
         self._loop = loop

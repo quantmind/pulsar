@@ -9,6 +9,7 @@ class StreamConsumedError(Exception):
 class HttpStream:
     """An asynchronous streaming body for an HTTP response
     """
+
     def __init__(self, response):
         self._response = response
         self._streamed = False

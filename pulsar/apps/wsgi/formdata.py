@@ -147,6 +147,7 @@ def parse_form_data(request, stream=None, **kw):
 class FormDecoder:
     """Base class for decoding HTTP body data
     """
+
     def __init__(self, request, options: Dict, stream: Callable) -> None:
         self.request = request
         self.options = options
@@ -313,7 +314,7 @@ class MultipartPart:
 
     @property
     def size(self):
-        return reduce(lambda x, y: x+len(y), self._bytes, 0)
+        return reduce(lambda x, y: x + len(y), self._bytes, 0)
 
     def bytes(self):
         '''Bytes'''

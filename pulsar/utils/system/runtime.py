@@ -20,12 +20,12 @@ knownPlatforms = {
     'posix': 'posix',
     'java': 'java',
     'org.python.modules.os': 'java',
-    }
+}
 
 _timeFunctions = {
     # 'win': time.clock,
     'win': time.time,
-    }
+}
 
 
 class Platform:

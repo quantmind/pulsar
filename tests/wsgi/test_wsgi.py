@@ -74,7 +74,7 @@ class WsgiRequestTests(unittest.TestCase):
         self.assertTrue(r.started)
 
     def testStreamed(self):
-        stream = (b'line %x\n' % (l+1) for l in range(10))
+        stream = (b'line %x\n' % (l + 1) for l in range(10))
         r = wsgi.WsgiResponse(content=stream)
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.status, '200 OK')
@@ -127,7 +127,8 @@ class WsgiRequestTests(unittest.TestCase):
         response.set_cookie('max_age', max_age=10)
         max_age_cookie = response.cookies['max_age']
         self.assertEqual(max_age_cookie['max-age'], 10)
-        self.assertEqual(max_age_cookie['expires'], http_date(time.time()+10))
+        self.assertEqual(max_age_cookie['expires'],
+                         http_date(time.time() + 10))
 
     def test_httponly_cookie(self):
         response = wsgi.WsgiResponse()

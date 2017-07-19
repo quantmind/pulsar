@@ -4,6 +4,7 @@ from .skiplist import Skiplist
 class Zset:
     '''Ordered-set equivalent of redis zset.
     '''
+
     def __init__(self, data=None):
         self._sl = Skiplist()
         self._dict = {}
@@ -93,7 +94,7 @@ scores and values.'''
             assert index >= 0, 'could not find start range'
             for i, v in enumerate(self._sl.range(index)):
                 if v == item:
-                    assert self._sl.remove_range(index + i, index+i + 1) == 1
+                    assert self._sl.remove_range(index + i, index + i + 1) == 1
                     return score
             assert False, 'could not find element'
 
@@ -133,7 +134,7 @@ scores and values.'''
                 result = cls()
                 sl = result._sl
                 for score, value in zset._sl:
-                    result.add(score*weight, value)
+                    result.add(score * weight, value)
             else:
                 for score, value in zset._sl:
                     score *= weight
@@ -158,11 +159,11 @@ scores and values.'''
                 result = cls()
                 for score, value in zset._sl:
                     if value in values:
-                        result.add(score*weight, value)
+                        result.add(score * weight, value)
             else:
                 for score, value in zset._sl:
                     if value in values:
                         existing = result.score(value)
-                        score = oper((score*weight, existing))
+                        score = oper((score * weight, existing))
                         result.add(score, value)
         return result

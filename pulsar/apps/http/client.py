@@ -352,7 +352,7 @@ class HttpRequest(RequestBase):
             headers.update(self.headers)
         buffer = [first_line.encode('ascii'), b'\r\n']
         buffer.extend((('%s: %s\r\n' % (name, value)).encode(CHARSET)
-                      for name, value in headers.items()))
+                       for name, value in headers.items()))
         buffer.append(b'\r\n')
         return b''.join(buffer)
 

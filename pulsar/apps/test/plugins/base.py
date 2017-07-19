@@ -24,6 +24,7 @@ def validate_plugin_list(val):
 
 class WrapTest:
     '''Wrap an underlying test case'''
+
     def __init__(self, test):
         self.test = test
         setattr(self, test._testMethodName, self._call)
@@ -83,14 +84,14 @@ class TestPluginMeta(type):
                         default = True
                         validator = validate_bool
                 setting = Setting(
-                                name=setting_name,
-                                desc=attrs.pop('desc', name),
-                                type=type,
-                                flags=attrs.pop('flags', [def_flag]),
-                                action=action,
-                                default=default,
-                                validator=validator,
-                                nargs=nargs)
+                    name=setting_name,
+                    desc=attrs.pop('desc', name),
+                    type=type,
+                    flags=attrs.pop('flags', [def_flag]),
+                    action=action,
+                    default=default,
+                    validator=validator,
+                    nargs=nargs)
                 settings[setting.name] = as_test_setting(setting)
         attrs['config'] = Config(settings=settings)
         return super().__new__(cls, name, bases, attrs)

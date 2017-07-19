@@ -39,7 +39,7 @@ class TestGreenIo(unittest.TestCase):
         cls.server_cfg = await send('arbiter', 'run', s)
         cls.client = Echo(cls.server_cfg.addresses[0])
         cls.green = EchoGreen(cls.server_cfg.addresses[0])
-        cls.msg = b'a'*2**13
+        cls.msg = b'a' * 2**13
         cls.pool = greenio.GreenPool()
 
     async def test_yield_io(self):

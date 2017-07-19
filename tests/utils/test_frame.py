@@ -15,7 +15,7 @@ class FrameTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.bdata = i2b((randint(0, 255) for v in range(256)))
-        cls.large_bdata = i2b((randint(0, 255) for v in range(64*1024)))
+        cls.large_bdata = i2b((randint(0, 255) for v in range(64 * 1024)))
 
     def parser(self, pyparser=False, **kw):
         return frame_parser(**kw)

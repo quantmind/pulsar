@@ -57,7 +57,7 @@ headers = (
     ('function', ''),
     ('lineno', ''),
     ('filename', '')
-    )
+)
 
 
 def absolute_file(val):
@@ -136,7 +136,7 @@ class Profile(TestPlugin):
         self.config = cfg
         self.profile_stats_path = cfg.profile_stats_path
         dir, name = os.path.split(self.profile_stats_path)
-        fname = '.'+name
+        fname = '.' + name
         self.profile_temp_path = os.path.join(dir, fname)
 
     def before_test_function_run(self, test, local):
@@ -192,7 +192,8 @@ class Profile(TestPlugin):
                         continue
                     else:
                         run_info += ' ' + line
-            data = ''.join(make_stat_table(data_stream(stats_str[n+1:], 100)))
+            data = ''.join(make_stat_table(
+                data_stream(stats_str[n + 1:], 100)))
             self.remove_dir(self.profile_stats_path, build=True)
             for file in os.listdir(template_path):
                 if file == 'index.html':

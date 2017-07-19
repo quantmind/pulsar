@@ -94,6 +94,7 @@ class RedisPubSub(PubSub):
 class RedisChannels(Channels, PubSubClient):
     """Manage redis channels-events
     """
+
     def __init__(self, pubsub, **kw):
         assert pubsub.protocol, "protocol required for channels"
         super().__init__(pubsub.store, **kw)

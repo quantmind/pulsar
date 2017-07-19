@@ -81,7 +81,7 @@ class TestTools(unittest.TestCase):
         s = 'a~b_(c-d).'
         qs = urlquote(s) + '%f'
         uqs = unquote_unreserved(qs)
-        self.assertEqual(uqs, s+'%f')
+        self.assertEqual(uqs, s + '%f')
 
     def test_remove_double_slash(self):
         r = remove_double_slash

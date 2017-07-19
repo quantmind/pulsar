@@ -171,7 +171,7 @@ class Concurrency:
                 except Exception as exc:
                     actor.stop(exc=exc)
                 actor.event('periodic_task').fire()
-                next = max(ACTOR_TIMEOUT_TOLE*actor.cfg.timeout, MIN_NOTIFY)
+                next = max(ACTOR_TIMEOUT_TOLE * actor.cfg.timeout, MIN_NOTIFY)
             else:
                 next = 0
 
@@ -276,6 +276,7 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
     Monitors live in the **main thread** of the master process and
     therefore do not require to be spawned.
     '''
+
     def setup_event_loop(self, actor):
         actor.logger = self.cfg.configured_logger('pulsar.%s' % actor.name)
         actor.mailbox = ProxyMailbox(actor)
@@ -300,6 +301,7 @@ class MonitorConcurrency(MonitorMixin, Concurrency):
 class ArbiterConcurrency(ArbiterMixin, ProcessMixin, Concurrency):
     '''Concurrency implementation for the ``arbiter``
     '''
+
     def get_actor(self, actor, aid, check_monitor=True):
         '''Given an actor unique id return the actor proxy.'''
         a = super().get_actor(actor, aid)
@@ -362,6 +364,7 @@ class ActorMultiProcess(ProcessMixin, Concurrency, Process):
     '''Actor on a Operative system process.
     Created using the python multiprocessing module.
     '''
+
     def run(self):  # pragma    nocover
         # The coverage for this process has not yet started
         try:

@@ -5,7 +5,7 @@ from pulsar.api import send, spawn, get_application, create_future, arbiter
 
 
 def add(actor, a, b):
-    return actor.name, a+b
+    return actor.name, a + b
 
 
 def wait_for_stop(test, aid, terminating=False):
@@ -52,11 +52,11 @@ async def spawn_actor_from_actor(actor, name):
 
 
 def cause_timeout(actor):
-    actor.cfg.set('timeout', 10*actor.cfg.timeout)
+    actor.cfg.set('timeout', 10 * actor.cfg.timeout)
 
 
 def cause_terminate(actor):
-    actor.cfg.set('timeout', 100*actor.cfg.timeout)
+    actor.cfg.set('timeout', 100 * actor.cfg.timeout)
     actor.concurrency.kill = kill_hack(actor.concurrency.kill)
     actor.stop = lambda exc=None, exit_code=None: False
 

@@ -291,7 +291,7 @@ class String:
         if self._children:
             for child in self._children:
                 if isinstance(child, String):
-                    yield from child.stream(request, counter+1)
+                    yield from child.stream(request, counter + 1)
                 else:
                     yield child
 
@@ -599,7 +599,7 @@ class Html(String):
             if self._children:
                 for child in self._children:
                     if isinstance(child, String):
-                        yield from child.stream(request, counter+1)
+                        yield from child.stream(request, counter + 1)
                     else:
                         yield child
                 if tag:
@@ -836,6 +836,7 @@ class Head(Html):
                 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js')
 
     '''
+
     def __init__(self, media_path=None, title=None, meta=None, minified=False,
                  asset_protocol=None, **params):
         super().__init__('head', **params)
@@ -981,11 +982,12 @@ class HtmlDocument(Html):
 
     .. _HTML5: http://www.w3schools.com/html/html5_intro.asp
     """
+
     def __init__(self, title=None, media_path='/media/', charset=None,
                  minified=False, asset_protocol=None, **params):
         super().__init__('html', **params)
         self.append(Head(title=title, media_path=media_path, minified=minified,
-                    charset=charset, asset_protocol=asset_protocol))
+                         charset=charset, asset_protocol=asset_protocol))
         self.append(Body(media_path=media_path, minified=minified,
                          asset_protocol=asset_protocol))
 

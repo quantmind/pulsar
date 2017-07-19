@@ -27,10 +27,10 @@ class TestPidfile(ActorTestMixin, unittest.TestCase):
         self.assertTrue(p.exists)
         #
         p1 = Pidfile(p.fname)
-        self.assertRaises(RuntimeError, p1.create, p.pid+1)
+        self.assertRaises(RuntimeError, p1.create, p.pid + 1)
         #
         p1 = Pidfile('bla/ksdcskcbnskcdbskcbksdjcb')
-        self.assertRaises(RuntimeError, p1.create, p.pid+1)
+        self.assertRaises(RuntimeError, p1.create, p.pid + 1)
         p1.unlink()
         p.unlink()
         self.assertFalse(os.path.exists(p.fname))

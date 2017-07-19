@@ -26,7 +26,8 @@ except ImportError:         # pragma    nocover
 
 
 memory_symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-memory_size = dict(((s, 1 << (i+1)*10) for i, s in enumerate(memory_symbols)))
+memory_size = dict(((s, 1 << (i + 1) * 10)
+                    for i, s in enumerate(memory_symbols)))
 
 
 def convert_bytes(b):

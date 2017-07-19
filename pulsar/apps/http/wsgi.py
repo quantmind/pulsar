@@ -17,6 +17,7 @@ class DummyTransport(Transport):
     data is not sent through the wire, instead it is passed to
     the connection other side object.
     """
+
     def __init__(self, connection, address, ssl=None):
         super().__init__()
         self.connection = connection
@@ -132,6 +133,7 @@ class DummyServerConnection(DummyConnection, Protocol):
 class DummyConnectionPool:
     """A class for simulating a client connection with a server
     """
+
     def __init__(self, connector, **kwargs):
         self.connector = connector
 

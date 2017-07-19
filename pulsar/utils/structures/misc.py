@@ -48,6 +48,7 @@ def as_tuple(value):
 
 class AttributeDictionary(collections.Mapping):
     '''A :class:`Mapping` structures which exposes keys as attributes.'''
+
     def __init__(self, *iterable, **kwargs):
         if iterable:
             if len(iterable) > 1:
@@ -181,7 +182,7 @@ class Deque(collections.deque):
         except ValueError:
             pass
         else:
-            l.insert(index+1, value)
+            l.insert(index + 1, value)
             self.clear()
             self.extend(l)
 

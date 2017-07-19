@@ -48,6 +48,7 @@ class TestLoader:
         more information.
     :parameter runner: The :class:`.TestRunner` passed by the test suite.
     '''
+
     def __init__(self, suite):
         self.stream = get_stream(suite.cfg)
         self.runner = TestRunner(suite.cfg.test_plugins, self.stream)
@@ -110,7 +111,7 @@ class TestLoader:
                 except ValueError:
                     continue
                 else:
-                    remaining = tags[index+1:]
+                    remaining = tags[index + 1:]
                     if len(remaining) == 1:
                         found.update(remaining)
                     elif not remaining:
@@ -173,7 +174,7 @@ class TestLoader:
                 found = self._check_tag(tag, include_tags, exclude_tags)
                 if isinstance(found, set):
                     for ttag in list(found):
-                        test_function = ttag[len(tag)+1:]
+                        test_function = ttag[len(tag) + 1:]
                         if test_function.startswith('test'):
                             yield ttag, (mod_path, test_function)
                     continue

@@ -15,7 +15,7 @@ else:
 
 
 if not HAS_C_EXTENSIONS:
-    from .pylib.protocols import  ProtocolConsumer, Protocol, Producer  # noqa
+    from .pylib.protocols import ProtocolConsumer, Protocol, Producer  # noqa
     from .pylib.events import EventHandler, AbortEvent          # noqa
     from .pylib.wsgi import WsgiProtocol, http_date, has_empty_content  # noqa
     from .pylib.wsgiresponse import WsgiResponse, wsgi_cached   # noqa

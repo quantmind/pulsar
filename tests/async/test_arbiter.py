@@ -44,7 +44,7 @@ class TestArbiterProcess(ActorTestMixin, unittest.TestCase):
         self.assertTrue('arbiter' in arbiter.registered)
         self.assertTrue('test' in arbiter.registered)
 
-    @test_timeout(2*ACTOR_ACTION_TIMEOUT)
+    @test_timeout(2 * ACTOR_ACTION_TIMEOUT)
     async def test_spawning_in_arbiter(self):
         arbiter = get_actor()
         self.assertEqual(arbiter.name, 'arbiter')
@@ -72,7 +72,7 @@ class TestArbiterProcess(ActorTestMixin, unittest.TestCase):
         name = list(arbiter.monitors.values())[0].name
         self.assertRaises(KeyError, arbiter.add_monitor, name)
 
-    @test_timeout(2*ACTOR_ACTION_TIMEOUT)
+    @test_timeout(2 * ACTOR_ACTION_TIMEOUT)
     async def test_terminate(self):
         arbiter = get_actor()
         self.assertTrue(arbiter.is_arbiter())

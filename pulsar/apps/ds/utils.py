@@ -35,22 +35,22 @@ def sort_command(store, client, request, value):
             alpha = True
         elif val == b'limit' and right >= 2:
             try:
-                start = max(0, int(request[j+1]))
-                count = int(request[j+2])
+                start = max(0, int(request[j + 1]))
+                count = int(request[j + 2])
             except Exception:
                 return client.error_reply(store.SYNTAX_ERROR)
             end = len(value) if count <= 0 else start + count
             j += 2
         elif val == b'store' and right >= 1:
-            storekey = request[j+1]
+            storekey = request[j + 1]
             j += 1
         elif val == b'by' and right >= 1:
-            sortby = request[j+1]
+            sortby = request[j + 1]
             if b'*' not in sortby:
                 dontsort = True
             j += 1
         elif val == b'get' and right >= 1:
-            getops.append(request[j+1])
+            getops.append(request[j + 1])
             j += 1
         else:
             return client.error_reply(store.SYNTAX_ERROR)

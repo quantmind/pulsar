@@ -192,6 +192,7 @@ pubsub_patterns = namedtuple('pubsub_patterns', 're clients')
 class Storage:
     '''Implement redis commands.
     '''
+
     def __init__(self, server):
         self.cfg = server.cfg
         self._password = self.cfg.key_value_password.encode('utf-8')
@@ -320,7 +321,7 @@ class Storage:
             if timeout:
                 if timeout < 0:
                     return client.reply_error(self.INVALID_TIMEOUT)
-                if client.db.expire(request[1], m*timeout):
+                if client.db.expire(request[1], m * timeout):
                     return client.reply_one()
             client.reply_zero()
 
@@ -335,7 +336,7 @@ class Storage:
             if timeout:
                 if timeout < 0:
                     return client.reply_error(self.INVALID_TIMEOUT)
-                timeout = M*timeout - time.time()
+                timeout = M * timeout - time.time()
                 if client.db.expire(request[1], timeout):
                     return client.reply_one()
             client.reply_zero()
@@ -799,7 +800,7 @@ class Storage:
         byte = bitoffset >> 3
         num_bytes = len(string)
         if byte >= num_bytes:
-            string.extend((byte + 1 - num_bytes)*b'\x00')
+            string.extend((byte + 1 - num_bytes) * b'\x00')
 
         # get current value
         byteval = string[byte]
@@ -850,7 +851,7 @@ class Storage:
             return client.reply_wrongtype()
         N = len(string)
         if N < T:
-            string.extend((T - N)*b'\x00')
+            string.extend((T - N) * b'\x00')
         string[offset:T] = value
         self._signal(self.NOTIFY_STRING, db, request[0], key, 1)
         client.reply_int(len(string))
@@ -1274,7 +1275,7 @@ class Storage:
             assert value
             value.trim(start, end)
             self._signal(self.NOTIFY_LIST, db, request[0], key,
-                         start-len(value))
+                         start - len(value))
             client.reply_ok()
             if db.pop(key, value) is not None:
                 self._signal(self.NOTIFY_GENERIC, db, 'del', key)
@@ -1453,7 +1454,7 @@ class Storage:
                     result = (None,)
                 elif len(value) <= count:
                     result = list(value)
-                    result.extend((None,)*(count-len(value)))
+                    result.extend((None,) * (count - len(value)))
                 else:
                     result = []
                     for _ in range(count):
@@ -2099,7 +2100,7 @@ class Storage:
         check_input(request, N != 0)
         t = time.time()
         seconds = math.floor(t)
-        microseconds = int(1000000*(t-seconds))
+        microseconds = int(1000000 * (t - seconds))
         client.reply_multi_bulk((seconds, microseconds))
 
     # #########################################################################
@@ -2119,7 +2120,7 @@ class Storage:
              nx=False, xx=False):
         try:
             seconds = int(seconds)
-            milliseconds = 0.001*int(milliseconds)
+            milliseconds = 0.001 * int(milliseconds)
             if seconds < 0 or milliseconds < 0:
                 raise ValueError
         except Exception:
@@ -2308,7 +2309,7 @@ class Storage:
                 raise ValueError('at least 1 input key is needed for '
                                  'ZUNIONSTORE/ZINTERSTORE')
             sets = []
-            for key in request[3:3+numkeys]:
+            for key in request[3:3 + numkeys]:
                 value = db.get(key)
                 if value is None:
                     value = self.zset_type()
@@ -2318,7 +2319,7 @@ class Storage:
             if len(sets) != numkeys:
                 raise ValueError('numkeys does not match number of sets')
             op = set((b'weights', b'aggregate'))
-            request = request[3+numkeys:]
+            request = request[3 + numkeys:]
             weights = None
             aggregate = sum
             while request:
@@ -2326,8 +2327,8 @@ class Storage:
                 if name in op:
                     op.discard(name)
                     if name == b'weights':
-                        weights = [float(v) for v in request[1:1+numkeys]]
-                        request = request[1+numkeys:]
+                        weights = [float(v) for v in request[1:1 + numkeys]]
+                        request = request[1 + numkeys:]
                     elif len(request) > 1:
                         aggregate = self.zset_aggregate.get(request[1])
                         request = request[2:]
@@ -2336,7 +2337,7 @@ class Storage:
             if not aggregate:
                 raise ValueError(self.SYNTAX_ERRO)
             if weights is None:
-                weights = [1]*numkeys
+                weights = [1] * numkeys
             elif len(weights) != numkeys:
                 raise ValueError(self.SYNTAX_ERROR)
         except Exception as e:
@@ -2501,6 +2502,7 @@ class Storage:
 class Db:
     '''A database.
     '''
+
     def __init__(self, num, store):
         self.store = store
         self._num = num
@@ -2574,7 +2576,7 @@ class Db:
         if key in self._expires:
             self.store._hit_keys += 1
             t = self._expires[key]
-            return max(0, int(m*(t.when - self._loop.time())))
+            return max(0, int(m * (t.when - self._loop.time())))
         elif key in self._data:
             self.store._hit_keys += 1
             return -1

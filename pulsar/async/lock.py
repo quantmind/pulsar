@@ -27,6 +27,7 @@ class LockBase(ABC):
         Free the lock after timeout seconds. If timeout is None (default)
         does not free the lock until ``release`` is called.
     """
+
     def __init__(self, name, *, loop=None, timeout=None, blocking=True):
         self.name = name
         self.timeout = timeout
@@ -65,6 +66,7 @@ class LockBase(ABC):
 class Lock(LockBase):
     """An asynchronous lock
     """
+
     def __init__(self, name, *, loop=None, timeout=None, blocking=True):
         super().__init__(name, loop=loop, timeout=timeout, blocking=blocking)
         self._lock = _get_lock(self._loop, name)

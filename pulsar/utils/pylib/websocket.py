@@ -75,6 +75,7 @@ class FrameParser:
           by the client)
         * 2 Assumes always unmasked data
     '''
+
     def __init__(self, version, kind, ProtocolError, extensions=None,
                  protocols=None, close_codes=None):
         self.version = version

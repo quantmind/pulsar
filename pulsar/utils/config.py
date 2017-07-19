@@ -738,7 +738,7 @@ def validate_callable(arity):
         result = inspect.getfullargspec(cval)
         nargs = len(result.args) - discount
         if result.defaults:
-            group = tuple(range(nargs-len(result.defaults), nargs+1))
+            group = tuple(range(nargs - len(result.defaults), nargs + 1))
         else:
             group = (nargs,)
         if arity not in group:

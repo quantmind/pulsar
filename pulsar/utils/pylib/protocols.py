@@ -46,6 +46,7 @@ class Producer(EventHandler):
     """An Abstract :class:`.EventHandler` class for all producers of
     sockets (client and servers)
     """
+
     def __init__(self, protocol_factory, loop=None, name=None,
                  keep_alive=0, logger=None):
         """initialze the Producer

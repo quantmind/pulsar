@@ -44,7 +44,7 @@ class Skiplist(Sequence):
         node = self._head
         traversed = 0
         index += 1
-        for i in range(self._level-1, -1, -1):
+        for i in range(self._level - 1, -1, -1):
             while node.next[i] and (traversed + node.width[i]) <= index:
                 traversed += node.width[i]
                 node = node.next[i]
@@ -57,8 +57,8 @@ class Skiplist(Sequence):
         self._size = 0
         self._level = 1
         self._head = Node('HEAD', None,
-                          [None]*SKIPLIST_MAXLEVEL,
-                          [1]*SKIPLIST_MAXLEVEL)
+                          [None] * SKIPLIST_MAXLEVEL,
+                          [1] * SKIPLIST_MAXLEVEL)
 
     def extend(self, iterable):
         '''Extend this skiplist with an iterable over
@@ -78,7 +78,7 @@ class Skiplist(Sequence):
         '''
         node = self._head
         rank = 0
-        for i in range(self._level-1, -1, -1):
+        for i in range(self._level - 1, -1, -1):
             while node.next[i] and node.next[i].score < score:
                 rank += node.width[i]
                 node = node.next[i]
@@ -117,11 +117,11 @@ class Skiplist(Sequence):
                        include_max=True, start=0, num=None, scores=False):
         node = self._head
         if include_min:
-            for i in range(self._level-1, -1, -1):
+            for i in range(self._level - 1, -1, -1):
                 while node.next[i] and node.next[i].score < minval:
                     node = node.next[i]
         else:
-            for i in range(self._level-1, -1, -1):
+            for i in range(self._level - 1, -1, -1):
                 while node.next[i] and node.next[i].score <= minval:
                     node = node.next[i]
         node = node.next[0]
@@ -145,9 +145,9 @@ class Skiplist(Sequence):
         chain = [None] * SKIPLIST_MAXLEVEL
         rank = [0] * SKIPLIST_MAXLEVEL
         node = self._head
-        for i in range(self._level-1, -1, -1):
+        for i in range(self._level - 1, -1, -1):
             # store rank that is crossed to reach the insert position
-            rank[i] = 0 if i == self._level-1 else rank[i+1]
+            rank[i] = 0 if i == self._level - 1 else rank[i + 1]
             while node.next[i] and node.next[i].score <= score:
                 rank[i] += node.width[i]
                 node = node.next[i]
@@ -165,7 +165,7 @@ class Skiplist(Sequence):
             self._level = level
 
         # create the new node
-        node = Node(score, value, [None]*level, [None]*level)
+        node = Node(score, value, [None] * level, [None] * level)
         for i in range(level):
             prevnode = chain[i]
             steps = rank[0] - rank[i]
@@ -207,7 +207,7 @@ class Skiplist(Sequence):
         node = self._head
         index = 0
         chain = [None] * self._level
-        for i in range(self._level-1, -1, -1):
+        for i in range(self._level - 1, -1, -1):
             while node.next[i] and (index + node.width[i]) <= start:
                 index += node.width[i]
                 node = node.next[i]
@@ -240,12 +240,12 @@ class Skiplist(Sequence):
         node = self._head
         chain = [None] * self._level
         if include_min:
-            for i in range(self._level-1, -1, -1):
+            for i in range(self._level - 1, -1, -1):
                 while node.next[i] and node.next[i].score < minval:
                     node = node.next[i]
                 chain[i] = node
         else:
-            for i in range(self._level-1, -1, -1):
+            for i in range(self._level - 1, -1, -1):
                 while node.next[i] and node.next[i].score <= minval:
                     node = node.next[i]
                 chain[i] = node

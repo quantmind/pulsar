@@ -150,7 +150,7 @@ class Plugin:
         doc_first_line = test.shortDescription()
         teststr = test.tag
         if teststr.endswith(test._testMethodName):
-            teststr = teststr[:-len(test._testMethodName)-1]
+            teststr = teststr[:-len(test._testMethodName) - 1]
         teststr = '%s.%s' % (teststr, test)
         if self.descriptions and doc_first_line:
             return '\n'.join((teststr, doc_first_line))
@@ -290,6 +290,7 @@ class TestResult(Plugin):
     Each :class:`.Plugin` can access the :class:`.TestRunner` ``result``
     object via the :attr:`~Plugin.result` attribute.
     '''
+
     def __init__(self, descriptions=True):
         self.descriptions = descriptions
         self._testsRun = 0
@@ -372,6 +373,7 @@ def testsafe(name, return_val=None):
 class TestRunner(Plugin):
     '''A :class:`.Plugin` for asynchronously running tests.
     '''
+
     def __init__(self, plugins, stream, writercls=None, descriptions=True):
         self.descriptions = descriptions
         self.plugins = []

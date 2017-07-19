@@ -53,7 +53,7 @@ class TestZset(unittest.TestCase):
         s = self.test_update()
         values = list(s)
         while values:
-            index = randint(0, len(values)-1)
+            index = randint(0, len(values) - 1)
             val = values.pop(index)
             self.assertTrue(val in s)
             self.assertNotEqual(s.remove(val), None)

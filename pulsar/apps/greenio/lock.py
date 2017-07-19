@@ -24,6 +24,7 @@ class GreenLock:
     greenlet until a call to :meth:`~GreenLock.release` changes it to unlocked,
     then the :meth:`~GreenLock.acquire` call resets it to locked and returns.
     """
+
     def __init__(self, loop=None):
         self._loop = loop or get_event_loop()
         self._local = threading.local()

@@ -80,8 +80,8 @@ class TestSkiplist(unittest.TestCase):
         c = 0
         while sl:
             c += 1
-            index = randint(0, len(sl)-1)
-            self.assertEqual(sl.remove_range(index, index+1), 1)
+            index = randint(0, len(sl) - 1)
+            self.assertEqual(sl.remove_range(index, index + 1), 1)
         self.assertEqual(c, 100)
 
     def test_remove_range_by_score(self):

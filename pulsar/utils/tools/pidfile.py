@@ -10,6 +10,7 @@ class Pidfile:
     it and '"%s.oldpid" % name' will be used. Otherwise
     we create a temp file using os.mkstemp.
     """
+
     def __init__(self, fname=None):
         self.fname = fname
         self.pid = None

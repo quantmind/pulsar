@@ -157,6 +157,7 @@ class RouterParam:
         stored in the :class:`Router.parameters` dictionary at key given by
         the class attribute specified in the class definition.
     '''
+
     def __init__(self, value=None):
         self.value = value
 
@@ -541,7 +542,7 @@ class MediaMixin:
         for f in sorted(os.listdir(fullpath)):
             if not f.startswith('.'):
                 if os.path.isdir(os.path.join(fullpath, f)):
-                    names.append(Html('a', f, href=f+'/', cn='folder'))
+                    names.append(Html('a', f, href=f + '/', cn='folder'))
                 else:
                     files.append(Html('a', f, href=f))
         names.extend(files)
@@ -585,6 +586,7 @@ class MediaRouter(Router, MediaMixin):
 
         The default file to serve when a directory is requested.
     '''
+
     def __init__(self, rule, path=None, show_indexes=False,
                  default_suffix=None, default_file='index.html',
                  serve_only=None, **params):

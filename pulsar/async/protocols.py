@@ -22,7 +22,7 @@ class PulsarProtocol(Protocol, FlowControl, Timeout, Pipeline):
         self.timeout = producer.keep_alive
         self.logger = producer.logger or LOGGER
         self._limit = limit or DEFAULT_LIMIT
-        self._b_limit = 2*self._limit
+        self._b_limit = 2 * self._limit
         self._buffer = deque()
         self.event('connection_made').bind(self._set_flow_limits)
         self.event('connection_lost').bind(self._wakeup_waiter)
@@ -96,6 +96,7 @@ class PulsarProtocol(Protocol, FlowControl, Timeout, Pipeline):
 class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):
     """An ``asyncio.DatagramProtocol`` with events`
     """
+
     def datagram_received(self, data, addr):
         self.data_received_count += 1
         while data:

@@ -7,6 +7,7 @@ from ....async.lock import LockError, LockBase
 class RedisScript:
     '''An executable Lua script object
     '''
+
     def __init__(self, script):
         self.script = script
         self.sha = None
@@ -30,6 +31,7 @@ class RedisScript:
 class Lock(LockBase):
     """Asynchronous locking primitive for distributing computing
     """
+
     def __init__(self, client, name, timeout=None, blocking=True, sleep=0.2):
         super().__init__(name, loop=client._loop, timeout=timeout,
                          blocking=blocking)

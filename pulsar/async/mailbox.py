@@ -260,6 +260,7 @@ mailbox_protocol = partial(Connection, MessageConsumer)
 class MailboxClient(AbstractClient):
     """Used by actors to send messages to other actors via the arbiter.
     """
+
     def __init__(self, address, actor, loop):
         super().__init__(mailbox_protocol, loop=loop,
                          name='%s-mailbox' % actor, logger=LOGGER)

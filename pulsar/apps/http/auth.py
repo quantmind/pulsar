@@ -24,6 +24,7 @@ class Auth:
 
 class HTTPBasicAuth(Auth):
     '''HTTP Basic Authentication handler.'''
+
     def __init__(self, username, password, status_code=401):
         self.username = username
         self.password = password
@@ -49,6 +50,7 @@ class HTTPBasicAuth(Auth):
 
 class HTTPDigestAuth(Auth):
     '''HTTP Digest Authentication handler.'''
+
     def __init__(self, username, password=None, options=None):
         self.username = username
         self.password = password

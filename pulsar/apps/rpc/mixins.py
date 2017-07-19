@@ -7,6 +7,7 @@ class PulsarServerCommands(JSONRPC):
     '''Useful commands to add to your :class:`.JSONRPC` handler.
 
     It exposes the following functions:'''
+
     def rpc_ping(self, request):
         '''Ping the server.'''
         return 'pong'

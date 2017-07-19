@@ -223,6 +223,7 @@ class RedisClient:
 
         The :class:`.RedisStore` for this client.
     '''
+
     def __init__(self, store):
         self.store = store
 
@@ -517,6 +518,7 @@ class RedisClient:
 class Pipeline(RedisClient):
     '''A :class:`.RedisClient` for pipelining commands
     '''
+
     def __init__(self, store):
         self.store = store
         self.reset()

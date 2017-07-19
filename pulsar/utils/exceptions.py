@@ -63,6 +63,7 @@ class HaltServer(BaseException):
 
     When ``exit_code`` is greater than 1, it is considered an expected
     failure and therefore the full stack trace is not logged.'''
+
     def __init__(self, reason='Exiting server.', exit_code=3):
         super().__init__(reason)
         self.exit_code = exit_code
@@ -75,6 +76,7 @@ class LockError(RuntimeError):
 # #################################################################### HTTP
 class HttpRequestException(ConnectionError):
     "Base for all HTTP related errors"
+
     def __init__(self, *args, **kwargs):
         """
         Initialize RequestException with `request` and `response` objects.

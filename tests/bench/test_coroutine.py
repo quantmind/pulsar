@@ -16,7 +16,7 @@ def async_func(loop, value):
 async def sub_sub(loop, num):
     a = await async_func(loop, num)
     b = await async_func(loop, num)
-    return a+b
+    return a + b
 
 
 async def sub(loop, num):
@@ -32,7 +32,7 @@ async def main(num, loop=None):
     a = await async_func(loop, num)
     b = await sub(loop, num)
     c = await sub(loop, num)
-    return a+b+c
+    return a + b + c
 
 
 class TestCoroutine(unittest.TestCase):

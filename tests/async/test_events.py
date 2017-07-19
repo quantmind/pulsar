@@ -19,7 +19,7 @@ class TestFailure(unittest.TestCase):
 
     def test_one_time_error(self):
         h = Handler()
-        h.event('finish').bind(lambda f, exc=None: 'OK'+4)
+        h.event('finish').bind(lambda f, exc=None: 'OK' + 4)
         with self.assertRaises(TypeError):
             h.event('finish').fire()
 
@@ -28,8 +28,8 @@ class TestFailure(unittest.TestCase):
         h.bind_events({'foo': 3, 'bla': 6})
         self.assertFalse(h.event('start').handlers())
         self.assertFalse(h.event('finish').handlers())
-        h.bind_events({'start': lambda r, data=None, exc=None: data+1,
-                       'finish': lambda r, data=None, exc=None: data+1})
+        h.bind_events({'start': lambda r, data=None, exc=None: data + 1,
+                       'finish': lambda r, data=None, exc=None: data + 1})
         self.assertTrue(h.event('start').handlers())
         self.assertTrue(h.event('finish').handlers())
         h.event('start').fire(data=1)

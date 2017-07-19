@@ -157,13 +157,13 @@ def get_hostport(scheme, full_host):
         j = host.rfind(']')         # ipv6 addresses have [...]
         if i > j:
             try:
-                port = int(host[i+1:])
+                port = int(host[i + 1:])
             except ValueError:
-                if host[i+1:] == "":  # http://foo.com:/ == http://foo.com/
+                if host[i + 1:] == "":  # http://foo.com:/ == http://foo.com/
                     port = default_port(scheme)
                 else:
                     raise httpclient.InvalidURL("nonnumeric port: '%s'"
-                                                % host[i+1:])
+                                                % host[i + 1:])
             host = host[:i]
         else:
             port = default_port(scheme)
@@ -371,7 +371,7 @@ def encode_multipart_formdata(fields, boundary=None, charset=None):
                         'filename="%s"\r\n' % (fieldname, filename))
                        .encode(charset))
             body.write(('Content-Type: %s\r\n\r\n' %
-                       (get_content_type(filename))).encode(charset))
+                        (get_content_type(filename))).encode(charset))
         else:
             data = value
             body.write(('Content-Disposition: form-data; name="%s"\r\n'
@@ -492,6 +492,7 @@ class CacheControl:
     Specifies the maximum amount of time that a representation will be
     considered fresh.
     '''
+
     def __init__(self, maxage=None, private=False,
                  must_revalidate=False, proxy_revalidate=False,
                  nostore=False):

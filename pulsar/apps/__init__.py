@@ -424,6 +424,7 @@ class Application(Configurator):
 
         Default ``None``
     """
+
     def __init__(self, callable=None, load_config=True, **params):
         super().__init__(**params)
         self.cfg.callable = callable

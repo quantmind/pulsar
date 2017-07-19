@@ -182,6 +182,7 @@ class RemoteStore(Producer, Store):
     It is an :class:`.Producer` for accessing and retrieving
     data from remote data servers such as redis.
     """
+
     def __init__(self, name, host, loop=None, protocol_factory=None, **kw):
         super().__init__(protocol_factory, name=name, loop=loop)
         Store.__init__(self, host, **kw)
@@ -259,6 +260,7 @@ class PubSubClient:
     * ``channel`` the channel which originated the message
     * ``message`` the message
     '''
+
     def __call__(self, channel, message):
         raise NotImplementedError
 
@@ -290,6 +292,7 @@ class PubSub(Producer):
     An additional ``protocol`` object can be supplied. The protocol must
     implement the ``encode`` and ``decode`` methods.
     """
+
     def __init__(self, store, protocol_factory, protocol=None, **kw):
         super().__init__(protocol_factory, loop=store._loop, **kw)
         self.store = store
