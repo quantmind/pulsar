@@ -12,7 +12,7 @@ def sync_case(request):
 
 
 @blueprint.router('async', methods=['delete', 'put'])
-def async_cast(request):
+async def async_cast(request):
     return request.response('async')
 
 

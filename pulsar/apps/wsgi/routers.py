@@ -281,7 +281,7 @@ class Router(metaclass=RouterType):
 
         Typical usage:
 
-        app = WsgiApplication('/')
+        app = Router('/')
 
         @app.router('/hello', methods=['post'])
         def world(request):
