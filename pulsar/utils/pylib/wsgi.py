@@ -11,7 +11,7 @@ HEAD = 'HEAD'
 MAX_CHUNK_SIZE = 65536
 TLS_SCHEMES = frozenset(('https', 'wss'))
 NO_CONTENT_CODES = frozenset((204, 304))
-NO_BODY_VERBS = frozenset((HEAD, 'OPTIONS'))
+NO_BODY_VERBS = frozenset((HEAD,))
 URL_SCHEME = os.environ.get('wsgi.url_scheme', 'http')
 OS_SCRIPT_NAME = os.environ.get("SCRIPT_NAME", "")
 PULSAR_CACHE = 'pulsar.cache'
@@ -68,6 +68,8 @@ class Headers:
 
 
 class WsgiProtocol:
+    """"Pure python WSGI protocol implementation
+    """
     keep_alive = False
     parsed_url = None
     headers_sent = None
@@ -77,7 +79,6 @@ class WsgiProtocol:
         connection = protocol.connection
         server_address = connection.transport.get_extra_info('sockname')
         self.environ = {
-            'wsgi.input': protocol.body_reader,
             'wsgi.async': True,
             'wsgi.timestamp': protocol.producer.current_time,
             'wsgi.errors': sys.stderr,
@@ -93,6 +94,8 @@ class WsgiProtocol:
             'SERVER_PORT': str(server_address[1]),
             PULSAR_CACHE: protocol
         }
+        self.body_reader = protocol.body_reader(self.environ)
+        self.environ['wsgi.input'] = self.body_reader
         self.cfg = cfg
         self.headers = CIMultiDict()
         self.protocol = protocol
@@ -143,11 +146,6 @@ class WsgiProtocol:
 
         self.environ['HTTP_%s' % header_env] = header_value
 
-        #
-        # handle expect=100-continue
-        if header == EXPECT and header_value.lower() == '100-continue':
-            self.body_reader()
-
     def on_headers_complete(self):
         if 'SERVER_PROTOCOL' not in self.environ:
             self.environ['SERVER_PROTOCOL'] = (
@@ -157,7 +155,7 @@ class WsgiProtocol:
         forward = self.headers.get(X_FORWARDED_FOR)
         client_address = self.client_address
 
-        if self.environ['wsgi.url_scheme'] == 'https':
+        if self.environ.get('wsgi.url_scheme') == 'https':
             self.environ['HTTPS'] = 'on'
         if forward:
             # we only took the last one
@@ -177,24 +175,15 @@ class WsgiProtocol:
                 path_info = path_info.split(script_name, 1)[1]
             self.environ['PATH_INFO'] = unquote(path_info)
 
+        # add the protocol to the pipeline
         self.connection.pipeline(self.protocol)
 
     def on_body(self, body):
-        self.body_reader().feed_data(body)
+        self.body_reader.feed_data(body)
 
     def on_message_complete(self):
-        self.protocol.body_reader.feed_eof()
+        self.body_reader.feed_eof()
         self.protocol.finished_reading()
-
-    def body_reader(self):
-        proto = self.protocol
-        if not proto.body_reader.reader:
-            proto.body_reader.initialise(
-                self.connection.transport,
-                self.cfg.stream_buffer,
-                self.environ
-            )
-        return proto.body_reader
 
     def start_response(self, status, response_headers, exc_info=None):
         if exc_info:

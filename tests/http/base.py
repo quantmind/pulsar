@@ -826,13 +826,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             yield b'z'*100
 
         result = b'f'*100
-        fut._loop.call_later(0.5, fut.set_result, result)
+        fut._loop.call_later(1, fut.set_result, result)
         response = await http.post(
             self.httpbin('post_chunks'),
             headers={'content-type': 'text/plain'},
             data=gen())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.content), 300)
+        self.assertEqual(response.headers['content-length'], '300')
         self.assertEqual(response.headers['content-type'],
                          response.request.headers['content-type'])
 

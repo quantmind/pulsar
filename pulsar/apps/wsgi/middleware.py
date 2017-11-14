@@ -93,13 +93,13 @@ async def wait_for_body_middleware(environ, start_response=None):
 
     Useful when using synchronous web-frameworks such as :django:`django <>`.
     '''
-    if 'wsgi.input' in environ:
-        chunk = environ['wsgi.input'].read()
+    if environ.get('wsgi.async'):
         try:
-            chunk = await chunk
+            chunk = await environ['wsgi.input'].read()
         except TypeError:
-            pass
+            chunk = b''
         environ['wsgi.input'] = BytesIO(chunk)
+        environ.pop('wsgi.async')
 
 
 def middleware_in_executor(middleware):

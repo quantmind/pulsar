@@ -178,15 +178,21 @@ class ResponsePipeline:
         self.connection = connection
         self.queue = Queue(loop=connection._loop)
         self.logger = connection.producer.logger
+        self.debug = connection._loop.get_debug()
         self.worker = self.queue._loop.create_task(self._process())
 
     def put(self, consumer):
+        """Put a protocol consumer in the response pipeline
+        """
         self.queue.put_nowait(consumer)
 
     async def _process(self):
         while True:
             try:
                 consumer = await self.queue.get()
+                if self.debug:
+                    self.logger.debug('Connection pipeline process %s',
+                                      consumer)
                 await consumer.write_response()
             except (CancelledError, GeneratorExit, RuntimeError):
                 break

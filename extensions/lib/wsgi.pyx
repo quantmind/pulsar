@@ -45,7 +45,6 @@ cdef class WsgiProtocol:
         cdef object connection = protocol.connection
         cdef object server_address = connection.transport.get_extra_info('sockname')
         self.environ = {
-            'wsgi.input': protocol.body_reader,
             'wsgi.async': True,
             'wsgi.timestamp': connection.producer.time.current_time,
             'wsgi.errors': sys.stderr,
@@ -61,6 +60,8 @@ cdef class WsgiProtocol:
             'SERVER_PORT': str(server_address[1]),
             PULSAR_CACHE: protocol
         }
+        self.body_reader = protocol.body_reader(self.environ)
+        self.environ['wsgi.input'] = self.body_reader
         self.cfg = cfg
         self.headers = CIMultiDict()
         self.protocol = protocol
@@ -109,9 +110,6 @@ cdef class WsgiProtocol:
 
         self.environ['HTTP_%s' % header_env] = header_value
 
-        if header == EXPECT and header_value.lower() == '100-continue':
-            self.body_reader()
-
     cpdef on_headers_complete(self):
         cdef str forward = self.headers.get(X_FORWARDED_FOR)
         cdef object client_address = self.client_address
@@ -144,20 +142,11 @@ cdef class WsgiProtocol:
         self.connection.pipeline(self.protocol)
 
     cpdef on_body(self, bytes body):
-        self.body_reader().feed_data(body)
+        self.body_reader.feed_data(body)
 
     cpdef on_message_complete(self):
-        self.protocol.body_reader.feed_eof()
-
-    cpdef body_reader(self):
-        cdef object proto = self.protocol
-        if not proto.body_reader.reader:
-            proto.body_reader.initialise(
-                self.connection.transport,
-                self.cfg.stream_buffer,
-                self.environ
-            )
-        return proto.body_reader
+        self.body_reader.feed_eof()
+        self.protocol.finished_reading()
 
     cpdef start_response(self, str status, object response_headers, object exc_info=None):
         cdef str value

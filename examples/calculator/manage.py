@@ -41,14 +41,9 @@ class RequestCheck:
 
 
 class Root(rpc.PulsarServerCommands):
-    '''Add two rpc methods for testing to the :class:`.PulsarServerCommands`
+    """Add two rpc methods for testing to the :class:`.PulsarServerCommands`
     handler.
-    '''
-    def rpc_dodgy_method(self, request):
-        '''This method will fails because the return object is not
-        json serialisable.'''
-        return Calculator
-
+    """
     rpc_check_request = RequestCheck()
 
 

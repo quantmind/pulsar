@@ -141,10 +141,6 @@ class TestRpcOnThread(unittest.TestCase):
         with self.assertRaises(rpc.InternalError):
             await self.p.calc.divide('ciao', 'bo')
 
-    async def testCouldNotserialize(self):
-        with self.assertRaises(rpc.InternalError):
-            await self.p.dodgy_method()
-
     async def test_paths(self):
         '''Fetch a sizable ammount of data'''
         response = await self.p.calc.randompaths(num_paths=20, size=100,

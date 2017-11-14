@@ -7,4 +7,3 @@ sphinxcontrib-spelling
 uvloop
 pyslink
 httptools
-watchdog

@@ -42,7 +42,7 @@ class HttpBodyReader:
     _expect_sent = None
     reader = None
 
-    def initialise(self, transport, limit, environ, **kw):
+    def __init__(self, transport, limit, environ, **kw):
         self.limit = limit
         self.reader = asyncio.StreamReader(**kw)
         self.reader.set_transport(transport)

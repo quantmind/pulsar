@@ -102,10 +102,10 @@ class Chat(WS):
         '''
         if msg:
             lines = []
-            for l in msg.split('\n'):
-                l = l.strip()
-                if l:
-                    lines.append(l)
+            for li in msg.split('\n'):
+                li = li.strip()
+                if li:
+                    lines.append(li)
             msg = ' '.join(lines)
             if msg:
                 return self.pubsub.publish(self.channel, msg)

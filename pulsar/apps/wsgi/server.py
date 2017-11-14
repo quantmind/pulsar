@@ -53,14 +53,17 @@ class HttpServerResponse(ProtocolConsumer):
     ONE_TIME_EVENTS = ProtocolConsumer.ONE_TIME_EVENTS + ('on_headers',)
 
     def create_request(self):
-        producer = self.producer
-        self.body_reader = HttpBodyReader()
         self.parse_url = http.parse_url
         self.create_parser = http.HttpRequestParser
-        self.cfg = producer.cfg
+        self.cfg = self.producer.cfg
         self.logger = LOGGER
-        wsgi = WsgiProtocol(self, producer.cfg, FileWrapper)
-        return wsgi
+        return WsgiProtocol(self, self.producer.cfg, FileWrapper)
+
+    def body_reader(self, environ):
+        return HttpBodyReader(
+            self.connection.transport,
+            self.producer.cfg.stream_buffer,
+            environ)
 
     def __repr__(self):
         return '%s - %d - %s' % (

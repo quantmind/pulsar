@@ -189,10 +189,10 @@ class EventLoopPolicy(asyncio.DefaultEventLoopPolicy):
 
     @property
     def _local(self):
-        l = getattr(current_process(), '_event_loop_policy', None)
-        if l is None:
-            self._local = l = self._Local()
-        return l
+        lp = getattr(current_process(), '_event_loop_policy', None)
+        if lp is None:
+            self._local = lp = self._Local()
+        return lp
 
     @_local.setter
     def _local(self, v):

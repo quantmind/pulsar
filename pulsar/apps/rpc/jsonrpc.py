@@ -1,5 +1,3 @@
-import sys
-import json
 import logging
 import asyncio
 from collections import namedtuple
@@ -7,6 +5,7 @@ from collections import namedtuple
 from pulsar.api import AsyncObject
 from pulsar.utils.string import gen_unique_id
 from pulsar.utils.tools import checkarity
+from pulsar.utils.system import json
 from pulsar.apps.http import HttpClient
 
 from .handlers import RpcHandler, InvalidRequest, exception
@@ -58,7 +57,6 @@ class JSONRPC(RpcHandler):
         return request.json_response(res)
 
     async def _call(self, request, data):
-        exc_info = None
         proc = None
         try:
             if (not isinstance(data, dict) or
@@ -81,45 +79,33 @@ class JSONRPC(RpcHandler):
             except TypeError:
                 pass
         except Exception as exc:
-            result = exc
-            exc_info = sys.exc_info()
-        else:
-            try:
-                json.dumps(result)
-            except Exception as exc:
-                result = exc
-                exc_info = sys.exc_info()
-        #
-        if exc_info:
-            if isinstance(result, TypeError) and proc:
-                msg = checkarity(proc, args, kwargs, discount=1)
+            return self._get_error_and_status(exc, data, proc)
+
+        return {
+            'id': data.get('id'),
+            'jsonrpc': self.version,
+            'result': result
+        }, 200
+
+    def _get_error_and_status(self, exc, data, proc):
+        if isinstance(exc, TypeError) and proc:
+            params = data.get('params')
+            if isinstance(params, dict):
+                args, kwargs = (), params
             else:
-                msg = None
-
-            rpc_id = data.get('id') if isinstance(data, dict) else None
-
-            res, status = self._get_error_and_status(
-                result, msg=msg, rpc_id=rpc_id, exc_info=exc_info)
+                args, kwargs = tuple(params or ()), {}
+            msg = checkarity(proc, args, kwargs, discount=1)
         else:
-            res = {
-                'id': data.get('id'),
-                'jsonrpc': self.version,
-                'result': result
-            }
-            status = 200
+            msg = None
 
-        return res, status
-
-    def _get_error_and_status(self, exc, msg=None, rpc_id=None,
-                              exc_info=None):
+        rpc_id = data.get('id') if isinstance(data, dict) else None
         res = {'id': rpc_id, 'jsonrpc': self.version}
-
         code = getattr(exc, 'fault_code', None)
         if not code:
             code = -32602 if msg else -32603
         msg = msg or str(exc) or 'JSON RPC exception'
         if code == -32603:
-            logger.error(msg, exc_info=exc_info)
+            logger.exception(msg)
         else:
             logger.warning(msg)
         res['error'] = {

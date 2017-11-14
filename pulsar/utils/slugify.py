@@ -47,14 +47,14 @@ def slugify(value, separator='-', max_length=0, word_boundary=False,
     if decimal:
         try:
             value = DECIMAL_REXP.sub(lambda m: chr(int(m.group(1))), value)
-        except:
+        except Exception:
             pass
 
     # hexadecimal character reference
     if hexadecimal:
         try:
             value = HEX_REXP.sub(lambda m: chr(int(m.group(1), 16)), value)
-        except:
+        except Exception:
             pass
 
     value = value.lower()

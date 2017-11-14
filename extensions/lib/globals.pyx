@@ -12,7 +12,7 @@ cdef str PULSAR_CACHE = 'pulsar.cache'
 cdef int MAX_CHUNK_SIZE = 65536
 cdef object TLS_SCHEMES = frozenset(('https', 'wss'))
 cdef object NO_CONTENT_CODES = frozenset((204, 304))
-cdef object NO_BODY_VERBS = frozenset(('HEAD', 'OPTIONS'))
+cdef object NO_BODY_VERBS = frozenset(('HEAD',))
 
 cdef object COOKIE = istr('Cookie')
 cdef object CONNECTION = istr('Connection')

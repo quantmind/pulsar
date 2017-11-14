@@ -164,26 +164,26 @@ class Dict(dict):
 class Deque(collections.deque):
 
     def insert_before(self, pivot, value):
-        l = list(self)
+        li = list(self)
         try:
-            index = l.index(pivot)
+            index = li.index(pivot)
         except ValueError:
             pass
         else:
-            l.insert(index, value)
+            li.insert(index, value)
             self.clear()
-            self.extend(l)
+            self.extend(li)
 
     def insert_after(self, pivot, value):
-        l = list(self)
+        li = list(self)
         try:
-            index = l.index(pivot)
+            index = li.index(pivot)
         except ValueError:
             pass
         else:
-            l.insert(index+1, value)
+            li.insert(index+1, value)
             self.clear()
-            self.extend(l)
+            self.extend(li)
 
     def remove(self, elem, count=1):
         rev = False
@@ -191,21 +191,21 @@ class Deque(collections.deque):
             if count < 0:
                 rev = True
                 count = -count
-                l = list(reversed(self))
+                li = list(reversed(self))
             else:
-                l = list(self)
+                li = list(self)
             while count:
                 try:
-                    l.remove(elem)
+                    li.remove(elem)
                     count -= 1
                 except ValueError:
                     break
         else:
-            l = [v for v in self if v != elem]
-        removed = len(self) - len(l)
+            li = [v for v in self if v != elem]
+        removed = len(self) - len(li)
         if removed:
             self.clear()
-            self.extend(reversed(l) if rev else l)
+            self.extend(reversed(li) if rev else li)
         return removed
 
     def trim(self, start, end):

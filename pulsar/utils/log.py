@@ -336,9 +336,7 @@ class ColoredStream(logging.StreamHandler):   # pragma    nocover
         try:
             self.color(record)
             self.flush()
-        except (KeyboardInterrupt, SystemExit):  # pragma: no cover
-            raise
-        except:
+        except Exception:
             self.handleError(record)
 
     def color(self, record):

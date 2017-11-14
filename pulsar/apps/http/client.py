@@ -608,13 +608,13 @@ class HttpResponse(ProtocolConsumer):
         """
         headers = self.headers or {}
         header = headers.get('link')
-        l = {}
+        li = {}
         if header:
             links = parse_header_links(header)
             for link in links:
                 key = link.get('rel') or link.get('url')
-                l[key] = link
-        return l
+                li[key] = link
+        return li
 
     @property
     def reason(self):
