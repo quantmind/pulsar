@@ -80,4 +80,4 @@ class TestTestLoader(unittest.TestCase):
     async def test_load_http(self):
         app = await get_application('test')
         modules = dict(app.loader.test_files(['http']))
-        self.assertEqual(len(modules), 9)
+        self.assertEqual(len(modules), 8)

@@ -1,16 +1,13 @@
 import unittest
-from asyncio import new_event_loop, get_event_loop
 
-from pulsar.api import send, get_application, get_actor
-from pulsar.apps.test import dont_run_with_thread
+from pulsar.api import send, get_application
 
 from examples.echoudp.manage import server, Echo
 
 
-@unittest.skipIf(get_actor().cfg.event_loop == 'uv',
-                 "uvloop does not work with udp servers")
-class TestEchoUdpServerThread(unittest.TestCase):
-    concurrency = 'thread'
+class A(unittest.TestLoader):
+    # class TestEchoUdpServerThread(unittest.TestCase):
+    concurrency = 'process'
     server_cfg = None
 
     @classmethod
@@ -51,27 +48,3 @@ class TestEchoUdpServerThread(unittest.TestCase):
         msg = b''.join((b'a' for x in range(2**13)))
         result = await self.client(msg)
         self.assertEqual(result, msg)
-
-
-@dont_run_with_thread
-@unittest.skipIf(get_actor().cfg.event_loop == 'uv',
-                 "uvloop does not work with udp servers")
-class TestEchoUdpServerProcess(TestEchoUdpServerThread):
-    concurrency = 'process'
-
-    def sync_client(self):
-        return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
-
-    async def setUp(self):
-        result = await self.client(b'ciao luca')
-        self.assertEqual(result, b'ciao luca')
-
-    #    TEST SYNCHRONOUS CLIENT
-    async def __test_sync_echo(self):
-        loop = get_event_loop()
-        await loop.run_in_executor(None, self._test_sync_echo)
-
-    def _test_sync_echo(self):
-        echo = self.sync_client()
-        self.assertEqual(echo(b'ciao!'), b'ciao!')
-        self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
