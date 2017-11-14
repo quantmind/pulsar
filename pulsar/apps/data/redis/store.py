@@ -58,13 +58,13 @@ class RedisStore(RemoteStore):
 
     async def execute(self, *args, **options):
         connection = await self._pool.connect()
-        with connection:
+        async with connection:
             result = await connection.execute(*args, **options)
             return result
 
     async def execute_pipeline(self, commands, raise_on_error=True):
         conn = await self._pool.connect()
-        with conn:
+        async with conn:
             result = await conn.execute_pipeline(commands, raise_on_error)
             return result
 

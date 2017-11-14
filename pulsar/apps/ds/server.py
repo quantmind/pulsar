@@ -175,7 +175,7 @@ class PulsarDS(SocketServer):
     def server_factory(self, *args, **kw):
         return Server(*args, **kw)
 
-    def protocol_factory(self):
+    def protocol_factory(self, idx):
         return partial(Connection, PulsarStoreClient)
 
     def monitor_start(self, monitor):

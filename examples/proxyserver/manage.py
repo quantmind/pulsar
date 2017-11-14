@@ -41,7 +41,8 @@ from functools import partial
 
 import pulsar
 from pulsar.api import (
-    HttpException, ensure_future, create_future, ProtocolConsumer
+    HttpException, ensure_future, create_future, ProtocolConsumer,
+    AbortEvent
 )
 from pulsar.apps import wsgi, http
 from pulsar.apps.wsgi import wsgi_request
@@ -167,7 +168,7 @@ class TunnelResponse:
             self.start_response('200 Connection established', [])
             # send empty byte so that headers are sent
             self.future.set_result([b''])
-            response.abort_request()
+            raise AbortEvent
         else:
             response.event('data_processed').bind(self.data_processed)
             response.event('post_request').bind(self.post_request)

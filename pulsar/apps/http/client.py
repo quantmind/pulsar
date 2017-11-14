@@ -45,8 +45,8 @@ from pulsar.utils.httpurl import (
 )
 
 from .plugins import (
-    handle_cookies, WebSocket, Redirect, Tunneling, start_request,
-    keep_alive, InfoHeaders, Expect
+    handle_cookies, WebSocket, Redirect, start_request,
+    keep_alive, InfoHeaders, Expect, ssl_transport
 )
 from .auth import Auth, HTTPBasicAuth
 from .stream import HttpStream
@@ -139,6 +139,10 @@ class RequestBase:
     def full_url(self):
         return self.url
 
+    def new_parser(self, protocol):
+        protocol.headers = CIMultiDict()
+        return self.client.http_parser(protocol)
+
     def get_full_url(self):
         """Required by Cookies handlers
         """
@@ -151,13 +155,15 @@ class RequestBase:
 class HttpTunnel(RequestBase):
     first_line = None
     data = None
+    decompress = False
+    method = 'CONNECT'
 
     def __init__(self, request, url):
         self.status = 0
         self.request = request
         self.url = '%s://%s:%s' % scheme_host_port(url)
-        self.parser = request.parser
-        request.new_parser()
+        # self.parser = request.parser
+        # request.new_parser()
         self.headers = CIMultiDict(request.client.DEFAULT_TUNNEL_HEADERS)
 
     def __repr__(self):
@@ -180,8 +186,12 @@ class HttpTunnel(RequestBase):
         req = self.request
         self.headers['host'] = req.get_header('host')
         bits = scheme_host_port(req.url)[1:] + (req.version,)
-        self.first_line = 'CONNECT %s:%s %s\r\n' % bits
-        return b''.join((self.first_line.encode('ascii'), bytes(self.headers)))
+        self.first_line = 'CONNECT %s:%s %s' % bits
+        buffer = [self.first_line.encode('ascii'), b'\r\n']
+        buffer.extend((('%s: %s\r\n' % (name, value)).encode(CHARSET)
+                       for name, value in self.headers.items()))
+        buffer.append(b'\r\n')
+        return b''.join(buffer)
 
     def has_header(self, header_name):
         return header_name in self.headers
@@ -192,18 +202,22 @@ class HttpTunnel(RequestBase):
     def remove_header(self, header_name):
         self.headers.pop(header_name, None)
 
-    def apply(self, response, handler):
+    async def apply(self, response):
         """Tunnel the connection if needed
         """
-        connection = response.connection
-        tunnel_status = getattr(connection, '_tunnel_status', 0)
-        if not tunnel_status:
-            connection._tunnel_status = 1
-            response.event('pre_request').bind(handler)
-        elif tunnel_status == 1:
-            connection._tunnel_status = 2
-            response.request = self
-            response.event('on_headers').bind(handler.on_headers)
+        for event in response.events().values():
+            event.clear()
+        response.start(self)
+        await response.event('post_request').waiter()
+        if response.status_code == 200:
+            request = self.request
+            sslcontext = request._ssl
+            connection = response.connection
+            url = urlparse(request.url)
+            await ssl_transport(connection, sslcontext, url.netloc)
+            request._tunnel = None
+            response = await start_request(request, connection)
+        return response
 
 
 class HttpRequest(RequestBase):
@@ -328,10 +342,6 @@ class HttpRequest(RequestBase):
             url = urlunparse(('', '', p.path or '/', p.params,
                               p.query, p.fragment))
         return '%s %s %s' % (self.method, url, self.version)
-
-    def new_parser(self, protocol):
-        protocol.headers = CIMultiDict()
-        return self.client.http_parser(protocol)
 
     def is_chunked(self):
         return self.body and 'content-length' not in self.headers
@@ -854,7 +864,6 @@ class HttpClient(AbstractClient):
         self.http_parser = parser or http.HttpResponseParser
         self.frame_parser = frame_parser or websocket.frame_parser
         # Add hooks
-        self.event('pre_request').bind(Tunneling(self._loop))
         self.event('pre_request').bind(WebSocket())
         self.event('on_headers').bind(handle_cookies)
         self.event('post_request').bind(Redirect())
@@ -962,7 +971,7 @@ class HttpClient(AbstractClient):
 
     def maybe_decompress(self, response):
         encoding = response.headers.get('content-encoding')
-        if response.request.decompress and encoding:
+        if encoding and response.request.decompress:
             deco = self._decompressors.get(encoding)
             if not deco:
                 self.logger.warning('Cannot decompress %s', encoding)

@@ -4,7 +4,7 @@ from copy import copy
 from http.cookies import SimpleCookie
 from urllib.parse import urlparse, urljoin
 
-from pulsar.api import create_future, PulsarException
+from pulsar.api import PulsarException
 from pulsar.apps.ws import WebSocketProtocol, WS
 from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri
 from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
@@ -41,6 +41,10 @@ def _consumer(response, consumer):
 
 async def start_request(request, conn):
     response = conn.current_consumer()
+    if request.tunnel:
+        response = await request.tunnel.apply(response)
+        return response
+
     # bind request-specific events
     response.bind_events(request.inp_params)
     if request.auth:
@@ -218,69 +222,19 @@ class WebSocket:
             response.request_again = lambda r: websocket
 
 
-class Tunneling:
-    '''A pre request callback for handling proxy tunneling.
+async def ssl_transport(connection, sslcontext, hostname):
+    rawsock = connection.transport.get_extra_info('socket')
+    loop = connection._loop
+    # connection.transport.pause_reading()
+    # connection.reset_event('connection_made')
+    # connection_made = connection.event('connection_made').waiter()
 
-    If Tunnelling is required, it writes the CONNECT headers and abort
-    the writing of the actual request until headers from the proxy server
-    are received.
-    '''
-    def __init__(self, loop):
-        assert loop
-        self._loop = loop
-
-    @noerror
-    def __call__(self, response, exc=None):
-        # the pre_request handler
-        request = response.request
-        if request and request.tunnel:
-            request.tunnel.apply(response, self)
-
-    @noerror
-    def on_headers(self, response, exc=None):
-        '''Called back once the headers have arrived.'''
-        if response.status_code == 200:
-            response.request_again = self._tunnel_request
-            response.finished()
-
-    async def _tunnel_request(self, response):
-        request = response.request.request
-        connection = response.connection
-        loop = connection._loop
-        sock = connection.sock
-        connection.transport.pause_reading()
-        connection.reset_event('connection_made')
-        connection_made = connection.event('connection_made').waiter()
-        #
-        url = urlparse(request.url)
-        await ssl_transport(loop, sock, connection, request._ssl, url.netloc)
-        await connection_made
-        response = await start_request(request, connection)
-        return response
-
-
-async def ssl_transport(loop, rawsock, connection, sslcontext, hostname):
-
-    if hasattr(loop, '_make_legacy_ssl_transport'):
-        # TODO: this is a hack because the create_connection does not work
-        # with standard asyncio event loops
-        waiter = create_future(loop)
-        loop._make_legacy_ssl_transport(
-            rawsock,
-            connection,
-            sslcontext,
-            waiter,
-            server_hostname=hostname
-        )
-        await waiter
-
-    else:
-        await loop.create_connection(
-            lambda: connection,
-            ssl=sslcontext,
-            sock=rawsock,
-            server_hostname=hostname
-        )
+    await loop.create_connection(
+        lambda: connection,
+        ssl=sslcontext,
+        sock=rawsock,
+        server_hostname=hostname
+    )
 
 
 class InfoHeaders:
