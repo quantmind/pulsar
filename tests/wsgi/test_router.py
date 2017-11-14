@@ -239,6 +239,26 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertTrue('Test Response Wrapper' in response.text)
 
+    def test_router_decorator(self):
+        rt = MyRouter('/')
+
+        @rt.router('/sync', methods=['get', 'post'])
+        def sync_case(request):
+            return request.response
+
+        @rt.router('/async', methods=['delete', 'put'])
+        async def async_case(request):
+            return request.response
+
+        sync_child = rt.get_route('sync_case')
+        async_child = rt.get_route('async_case')
+        self.assertTrue(sync_child)
+        self.assertTrue(async_child)
+        self.assertTrue(async_child.delete)
+        self.assertTrue(async_child.put)
+        self.assertTrue(sync_child.get)
+        self.assertTrue(sync_child.post)
+
     async def test_media_router_serve_only(self):
         router = MediaRouter('/', serve_only=('json', 'png'))
         self.assertIsInstance(router._serve_only, set)

@@ -276,6 +276,25 @@ class Router(metaclass=RouterType):
             self.add_child(self.make_router(rule, method=method,
                                             handler=handler, **rparameters))
 
+    def router(self, rule, methods=['get']):
+        '''Map a function to :class:`Router` and add to the :attr:`routes` list.
+
+        Typical usage:
+
+        app = Router('/')
+
+        @app.router('/hello', methods=['post'])
+        def world(request):
+            return wsgi.WsgiResponse(200, 'world')
+        '''
+        def handler(fn):
+            for method in methods:
+                self.add_child(
+                    self.make_router(rule, method.lower(), fn,
+                                     name=fn.__name__))
+            return fn
+        return handler
+
     @property
     def route(self):
         '''The relative :class:`.Route` served by this
