@@ -33,9 +33,10 @@ class Headers:
 
 
 cdef class WsgiProtocol:
+
     cdef readonly:
         dict environ
-        object headers, headers_sent, chunked, parser, connection, client_address, cfg
+        object headers, headers_sent, chunked, parser, connection, client_address, cfg, body_reader
     cdef public:
         str status
         object keep_alive
