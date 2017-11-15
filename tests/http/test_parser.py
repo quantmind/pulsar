@@ -113,12 +113,21 @@ class TestPythonHttpParser(unittest.TestCase):
         self.assertFalse(p.headers)
 
     def testBadHeader(self):
-        p = self.request()
-        data = b'GET /get HTTP/1.1\r\nbla\0: bar\r\n\r\n'
-        self.assertRaises(HttpParserError, p.parser.feed_data, data)
         #
         p = self.request()
         data = b'GET /test HTTP/1.1\r\nfoo\r\n\r\n'
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
+        #
+        p = self.request()
+        data = b'GET /get HTTP/1.1\r\nbla\7: bar\r\n\r\n'
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
+        #
+        p = self.request()
+        data = b'GET /get HTTP/1.1\r\nbla\42: bar\r\n\r\n'
+        self.assertRaises(HttpParserError, p.parser.feed_data, data)
+        #
+        p = self.request()
+        data = b'GET /get HTTP/1.1\r\nbla\128: bar\r\n\r\n'
         self.assertRaises(HttpParserError, p.parser.feed_data, data)
 
     def testHeaderOnly(self):

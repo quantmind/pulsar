@@ -196,10 +196,12 @@ class HttpParser:
                 break
 
             if chunk.find(b':') < 0:
-                continue
+                raise HttpParserError('Invalid header')
             name, value = chunk.split(b':', 1)
             value = value.lstrip()
             name = name.rstrip(b" \t").strip()
+            if not all(42 < c < 128 for c in name):
+                raise HttpParserError('Invalid header name')
             self._on_header(name, value)
             name = name.lower()
             if name == b'connection':
@@ -261,8 +263,9 @@ class HttpParser:
             #
             # Content length not given
             if self._clen_rest == sys.maxsize:
-                self._position = 3
-                self._on_message_complete()
+                if self.type == ParserType.HTTP_REQUEST:
+                    self._position = 3
+                    self._on_message_complete()
             else:
                 size = min(len(data), self._clen_rest)
                 if size:

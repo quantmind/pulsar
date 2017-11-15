@@ -45,6 +45,7 @@ class OAuth2(auth.Auth):
         r = response.request
         url, headers, _ = self.client.add_token(
             r.url, http_method=r.method, body=r.body, headers=r.headers)
-        for key, value in mapping_iterator(headers):
-            r.add_header(key, value)
+        assert r.headers == headers
+        # for key, value in mapping_iterator(headers):
+        #     r.add_header(key, value)
         r.url = url

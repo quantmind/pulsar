@@ -38,25 +38,28 @@ class TestAuth(unittest.TestCase):
         self.assertFalse(c.private)
         self.assertFalse(c.maxage)
         c(headers)
-        self.assertEqual(headers['cache-control'], 'no-cache')
+        self.assertEqual(', '.join(headers.getall('cache-control')),
+                         'no-cache')
         c = CacheControl(maxage=3600)
         c(headers)
-        self.assertEqual(headers['cache-control'], 'max-age=3600, public')
+        self.assertEqual(', '.join(headers.getall('cache-control')),
+                         'max-age=3600, public')
         c = CacheControl(maxage=3600, private=True)
         c(headers)
-        self.assertEqual(headers['cache-control'], 'max-age=3600, private')
+        self.assertEqual(', '.join(headers.getall('cache-control')),
+                         'max-age=3600, private')
         c = CacheControl(maxage=3600, must_revalidate=True)
         c(headers)
-        self.assertEqual(headers['cache-control'],
+        self.assertEqual(', '.join(headers.getall('cache-control')),
                          'max-age=3600, public, must-revalidate')
         c = CacheControl(maxage=3600, proxy_revalidate=True)
         c(headers)
-        self.assertEqual(headers['cache-control'],
+        self.assertEqual(', '.join(headers.getall('cache-control')),
                          'max-age=3600, public, proxy-revalidate')
         c = CacheControl(maxage=3600, proxy_revalidate=True,
                          nostore=True)
         c(headers)
-        self.assertEqual(headers['cache-control'],
+        self.assertEqual(', '.join(headers.getall('cache-control')),
                          'no-store, no-cache, must-revalidate, max-age=0')
 
 

@@ -243,10 +243,10 @@ class HttpRequest(RequestBase):
             auth = HTTPBasicAuth(*auth)
         self.auth = auth
         self.url = full_url(url, params, method=self.method)
-        self.headers = client.get_headers(self, headers)
-        self.body = self._encode_body(data, files, json)
         self._set_proxy(proxies)
         self.key = RequestKey.create(self)
+        self.headers = client.get_headers(self, headers)
+        self.body = self._encode_body(data, files, json)
         self.unredirected_headers['host'] = self.key.netloc
         cookies = cookiejar_from_dict(client.cookies, cookies)
         if cookies:
@@ -1031,6 +1031,8 @@ class HttpClient(AbstractClient):
         raw_sock = raw_sock.dup()
         connection.transport.close()
         await connection.event('connection_lost').waiter()
+        self.sessions -= 1
+        self.requests_processed -= 1
         #
         connection = await self.create_connection(
             sock=raw_sock, ssl=req.ssl(self), server_hostname=req.netloc

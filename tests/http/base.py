@@ -115,12 +115,9 @@ class TestHttpClientBase:
         self.assertEqual(len(http.connection_pools), pools)
         if pools:
             pool = http.connection_pools[response.request.key]
-            one = self.tunneling
-            real_sessions = sessions * (1 + one)
-            real_processed = real_sessions - sessions + processed
-            self.assertEqual(http.sessions, real_sessions)
+            self.assertEqual(http.sessions, sessions)
             self.assertEqual(pool.available, available)
-            self.assertEqual(http.requests_processed, real_processed)
+            self.assertEqual(http.requests_processed, processed)
 
     def _after(self, method, response):
         '''Check for a after_%s % method to test the response.'''
@@ -141,11 +138,10 @@ class TestHttpClientBase:
         http = response.producer
         self.assertEqual(len(http.connection_pools), 1)
         pool = http.connection_pools[request.key]
-        one = self.tunneling
         self.assertEqual(pool.available, 1)
         self.assertEqual(pool.in_use, 0)
-        self.assertEqual(http.sessions, 1 + one)
-        self.assertEqual(http.requests_processed, processed + one)
+        self.assertEqual(http.sessions, 1)
+        self.assertEqual(http.requests_processed, processed)
         self.assertEqual(response.connection.processed, processed)
 
     def _check_server(self, response):
