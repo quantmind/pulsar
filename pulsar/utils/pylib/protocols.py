@@ -274,7 +274,8 @@ class ProtocolConsumer(EventHandler):
         try:
             self.fire_event('pre_request')
         except AbortEvent:
-            self.producer.logger.debug('Abort request %s', request)
+            if self._loop.get_debug():
+                self.producer.logger.debug('Abort request %s', request)
         else:
             self.start_request()
 
@@ -282,7 +283,8 @@ class ProtocolConsumer(EventHandler):
         return dummyRequest
 
     def feed_data(self, data):
-        """Called when some data is received.
+        """Called when some data is received by the protocol.
+        Must be implemented.
         """
 
     def start_request(self):

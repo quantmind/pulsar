@@ -48,6 +48,7 @@ class Event:
 
     def clear(self):
         self._handlers = None
+        return self
 
     def unbind(self, callback):
         """Remove a callback from the list

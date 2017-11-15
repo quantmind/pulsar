@@ -39,14 +39,13 @@ from pulsar.utils import http
 from pulsar.utils.structures import mapping_iterator
 from pulsar.utils.httpurl import (
     encode_multipart_formdata, CHARSET, get_environ_proxies, is_succesful,
-    get_hostport, cookiejar_from_dict, host_no_default_port, http_chunks,
+    get_hostport, cookiejar_from_dict, http_chunks, JSON_CONTENT_TYPES,
     parse_options_header, tls_schemes, parse_header_links, requote_uri,
-    JSON_CONTENT_TYPES
 )
 
 from .plugins import (
-    handle_cookies, WebSocket, Redirect, start_request,
-    keep_alive, InfoHeaders, Expect, ssl_transport
+    handle_cookies, WebSocket, Redirect, start_request, RequestKey,
+    keep_alive, InfoHeaders, Expect
 )
 from .auth import Auth, HTTPBasicAuth
 from .stream import HttpStream
@@ -119,10 +118,6 @@ class RequestBase:
         return bool(self.history)
 
     @property
-    def address(self):
-        return scheme_host_port(self.url)[1:]
-
-    @property
     def origin_req_host(self):
         """Required by Cookies handlers
         """
@@ -158,35 +153,18 @@ class HttpTunnel(RequestBase):
     decompress = False
     method = 'CONNECT'
 
-    def __init__(self, request, url):
-        self.status = 0
-        self.request = request
-        self.url = '%s://%s:%s' % scheme_host_port(url)
-        # self.parser = request.parser
-        # request.new_parser()
-        self.headers = CIMultiDict(request.client.DEFAULT_TUNNEL_HEADERS)
+    def __init__(self, client, req):
+        self.client = client
+        self.key = req
+        self.headers = CIMultiDict(client.DEFAULT_TUNNEL_HEADERS)
 
     def __repr__(self):
         return 'Tunnel %s' % self.url
     __str__ = __repr__
 
-    @property
-    def key(self):
-        return self.request.key
-
-    @property
-    def client(self):
-        return self.request.client
-
-    @property
-    def version(self):
-        return self.request.version
-
     def encode(self):
-        req = self.request
-        self.headers['host'] = req.get_header('host')
-        bits = scheme_host_port(req.url)[1:] + (req.version,)
-        self.first_line = 'CONNECT %s:%s %s' % bits
+        self.headers['host'] = self.key.netloc
+        self.first_line = 'CONNECT %s:%s HTTP/1.1' % self.key.address
         buffer = [self.first_line.encode('ascii'), b'\r\n']
         buffer.extend((('%s: %s\r\n' % (name, value)).encode(CHARSET)
                        for name, value in self.headers.items()))
@@ -201,23 +179,6 @@ class HttpTunnel(RequestBase):
 
     def remove_header(self, header_name):
         self.headers.pop(header_name, None)
-
-    async def apply(self, response):
-        """Tunnel the connection if needed
-        """
-        for event in response.events().values():
-            event.clear()
-        response.start(self)
-        await response.event('post_request').waiter()
-        if response.status_code == 200:
-            request = self.request
-            sslcontext = request._ssl
-            connection = response.connection
-            url = urlparse(request.url)
-            await ssl_transport(connection, sslcontext, url.netloc)
-            request._tunnel = None
-            response = await start_request(request, connection)
-        return response
 
 
 class HttpRequest(RequestBase):
@@ -261,7 +222,7 @@ class HttpRequest(RequestBase):
                  allow_redirects=False, decompress=True, version=None,
                  wait_continue=False, websocket_handler=None, cookies=None,
                  params=None, stream=False, proxies=None, verify=True,
-                 cert=None, **ignored):
+                 cert=None, **extra):
         self.client = client
         self.method = method.upper()
         self.inp_params = inp_params or {}
@@ -284,7 +245,9 @@ class HttpRequest(RequestBase):
         self.url = full_url(url, params, method=self.method)
         self.headers = client.get_headers(self, headers)
         self.body = self._encode_body(data, files, json)
-        self._set_proxy(proxies, ignored)
+        self._set_proxy(proxies)
+        self.key = RequestKey.create(self)
+        self.unredirected_headers['host'] = self.key.netloc
         cookies = cookiejar_from_dict(client.cookies, cookies)
         if cookies:
             cookies.add_cookie_header(self)
@@ -294,26 +257,13 @@ class HttpRequest(RequestBase):
         return self.client._loop
 
     @property
-    def address(self):
-        """``(host, port)`` tuple of the HTTP resource
-        """
-        return self._tunnel.address if self._tunnel else super().address
-
-    @property
     def ssl(self):
         """Context for TLS connections.
 
         If this is a tunneled request and the tunnel connection is not yet
         established, it returns ``None``.
         """
-        if not self._tunnel:
-            return self._ssl
-
-    @property
-    def key(self):
-        tunnel = self._tunnel.url if self._tunnel else None
-        scheme, host, port = scheme_host_port(self._proxy or self.url)
-        return scheme, host, port, tunnel, self.verify
+        return self._ssl
 
     @property
     def proxy(self):
@@ -332,13 +282,12 @@ class HttpRequest(RequestBase):
     __str__ = __repr__
 
     def first_line(self):
-        p = urlparse(self.url)
-        if self._proxy:
-            if self.method == 'CONNECT':
-                url = p.netloc
-            else:
-                url = self.url
+        if self.method == 'CONNECT':
+            url = self.key.netloc
+        elif self._proxy:
+            url = self.url
         else:
+            p = urlparse(self.url)
             url = urlunparse(('', '', p.path or '/', p.params,
                               p.query, p.fragment))
         return '%s %s %s' % (self.method, url, self.version)
@@ -508,26 +457,8 @@ class HttpRequest(RequestBase):
         self._write_body_data(transport, b'', True)
 
     # PROXY INTERNALS
-    def _set_proxy(self, proxies, ignored):
+    def _set_proxy(self, proxies):
         url = urlparse(self.url)
-        self.unredirected_headers['host'] = host_no_default_port(
-            url.scheme, url.netloc
-        )
-        if url.scheme in tls_schemes:
-            certfile = None
-            keyfile = None
-            if self.cert:
-                if isinstance(self.cert, tuple):
-                    certfile, keyfile = self.cert
-                else:
-                    certfile = self.cert
-            self._ssl = self.client.ssl_context(
-                verify=self.verify,
-                certfile=certfile,
-                keyfile=keyfile,
-                **ignored
-            )
-
         request_proxies = self.client.proxies.copy()
         if proxies:
             request_proxies.update(proxies)
@@ -538,11 +469,11 @@ class HttpRequest(RequestBase):
             no_proxy = [n for n in request_proxies.get('no', '').split(',')
                         if n]
             if not any(map(host.endswith, no_proxy)):
-                url = request_proxies[url.scheme]
-                if not self._ssl:
-                    self._proxy = url
+                proxy_url = request_proxies[url.scheme]
+                if url.scheme in tls_schemes:
+                    self._tunnel = proxy_url
                 else:
-                    self._tunnel = HttpTunnel(self, url)
+                    self._proxy = proxy_url
 
 
 class HttpResponse(ProtocolConsumer):
@@ -550,7 +481,6 @@ class HttpResponse(ProtocolConsumer):
 
     Initialised by a call to the :class:`HttpClient.request` method.
     """
-    _tunnel_host = None
     _has_proxy = False
     _data_sent = None
     _cookies = None
@@ -687,8 +617,9 @@ class HttpResponse(ProtocolConsumer):
     def start_request(self):
         request = self.request
         self.parser = request.new_parser(self)
-        self.connection.transport.write(request.encode())
-        if request.headers.get('expect') != '100-continue':
+        headers = request.encode()
+        self.connection.transport.write(headers)
+        if not headers or request.headers.get('expect') != '100-continue':
             self.write_body()
 
     def feed_data(self, data):
@@ -994,12 +925,14 @@ class HttpClient(AbstractClient):
             nparams.update(((name, getattr(self, name)) for name in
                             self.request_parameters if name not in params))
             request = HttpRequest(self, url, method, params, **nparams)
-            pool = self.connection_pools.get(request.key)
+            key = request.key
+            pool = self.connection_pools.get(key)
             if pool is None:
-                host, port = request.address
-                connector = partial(self.create_connection,
-                                    (host, port),
-                                    ssl=request.ssl)
+                tunnel = request.tunnel
+                if tunnel:
+                    connector = partial(self.create_tunnel_connection, key)
+                else:
+                    connector = partial(self.create_http_connection, key)
                 pool = self.connection_pool(
                     connector, pool_size=self.pool_size, loop=self._loop
                 )
@@ -1072,3 +1005,34 @@ class HttpClient(AbstractClient):
                                               cafile=cafile,
                                               capath=capath,
                                               cadata=cadata)
+
+    async def create_http_connection(self, req):
+        return await self.create_connection(req.address, ssl=req.ssl(self))
+
+    async def create_tunnel_connection(self, req):
+        """Create a tunnel connection
+        """
+        tunnel_address = req.tunnel_address
+        connection = await self.create_connection(tunnel_address)
+        response = connection.current_consumer()
+        for event in response.events().values():
+            event.clear()
+        response.start(HttpTunnel(self, req))
+        await response.event('post_request').waiter()
+        if response.status_code != 200:
+            raise ConnectionRefusedError(
+                'Cannot connect to tunnel: status code %s'
+                % response.status_code
+            )
+        raw_sock = connection.transport.get_extra_info('socket')
+        if raw_sock is None:
+            raise RuntimeError('Transport without socket')
+        # duplicate socket so we can close transport
+        raw_sock = raw_sock.dup()
+        connection.transport.close()
+        await connection.event('connection_lost').waiter()
+        #
+        connection = await self.create_connection(
+            sock=raw_sock, ssl=req.ssl(self), server_hostname=req.netloc
+        )
+        return connection

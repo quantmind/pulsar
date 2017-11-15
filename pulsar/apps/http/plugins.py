@@ -6,19 +6,53 @@ from urllib.parse import urlparse, urljoin
 
 from pulsar.api import PulsarException
 from pulsar.apps.ws import WebSocketProtocol, WS
-from pulsar.utils.httpurl import REDIRECT_CODES, requote_uri
+from pulsar.utils.httpurl import (
+    REDIRECT_CODES, requote_uri, get_hostport, host_no_default_port,
+    tls_schemes
+)
 from pulsar.utils.websocket import SUPPORTED_VERSIONS, websocket_key
 
 
-def noerror(callback):
-    '''Decorator to run a callback of a :class:`.EventHandler`
-    only when no errors occur
-    '''
-    def _(*response, **kw):
-        if response[-1] and not kw.get('exc'):
-            return callback(*response)
+requestKey = namedtuple('requestKey', 'scheme host port tunnel verify cert')
 
-    return _
+
+class RequestKey(requestKey):
+
+    @classmethod
+    def create(cls, request):
+        url = urlparse(request.proxy or request.url)
+        host, port = get_hostport(url.scheme, url.netloc)
+        return cls(
+            url.scheme, host, port,
+            request.tunnel,
+            request.verify, request.cert
+        )
+
+    @property
+    def address(self):
+        return self.host, self.port
+
+    @property
+    def netloc(self):
+        return host_no_default_port(self.scheme, '%s:%s' % self.address)
+
+    @property
+    def tunnel_address(self):
+        if self.tunnel:
+            url = urlparse(self.tunnel)
+            return get_hostport(url.scheme, url.netloc)
+
+    def ssl(self, client):
+        if self.scheme in tls_schemes:
+            if isinstance(self.cert, tuple):
+                certfile, keyfile = self.cert
+            else:
+                certfile, keyfile = self.cert, None
+            return client.ssl_context(
+                verify=self.verify,
+                certfile=certfile,
+                keyfile=keyfile
+            )
 
 
 def keep_alive(version, headers):
@@ -33,17 +67,8 @@ def keep_alive(version, headers):
         return headers.get('connection') == 'keep-alive'
 
 
-def _consumer(response, consumer):
-    if response is not None:
-        consumer = response
-    return consumer
-
-
 async def start_request(request, conn):
     response = conn.current_consumer()
-    if request.tunnel:
-        response = await request.tunnel.apply(response)
-        return response
 
     # bind request-specific events
     response.bind_events(request.inp_params)
@@ -107,11 +132,9 @@ class WebSocketClient(WebSocketProtocol):
 
 class Expect:
 
-    @noerror
-    def __call__(self, response, **kw):
+    def __call__(self, response, exc=None):
         if response.status_code == 100:
             if response.request.headers.get('expect') == '100-continue':
-                response.write_body()
                 response.request_again = self._response
 
     def _response(self, response):
@@ -125,7 +148,6 @@ class Expect:
 
 class Redirect:
 
-    @noerror
     def __call__(self, response, exc=None):
         if (response.status_code in REDIRECT_CODES and
                 'location' in response.headers and
@@ -165,10 +187,11 @@ class Redirect:
         return response
 
 
-@noerror
 def handle_cookies(response, exc=None):
     '''Handle response cookies.
     '''
+    if exc:
+        return
     headers = response.headers
     request = response.request
     client = request.client
@@ -190,10 +213,10 @@ class WebSocket:
             self._websocket_key = websocket_key()
         return self._websocket_key
 
-    @noerror
     def __call__(self, response, exc=None):
         request = response.request
-        if request and urlparse(request.url).scheme in ('ws', 'wss'):
+        if (not exc and request and
+                urlparse(request.url).scheme in ('ws', 'wss')):
             headers = request.headers
             headers['connection'] = 'Upgrade'
             headers['upgrade'] = 'websocket'
@@ -203,7 +226,6 @@ class WebSocket:
                 headers['Sec-WebSocket-Key'] = self.websocket_key
             response.event('on_headers').bind(self.on_headers)
 
-    @noerror
     def on_headers(self, response, exc=None):
         '''Websocket upgrade as ``on_headers`` event.'''
 
@@ -220,21 +242,6 @@ class WebSocket:
             response.event('post_request').fire()
             websocket = connection.current_consumer()
             response.request_again = lambda r: websocket
-
-
-async def ssl_transport(connection, sslcontext, hostname):
-    rawsock = connection.transport.get_extra_info('socket')
-    loop = connection._loop
-    # connection.transport.pause_reading()
-    # connection.reset_event('connection_made')
-    # connection_made = connection.event('connection_made').waiter()
-
-    await loop.create_connection(
-        lambda: connection,
-        ssl=sslcontext,
-        sock=rawsock,
-        server_hostname=hostname
-    )
 
 
 class InfoHeaders:

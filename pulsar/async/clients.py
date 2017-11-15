@@ -259,22 +259,19 @@ class AbstractClient(Producer, ClientMixin):
         '''
         raise NotImplementedError
 
-    async def create_connection(self, address, protocol_factory=None, **kw):
-        '''Helper method for creating a connection to an ``address``.
-        '''
+    async def create_connection(self, address=None, protocol_factory=None,
+                                **kwargs):
+        """Helper method for creating a connection to an ``address``.
+        """
+        loop = self._loop
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(address, tuple):
-            host, port = address
-            if self._loop.get_debug():
-                self.logger.debug('Create connection %s:%s', host, port)
-            _, protocol = await self._loop.create_connection(
-                protocol_factory, host, port, **kw)
-            event = protocol.event('connection_made')
-            if not event.fired():
-                await event.waiter()
-        else:
-            raise NotImplementedError('Could not connect to %s' %
-                                      str(address))
+            kwargs['host'] = address[0]
+            kwargs['port'] = address[1]
+        _, protocol = await loop.create_connection(protocol_factory, **kwargs)
+        event = protocol.event('connection_made')
+        if not event.fired():
+            await event.waiter()
         return protocol
 
     async def create_datagram_endpoint(self, protocol_factory=None, **kw):

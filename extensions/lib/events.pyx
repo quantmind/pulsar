@@ -109,8 +109,9 @@ cdef class Event:
             self._handlers = handlers
         handlers.append(callback)
 
-    cpdef void clear(self):
+    cpdef clear(self):
         self._handlers = None
+        return self
 
     cpdef int unbind(self, object callback):
         """Remove a callback from the list

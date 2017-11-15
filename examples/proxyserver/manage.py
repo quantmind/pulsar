@@ -46,7 +46,6 @@ from pulsar.api import (
 )
 from pulsar.apps import wsgi, http
 from pulsar.apps.wsgi import wsgi_request
-from pulsar.apps.http.plugins import noerror
 from pulsar.utils.httpurl import ENCODE_BODY_METHODS
 from pulsar.utils.log import LocalMixin, local_property
 
@@ -101,8 +100,12 @@ class TunnelResponse:
         self.wsgi = wsgi
         self.environ = environ
         self.connection = wsgi_request(self.environ).cache.connection
+        self.debug = self.connection._loop.get_debug()
         self.start_response = start_response
         self.future = create_future()
+
+    def __repr__(self):
+        return self.environ['RAW_URI']
 
     async def request(self):
         '''Perform the Http request to the upstream server
@@ -145,11 +148,10 @@ class TunnelResponse:
 
     def error(self, exc):
         if self.future.done():
-            self.future.set_exception(exc)
+            logger.exception("Failed to tunnel proxy")
         else:
-            logger.error(str(exc))
+            self.future.set_exception(exc)
 
-    @noerror
     def pre_request(self, response, exc=None):
         '''Start the tunnel.
 
@@ -157,27 +159,35 @@ class TunnelResponse:
         established.
         '''
         if response.request.method == 'CONNECT':
+            self.start_response('200 Connection established', [])
+            # send empty byte so that headers are sent
+            self.future.set_result([b''])
             # proxy - server connection
             upstream = response.connection
             # client - proxy connection
             dostream = self.connection
             # Upgrade downstream connection
-            dostream.upgrade(partial(StreamTunnel, upstream))
-            # Upgrade upstream connection
-            upstream.upgrade(partial(StreamTunnel, dostream))
-            self.start_response('200 Connection established', [])
-            # send empty byte so that headers are sent
-            self.future.set_result([b''])
+            dostream.upgrade(partial(StreamTunnel.create, upstream))
+            #
+            # upstream upgrade
+            upstream.upgrade(partial(StreamTunnel.create, dostream))
+            response.fire_event('post_request')
+            # abort the event
             raise AbortEvent
         else:
             response.event('data_processed').bind(self.data_processed)
             response.event('post_request').bind(self.post_request)
 
     def data_processed(self, response, data=None, **kw):
+        if self.debug:
+            logger.debug('Writing data for %r' % self)
         self.connection.write(data)
 
-    def post_request(self, _, exc=None):
-        self.future.set_exception(wsgi.AbortWsgi())
+    def post_request(self, response, exc=None):
+        if self.debug:
+            logger.debug('finished request for %r' % self)
+        if not self.future.done():
+            self.future.set_exception(wsgi.AbortWsgi())
 
 
 class DataIterator:
@@ -203,28 +213,24 @@ class StreamTunnel(ProtocolConsumer):
     '''
     headers = None
     status_code = None
-    http_request = None
 
-    def __init__(self, tunnel, loop=None):
-        super().__init__(loop)
-        self.tunnel = tunnel
+    @classmethod
+    def create(cls, tunnel, connection):
+        stream = cls(connection)
+        connection.event('connection_lost').bind(stream._close_tunnel)
+        stream.start(tunnel)
+        return stream
 
-    def connection_made(self, connection):
-        self.logger.debug('Tunnel connection %s made', connection)
-        connection.event('connection_lost').bind(self._close_tunnel)
-        if self.http_request:
-            self.start(self.http_request)
-
-    def data_received(self, data):
+    def feed_data(self, data):
         try:
-            return self.tunnel.write(data)
+            return self.request.write(data)
         except Exception:
-            if not self.tunnel.closed:
+            if not self.request.closed:
                 raise
 
     def _close_tunnel(self, arg, exc=None):
-        if not self.tunnel.closed:
-            self._loop.call_soon(self.tunnel.close)
+        if not self.request.closed:
+            self._loop.call_soon(self.request.close)
 
 
 def server(name='proxy-server', headers_middleware=None,

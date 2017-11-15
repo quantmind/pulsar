@@ -24,7 +24,7 @@ cdef class Event:
     cpdef object fired(self)
     cpdef list handlers(self)
     cpdef bind(self, object callback)
-    cpdef void clear(self)
+    cpdef clear(self)
     cpdef int unbind(self, object callback)
     cpdef fire(self, exc=?, data=?)
     cpdef object waiter(self)

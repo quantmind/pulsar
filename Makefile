@@ -16,8 +16,9 @@ compile: clean
 	$(PYTHON) setup.py build_ext -i
 
 
-docs: compile
-	cd docs && $(PYTHON) -m sphinx -a -b html . _build/html
+docs:
+	mkdir -p build/docs/html
+	$(PYTHON) -m sphinx -a -b html docs/source build/docs/html
 
 
 test:

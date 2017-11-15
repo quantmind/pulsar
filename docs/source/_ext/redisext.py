@@ -1,12 +1,11 @@
-'''Sphinx extension for displaying Setting information
-'''
-from inspect import isfunction
+"""Sphinx extension for displaying Setting information
+"""
+from collections import OrderedDict
 
 from sphinx.util.compat import Directive
 from docutils import nodes, statemachine
 
 from pulsar.apps.ds import COMMANDS_INFO
-from pulsar.utils.structures import OrderedDict
 
 targetid = "redis_commands"
 
