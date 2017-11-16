@@ -6,7 +6,7 @@
 |
 
 :Badges: |license|  |pyversions| |status| |pypiversion| |contributors|
-:CI: |circle|_ |coverage-master| |appveyor|
+:CI: |circleci|_ |coverage-master| |appveyor|
 :Documentation: http://quantmind.github.io/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -14,8 +14,7 @@
 :Mailing list: `google user group`_
 :Design by: `Quantmind`_ and `Luca Sbardella`_
 :Platforms: Linux, OSX, Windows. Python 3.5 and above
-:Keywords: client, server, asynchronous, concurrency, actor, thread, process,
-    socket, wsgi, websocket, redis, json-rpc
+:Keywords: python, asyncio, multiprocessing, client/server, asynchronous, concurrency, actor, thread, process, socket, wsgi, websocket, redis, json-rpc
 
 .. |pypiversion| image:: https://img.shields.io/pypi/v/pulsar.svg
     :target: https://pypi.python.org/pypi/pulsar
@@ -27,10 +26,6 @@
   :target: https://pypi.python.org/pypi/pulsar
 .. |downloads| image:: https://img.shields.io/pypi/dd/pulsar.svg
   :target: https://pypi.python.org/pypi/pulsar
-.. |master-build| image:: https://travis-ci.org/quantmind/pulsar.svg?branch=master
-.. _master-build: http://travis-ci.org/quantmind/pulsar
-.. |dev-build| image:: https://travis-ci.org/quantmind/pulsar.svg?branch=dev
-.. _dev-build: http://travis-ci.org/quantmind/pulsar
 .. |coverage-master| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master
   :target: https://coveralls.io/github/quantmind/pulsar?branch=master
 .. |coverage-dev| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=dev
