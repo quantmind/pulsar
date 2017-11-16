@@ -6,7 +6,7 @@
 |
 
 :Badges: |license|  |pyversions| |status| |pypiversion| |contributors|
-:Master CI: |master-build|_ |coverage-master| |appveyor| |circleci|
+:CI: |circle|_ |coverage-master| |appveyor|
 :Documentation: http://quantmind.github.io/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -91,10 +91,10 @@ asynchronous ``with`` block.
 Installing
 ============
 
-Pulsar has two hard dependencies:
+Pulsar has two **hard dependencies**:
 
-* [multidict](https://github.com/aio-libs/multidict)
-* [async_timeout](https://github.com/aio-libs/async-timeout)
+* multidict_
+* async_timeout_
 
 install via pip::
 
@@ -102,6 +102,10 @@ install via pip::
 
 or download the tarball from pypi_.
 
+To speedup pulsar by a factor of 2 or more these **soft dependencies** are recommended
+
+* httptools_
+* uvloop_
 
 Applications
 ==============
@@ -255,5 +259,7 @@ file in the top distribution directory for the full license text.
 .. _`Web Sockets`: http://quantmind.github.io/pulsar/apps/websockets.html
 .. _uvloop: https://github.com/MagicStack/uvloop
 .. _httptools: https://github.com/MagicStack/httptools
+.. _multidict: https://github.com/aio-libs/multidict
+.. _async-timeout: https://github.com/aio-libs/async-timeout
 .. _`Asynchronous WSGI server`: http://quantmind.github.io/pulsar/apps/wsgi/index.html
 .. _`Asynchronous Test suite`: http://quantmind.github.io/pulsar/apps/test.html
