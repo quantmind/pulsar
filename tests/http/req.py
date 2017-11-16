@@ -6,6 +6,7 @@ try:
 except ImportError:
     http = None
 
+from pulsar.api import HAS_C_EXTENSIONS
 from pulsar.apps.test import dont_run_with_thread
 
 
@@ -19,6 +20,10 @@ class TestRequest:
     @dont_run_with_thread
     @unittest.skipUnless(http, "requires python requests library")
     def test_requests_get_200(self):
+        if HAS_C_EXTENSIONS and self.tunneling:
+            raise unittest.SkipTest(
+                'requests test when tunneling and C extensions - ticket #287'
+            )
         response = http.get(self.httpbin(), verify=False,
                             proxies=self.proxies())
         self.assertEqual(str(response), '<Response [200]>')

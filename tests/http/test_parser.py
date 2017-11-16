@@ -50,6 +50,19 @@ class TestPythonHttpParser(unittest.TestCase):
         self.assertTrue(p.headers_complete)
         self.assertFalse(p.message_complete)
 
+    def test_client_500(self):
+        p = self.response()
+        p.parser.feed_data(b'HTTP/1.1 500 Internal Server Error\r\n\r\n')
+        self.assertTrue(p.headers_complete)
+        self.assertFalse(p.message_complete)
+
+    def test_expect(self):
+        p = self.response()
+        data = b'HTTP/1.1 100 Continue\r\n\r\n'
+        p.feed_data(data)
+        self.assertTrue(p.headers_complete)
+        self.assertTrue(p.message_complete)
+
     def test_simple_server_message(self):
         p = self.request()
         data = b'GET /forum/bla?page=1#post1 HTTP/1.1\r\n\r\n'
@@ -165,7 +178,12 @@ class TestPythonHttpParser(unittest.TestCase):
         self.assertEqual(len(p.headers), 2)
         self.assertEqual(p.headers.getall('Accept'), ['*/*', 'jpeg'])
 
-    def test_connect(self):
+    def test_connection_established(self):
         p = self.response()
-        data = b'HTTP/1.1 200 Connection established\r\n\r\n'
-        p.feed_data(data)
+        p.parser.feed_data((
+            b'HTTP/1.1 200 Connection established\r\n'
+            b'Server: Pulsar-proxy-server/2.0.0a1\r\n'
+            b'Date: Thu, 16 Nov 2017 11:41:51 GMT\r\n\r\n'
+        ))
+        self.assertTrue(p.headers_complete)
+        self.assertFalse(p.message_complete)

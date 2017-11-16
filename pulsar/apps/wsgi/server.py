@@ -8,7 +8,6 @@ HTTP Protocol Consumer
 
 """
 import sys
-import os
 from asyncio import CancelledError
 
 from async_timeout import timeout
@@ -21,22 +20,6 @@ from .utils import handle_wsgi_error, log_wsgi_info, LOGGER
 from .formdata import HttpBodyReader
 from .wrappers import FileWrapper, close_object
 from .headers import CONTENT_LENGTH
-
-
-CHARSET = http.CHARSET
-MAX_TIME_IN_LOOP = 0.3
-HTTP_1_0 = '1.0'
-URL_SCHEME = os.environ.get('wsgi.url_scheme', 'http')
-ENVIRON = {
-    "wsgi.errors": sys.stderr,
-    "wsgi.file_wrapper": FileWrapper,
-    "wsgi.version": (1, 0),
-    "wsgi.run_once": False,
-    "wsgi.multithread": True,
-    "wsgi.multiprocess": True,
-    "SCRIPT_NAME": os.environ.get("SCRIPT_NAME", ""),
-    "CONTENT_TYPE": ''
-}
 
 
 class AbortWsgi(Exception):
@@ -80,6 +63,19 @@ class HttpServerResponse(ProtocolConsumer):
             self.request.parser.feed_data(data)
         except http.HttpParserUpgrade:
             pass
+        except Exception as exc:
+            self.logger.exception(
+                'Could not recover from "%s" - sending 500',
+                exc
+            )
+            write = self.request.start_response(
+                '500 Internal Server Error',
+                [('content-length', '0')],
+                sys.exc_info()
+            )
+            write(b'', True)
+            self.connection.close()
+            self.event('post_request').fire()
 
     async def write_response(self):
         loop = self._loop

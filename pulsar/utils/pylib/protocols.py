@@ -220,15 +220,20 @@ class Protocol(EventHandler):
         Once done set a timeout for idle connections when a
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         """
-        self.data_received_count += 1
-        while data:
-            consumer = self.current_consumer()
-            if not consumer.request:
-                consumer.start()
-            toprocess = consumer.feed_data(data)
-            consumer.fire_event('data_processed', data=data, exc=None)
-            data = toprocess
-        self.changed()
+        try:
+            self.data_received_count += 1
+            while data:
+                consumer = self.current_consumer()
+                if not consumer.request:
+                    consumer.start()
+                toprocess = consumer.feed_data(data)
+                consumer.fire_event('data_processed', data=data, exc=None)
+                data = toprocess
+            self.changed()
+        except Exception:
+            if self.transport:
+                self.transport.abort()
+            raise
 
     def changed(self):
         self.last_change = self.producer.current_time

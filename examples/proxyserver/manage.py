@@ -42,7 +42,7 @@ from functools import partial
 import pulsar
 from pulsar.api import (
     HttpException, ensure_future, create_future, ProtocolConsumer,
-    AbortEvent
+    AbortEvent, Http404
 )
 from pulsar.apps import wsgi, http
 from pulsar.apps.wsgi import wsgi_request
@@ -83,6 +83,8 @@ class ProxyServerWsgiHandler(LocalMixin):
 
     def __call__(self, environ, start_response):
         uri = environ['RAW_URI']
+        if uri == environ.get('HTTP_HOST'):
+            raise Http404
         logger.debug('new request for %r' % uri)
         if not uri or uri.startswith('/'):  # No proper uri, raise 404
             raise HttpException(status=404)
@@ -153,13 +155,16 @@ class TunnelResponse:
             self.future.set_exception(exc)
 
     def pre_request(self, response, exc=None):
-        '''Start the tunnel.
+        """Start the tunnel.
 
         This is a callback fired once a connection with upstream server is
         established.
-        '''
+        """
         if response.request.method == 'CONNECT':
-            self.start_response('200 Connection established', [])
+            self.start_response(
+                '200 Connection established',
+                [('content-length', '0')]
+            )
             # send empty byte so that headers are sent
             self.future.set_result([b''])
             # proxy - server connection

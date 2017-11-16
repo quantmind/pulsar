@@ -39,52 +39,38 @@ class HttpBodyReader:
     An instance of this class is injected into the wsgi.input key
     of the WSGI environment
     """
-    _expect_sent = None
-    reader = None
-
-    def __init__(self, transport, limit, environ, **kw):
+    def __init__(self, transport, limit, environ):
         self.limit = limit
-        self.reader = asyncio.StreamReader(**kw)
+        self.transport = transport
+        self.reader = asyncio.StreamReader()
         self.reader.set_transport(transport)
         self.feed_data = self.reader.feed_data
+        self.feed_eof = self.reader.feed_eof
         self.environ = environ
         self._expect_sent = None
         self._waiting = None
 
-    def feed_eof(self):
-        if self.reader:
-            self.reader.feed_eof()
-
     def fail(self):
-        if self.reader and self._waiting_expect():
+        if self._waiting_expect():
             raise HttpException(status=417)
 
     def read(self, n=-1):
-        if self.reader:
-            self._can_continue()
-            return self.reader.read(n=n)
-        else:
-            return b''
+        self._can_continue()
+        return self.reader.read(n=n)
 
     async def readline(self):
-        if self.reader:
-            self._can_continue()
-            try:
-                line = await self.reader.readuntil(b'\n')
-            except asyncio.streams.LimitOverrunError as exc:
-                line = await self.read(exc.consumed) + await self.readline()
-                if len(line) > self.limit:
-                    raise_large_body_error(self.limit)
-            return line
-        else:
-            return b''
+        self._can_continue()
+        try:
+            line = await self.reader.readuntil(b'\n')
+        except asyncio.streams.LimitOverrunError as exc:
+            line = await self.read(exc.consumed) + await self.readline()
+            if len(line) > self.limit:
+                raise_large_body_error(self.limit)
+        return line
 
     def readexactly(self, n):
-        if self.reader:
-            self._can_continue()
-            return self.reader.readexactly(n)
-        else:
-            return b''
+        self._can_continue()
+        return self.reader.readexactly(n)
 
     def _waiting_expect(self):
         '''``True`` when the client is waiting for 100 Continue.
@@ -103,7 +89,7 @@ class HttpBodyReader:
             else:
                 msg = '%s 100 Continue\r\n\r\n' % protocol
                 self._expect_sent = msg
-                self.reader._transport.write(msg.encode(CHARSET))
+                self.transport.write(msg.encode(CHARSET))
 
 
 def parse_form_data(request, stream=None, **kw):

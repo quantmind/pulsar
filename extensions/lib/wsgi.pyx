@@ -2,6 +2,7 @@ import sys
 from urllib.parse import unquote
 
 from multidict import istr, CIMultiDict
+from httptools import HttpParserInvalidURLError
 
 from wsgi cimport _http_date
 
@@ -74,17 +75,22 @@ cdef class WsgiProtocol:
     cpdef on_url(self, bytes url):
         cdef object proto = self.protocol
         cdef object transport = self.connection.transport
-        cdef object parsed_url = proto.parse_url(url)
-        cdef bytes query = parsed_url.query or b''
         cdef object scheme = 'https' if transport.get_extra_info('sslcontext') else URL_SCHEME
-        if parsed_url.schema:
-            scheme = parsed_url.schema.decode(CHARSET)
+        cdef object parsed_url
+
+        try:
+            parsed_url = proto.parse_url(url)
+        except HttpParserInvalidURLError:
+            parsed_url = proto.parse_url(scheme.encode(CHARSET) + b'://' + url)
+        else:
+            if parsed_url.schema:
+                scheme = parsed_url.schema.decode(CHARSET)
 
         self.parsed_url = parsed_url
         self.environ.update((
             ('RAW_URI', url.decode(CHARSET)),
             ('REQUEST_METHOD', self.parser.get_method().decode(CHARSET)),
-            ('QUERY_STRING', query.decode(CHARSET)),
+            ('QUERY_STRING', parsed_url.query.decode(CHARSET) if parsed_url.query else ''),
             ('wsgi.url_scheme', scheme)
         ))
 
@@ -186,10 +192,12 @@ cdef class WsgiProtocol:
         cdef dict env = self.environ
         cdef object proto = self.protocol
         cdef object tosend
+        cdef str http
 
         if not self.headers_sent:
+            http = env.get('SERVER_PROTOCOL', DEFAULT_HTTP)
             self.headers_sent = self.get_headers()
-            buffer = bytearray(('%s %s\r\n' % (env['SERVER_PROTOCOL'], self.status)).encode(CHARSET))
+            buffer = bytearray(('%s %s\r\n' % (http, self.status)).encode(CHARSET))
             for k, v in self.headers_sent.items():
                 buffer.extend(('%s: %s\r\n' % (k, v)).encode(CHARSET))
             buffer.extend(CRLF)
@@ -225,8 +233,7 @@ cdef class WsgiProtocol:
             raise RuntimeError('Headers not set.')
 
         if (content_length or
-                self.status == '200 Connection established' or
-                has_empty_content(status) or
+                has_empty_content(status, self.environ['REQUEST_METHOD']) or
                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
             chunked = False
             headers.pop(TRANSFER_ENCODING, None)

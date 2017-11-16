@@ -91,6 +91,8 @@ class PulsarProtocol(Protocol, FlowControl, Timeout, Pipeline):
         except asyncio.TimeoutError:
             self.logger.warning('Abort connection %s', self)
             self.abort()
+        except asyncio.CancelledError:
+            pass
 
 
 class DatagramProtocol(PulsarProtocol, asyncio.DatagramProtocol):

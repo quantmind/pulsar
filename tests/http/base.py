@@ -8,7 +8,7 @@ from functools import wraps
 import examples
 
 from pulsar import SERVER_SOFTWARE
-from pulsar.api import send
+from pulsar.api import send, HttpConnectionError
 from pulsar.utils.path import Path
 from pulsar.utils.system import platform
 from pulsar.apps.http import (
@@ -42,6 +42,8 @@ class TestHttpClientBase:
     proxy_app = None
     # concurrency is set by the config object unless you set it here
     concurrency = None
+    uri = None
+    proxy_uri = None
     timeout = 10
 
     @classmethod
@@ -73,8 +75,14 @@ class TestHttpClientBase:
             cfg = await send('arbiter', 'run', s)
             cls.proxy_app = cfg.app()
             cls.proxy_uri = 'http://{0}:{1}'.format(*cfg.addresses[0])
-            # cls.proxy_uri = 'http://127.0.0.1:8080'
         cls._client = cls.client()
+        #
+        # wait for httpbin server up
+        if cls.uri:
+            await cls.connection(cls.uri)
+        # wait for proxy server up
+        if cls.proxy_uri:
+            await cls.connection(cls.proxy_uri, 404)
 
     @classmethod
     async def tearDownClass(cls):
@@ -82,6 +90,22 @@ class TestHttpClientBase:
             await send('arbiter', 'kill_actor', cls.app.name)
         if cls.proxy_app is not None:
             await send('arbiter', 'kill_actor', cls.proxy_app.name)
+
+    @classmethod
+    async def connection(cls, url, valid_status=200):
+        client = HttpClient(verify=False)
+        times = 0
+        sleepy = 0.1
+        while times < 5:
+            times += sleepy
+            try:
+                resp = await client.get(url)
+            except HttpConnectionError:
+                await asyncio.sleep(sleepy)
+            else:
+                if not resp.status_code == valid_status:
+                    resp.raise_for_status()
+                break
 
     @classmethod
     def proxies(cls):

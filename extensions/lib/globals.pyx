@@ -5,6 +5,7 @@ from multidict import istr
 
 cdef bytes CRLF = b'\r\n'
 cdef str CHARSET = 'ISO-8859-1'
+cdef DEFAULT_HTTP = 'HTTP/1.1'
 
 cdef str URL_SCHEME = os.environ.get('wsgi.url_scheme', 'http')
 cdef str OS_SCRIPT_NAME = os.environ.get("SCRIPT_NAME", "")

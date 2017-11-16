@@ -164,7 +164,7 @@ class HttpTunnel(RequestBase):
 
     def encode(self):
         self.headers['host'] = self.key.netloc
-        self.first_line = 'CONNECT %s:%s HTTP/1.1' % self.key.address
+        self.first_line = 'CONNECT http://%s:%s HTTP/1.1' % self.key.address
         buffer = [self.first_line.encode('ascii'), b'\r\n']
         buffer.extend((('%s: %s\r\n' % (name, value)).encode(CHARSET)
                        for name, value in self.headers.items()))
@@ -519,7 +519,7 @@ class HttpResponse(ProtocolConsumer):
         if self.status_code:
             return is_succesful(self.status_code)
         else:
-            return not self.done()
+            return not self.event('post_request').fired()
 
     @property
     def cookies(self):
@@ -795,10 +795,10 @@ class HttpClient(AbstractClient):
         self.http_parser = parser or http.HttpResponseParser
         self.frame_parser = frame_parser or websocket.frame_parser
         # Add hooks
-        self.event('pre_request').bind(WebSocket())
         self.event('on_headers').bind(handle_cookies)
-        self.event('post_request').bind(Redirect())
+        self.event('pre_request').bind(WebSocket())
         self.event('post_request').bind(Expect())
+        self.event('post_request').bind(Redirect())
         self._decompressors = dict(
             gzip=GzipDecompress(),
             deflate=DeflateDecompress()

@@ -37,10 +37,9 @@ cdef class TimeTracker:
 cdef class Producer(EventHandler):
     cdef readonly:
         object _loop
-        int sessions
         str name
     cdef public:
-        int requests_processed, keep_alive
+        int sessions, requests_processed, keep_alive
         object protocol_factory, logger
 
     def __init__(self, object protocol_factory, object loop=None,
@@ -139,15 +138,20 @@ cdef class Protocol(EventHandler):
         :attr:`~Protocol.timeout` is a positive number (of seconds).
         """
         cdef ProtocolConsumer consumer;
-        self.data_received_count += 1
-        while data:
-            consumer = self.current_consumer()
-            if not consumer.request:
-                consumer.start()
-            toprocess = consumer.feed_data(data)
-            consumer.fire_event('data_processed', data=data, exc=None)
-            data = toprocess
-        self.changed()
+        try:
+            self.data_received_count += 1
+            while data:
+                consumer = self.current_consumer()
+                if not consumer.request:
+                    consumer.start()
+                toprocess = consumer.feed_data(data)
+                consumer.fire_event('data_processed', data=data, exc=None)
+                data = toprocess
+            self.changed()
+        except Exception:
+            if self.transport:
+                self.transport.abort()
+            raise
 
     cpdef int changed(self):
         self.last_change = self.producer.time.current_time
@@ -193,7 +197,8 @@ cdef class ProtocolConsumer(EventHandler):
         try:
             self.fire_event('pre_request', data=None, exc=None)
         except AbortEvent:
-            self.producer.logger.debug('Abort request %s', request)
+            if self._loop.get_debug():
+                self.producer.logger.debug('Abort request %s', request)
         else:
             self.start_request()
 

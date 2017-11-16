@@ -1,9 +1,8 @@
 from tests.http import base, req
 
 
-if False:
-    class TestHttpClientWithProxy(req.TestRequest, base.TestHttpClient):
-        with_proxy = True
+class TestHttpClientWithProxy(req.TestRequest, base.TestHttpClient):
+    with_proxy = True
 
-        def _check_server(self, response):
-            pass
+    def _check_server(self, response):
+        pass

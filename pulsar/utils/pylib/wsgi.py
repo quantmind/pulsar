@@ -199,6 +199,8 @@ class WsgiProtocol:
         elif self.status:
             # Headers already set. Raise error
             raise RuntimeError("Response headers already set!")
+        else:
+            self.keep_alive = self.parser.should_keep_alive()
         self.status = status
         for header, value in response_headers:
             if header in HOP_HEADERS:
@@ -211,9 +213,9 @@ class WsgiProtocol:
                 )
                 continue
             self.headers.add(header, value)
-        self.headers[SERVER] = self.environ['SERVER_SOFTWARE']
-        self.headers[DATE] = fast_http_date(self.environ['wsgi.timestamp'])
-        self.keep_alive = self.parser.should_keep_alive()
+        producer = self.protocol.producer
+        self.headers[SERVER] = producer.server_software
+        self.headers[DATE] = fast_http_date(producer.current_time)
         return self.write
 
     def write(self, data, force=False):
@@ -261,12 +263,9 @@ class WsgiProtocol:
             raise RuntimeError('Headers not set.')
 
         if (content_length or empty or
-                self.status == '200 Connection established' or
                 self.environ['SERVER_PROTOCOL'] == 'HTTP/1.0'):
             chunked = False
             headers.pop(TRANSFER_ENCODING, None)
-            if not empty and not content_length:
-                headers[CONTENT_LENGTH] = 0
         elif not chunked and not content_length:
             chunked = True
             headers[TRANSFER_ENCODING] = 'chunked'

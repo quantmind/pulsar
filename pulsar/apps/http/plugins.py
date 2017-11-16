@@ -134,7 +134,8 @@ class Expect:
 
     def __call__(self, response, exc=None):
         if response.status_code == 100:
-            if response.request.headers.get('expect') == '100-continue':
+            expect = response.request.headers.get('expect')
+            if expect and expect.lower() == '100-continue':
                 response.request_again = self._response
 
     def _response(self, response):

@@ -177,8 +177,9 @@ class Runner:
                 error = await self._run_safe(test, test_name, test_timeout)
                 runner.after_test_function_run(test)
             error = await self._run_safe(test, 'tearDown', test_timeout, error)
-            if not error:
+            if error is None:
                 runner.addSuccess(test)
+
         runner.stopTest(test)
 
     async def _run_safe(self, test, method_name, test_timeout, error=None):
@@ -197,6 +198,7 @@ class Runner:
         except SkipTest as x:
             self.runner.addSkip(test, str(x))
             exc = None
+            error = False
         except Exception as x:
             exc = TestFailure(x)
 

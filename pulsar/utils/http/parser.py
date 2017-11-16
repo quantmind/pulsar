@@ -200,7 +200,7 @@ class HttpParser:
             name, value = chunk.split(b':', 1)
             value = value.lstrip()
             name = name.rstrip(b" \t").strip()
-            if not all(42 < c < 128 for c in name):
+            if HEADER_RE.search(name):
                 raise HttpParserError('Invalid header name')
             self._on_header(name, value)
             name = name.lower()
@@ -263,7 +263,7 @@ class HttpParser:
             #
             # Content length not given
             if self._clen_rest == sys.maxsize:
-                if self.type == ParserType.HTTP_REQUEST:
+                if not self.http_message_needs_eof():
                     self._position = 3
                     self._on_message_complete()
             else:

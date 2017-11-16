@@ -3,7 +3,6 @@ from asyncio import get_event_loop
 
 
 LOGGER = logging.getLogger('pulsar.events')
-NoData = object()
 
 
 class AbortEvent(Exception):
@@ -62,7 +61,7 @@ class Event:
             return removed_count
         return 0
 
-    def fire(self, exc=None, data=NoData):
+    def fire(self, exc=None, data=None):
         o = self._self
 
         if o is not None:
@@ -75,7 +74,7 @@ class Event:
                 if exc is not None:
                     for hnd in handlers:
                         hnd(o, exc=exc)
-                elif data is not NoData:
+                elif data is not None:
                     for hnd in handlers:
                         hnd(o, data=data)
                 else:
@@ -86,7 +85,7 @@ class Event:
                 if exc:
                     self._waiter.set_exception(exc)
                 else:
-                    self._waiter.set_result(data if data is not NoData else o)
+                    self._waiter.set_result(data if data is not None else o)
                 self._waiter = None
 
     def waiter(self):
@@ -122,7 +121,7 @@ class EventHandler:
             events[name] = Event(name, self, 0)
         return events[name]
 
-    def fire_event(self, name, exc=None, data=NoData):
+    def fire_event(self, name, exc=None, data=None):
         if self._events and name in self._events:
             self._events[name].fire(exc=exc, data=data)
 
