@@ -9,10 +9,10 @@ jobs:
           - checkout
           - run:
               name: install packages
-              command: .circleci/install.sh
+              command: .circleci/install-dev.sh
           - run:
               name: test
-              command: make clean && make testall
+              command: make compile && make test
           - run:
               name: run and publish coverage
               command: make coverage

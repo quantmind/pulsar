@@ -23,11 +23,15 @@ docs:
 
 test:
 	flake8
+	$(PYTHON) -W ignore setup.py test -q --io uv
+
+testpy:
+	PULSARPY=yes
 	$(PYTHON) -W ignore setup.py test -q
 
 
 coverage:
-	flake8
+	PULSARPY=yes
 	$(PYTHON) -W ignore setup.py test --coverage -q
 
 
@@ -36,7 +40,6 @@ testall:
 	$(PYTHON) -W ignore setup.py test -q
 	$(PYTHON) -W ignore setup.py test -q --io uv
 	$(PYTHON) setup.py bench
-	$(PYTHON) -W ignore setup.py test --coverage --http-py-parser
 
 
 release: clean compile test
