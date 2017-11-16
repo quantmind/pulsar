@@ -7,3 +7,5 @@ requests
 certifi
 recommonmark
 twine
+uvloop
+httptools

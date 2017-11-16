@@ -1,25 +1,59 @@
 #!/bin/bash
+
 set -e -x
 
-# Compile wheels
-PYTHON="/opt/python/${PYTHON_VERSION}/bin/python"
-PIP="/opt/python/${PYTHON_VERSION}/bin/pip"
-${PIP} install --upgrade pip wheel
-${PIP} install --upgrade setuptools
-${PIP} install -r /io/requirements-dev.txt
-${PIP} install -r /io/requirements.txt
-make -C /io/ PYTHON="${PYTHON}" compile
-${PIP} wheel /io/ -w /io/dist/
 
-# Bundle external shared libraries into the wheels.
-for whl in /io/dist/*.whl; do
-    auditwheel repair $whl -w /io/dist/
-    rm /io/dist/*-linux_*.whl
-done
+PACKAGE_VERSION=$(python ".ci/package-version.py")
+PYPI_VERSION=$(python ".ci/pypi-check.py" "${PYMODULE}")
 
-PYTHON="/opt/python/${PYTHON_VERSION}/bin/python"
-PIP="/opt/python/${PYTHON_VERSION}/bin/pip"
-${PIP} install ${PYMODULE} --no-index -f file:///io/dist
-rm -rf /io/tests/__pycache__
-make -C /io/ PYTHON="${PYTHON}" testinstalled
-rm -rf /io/tests/__pycache__
+if [ "${PACKAGE_VERSION}" == "${PYPI_VERSION}" ]; then
+    echo "${PYMODULE}-${PACKAGE_VERSION} is already published on PyPI"
+    exit 1
+fi
+
+
+pushd $(dirname $0) > /dev/null
+_root=$(dirname $(pwd -P))
+popd > /dev/null
+
+
+_upload_wheels() {
+    python "${_root}/.ci/s3-upload.py" "${_root}/dist"/*.whl
+    rm -rf "${_root}/dist"/*.whl
+}
+
+
+if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+    for pyver in ${RELEASE_PYTHON_VERSIONS}; do
+        ML_PYTHON_VERSION=$(python3 -c \
+            "print('cp{maj}{min}-cp{maj}{min}m'.format( \
+                   maj='${pyver}'.split('.')[0], \
+                   min='${pyver}'.split('.')[1]))")
+
+        for arch in x86_64 i686; do
+            ML_IMAGE="quay.io/pypa/manylinux1_${arch}"
+            docker pull "${ML_IMAGE}"
+            docker run --rm \
+                -v "${_root}":/io \
+                -e "PYMODULE=${PYMODULE}" \
+                -e "PYTHON_VERSION=${ML_PYTHON_VERSION}" \
+                "${ML_IMAGE}" /io/.ci/build-manylinux-wheels.sh
+
+            _upload_wheels
+        done
+    done
+
+elif [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+    make clean && make -C "${_root}"
+    pip wheel "${_root}" -w "${_root}/dist/"
+
+    pip install ${PYMODULE} --no-index -f "file:///${_root}/dist"
+    pushd / >/dev/null
+    make -C "${_root}" testinstalled
+    popd >/dev/null
+
+    _upload_wheels
+
+else
+    echo "Cannot build on ${TRAVIS_OS_NAME}."
+fi

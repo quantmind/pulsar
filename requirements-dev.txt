@@ -4,6 +4,4 @@ setproctitle
 psutil
 unidecode
 sphinxcontrib-spelling
-uvloop
 pyslink
-httptools
