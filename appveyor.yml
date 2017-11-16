@@ -13,10 +13,6 @@ init:
 install:
   - "ci/build.cmd %PYTHON%\\python.exe -m pip install -U wheel setuptools"
   - "ci/build.cmd %PYTHON%\\python.exe -m pip install -r requirements/test.txt"
-
-install:
-  - "%WITH_COMPILER% %PYTHON%/python -V"
-  - "%WITH_COMPILER% %PYTHON%/python -m pip install -r requirements-dev-win.txt"
   - cmd: nuget install redis-64 -excludeversion
   - cmd: redis-64\tools\redis-server.exe --service-install
   - cmd: redis-64\tools\redis-server.exe --service-start
