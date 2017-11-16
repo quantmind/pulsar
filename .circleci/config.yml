@@ -8,11 +8,14 @@ jobs:
         steps:
           - checkout
           - run:
-              command:
-                  make clean && make testall
+              name: install packages
+              command: .circleci/install.sh
           - run:
-              command:
-                  make coverage
+              name: test
+              command: make clean && make testall
+          - run:
+              name: run and publish coverage
+              command: make coverage
     lagacy:
         working_directory: ~/pulsar-legacy
         docker:
