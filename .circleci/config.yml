@@ -1,0 +1,25 @@
+version: 2
+jobs:
+    main:
+        working_directory: ~/pulsar-current
+        docker:
+          - image: circleci/python:3.6.1
+          - image: circleci/redis
+        steps:
+          - checkout
+          - run:
+              command:
+                  make clean && make testall
+          - run:
+              command:
+                  make coverage
+    lagacy:
+        working_directory: ~/pulsar-legacy
+        docker:
+          - image: circleci/python:3.5.4
+          - image: circleci/redis
+        steps:
+          - checkout
+          - run:
+              command:
+                  make clean && make testall
