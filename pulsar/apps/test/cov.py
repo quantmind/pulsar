@@ -1,10 +1,10 @@
 import os
 import sys
+from asyncio import new_event_loop
 
 import coverage
 from coverage.report import Reporter
 
-from pulsar import new_event_loop
 from pulsar.apps.http import HttpClient
 from pulsar.utils.system import json
 from pulsar.utils.version import gitrepo

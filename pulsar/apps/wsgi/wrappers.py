@@ -13,14 +13,6 @@ The :class:`WsgiResponse`, which is available in the
 several utility methods for manipulating headers and asynchronous content.
 
 
-Environ Mixin
-=====================
-
-.. autoclass:: EnvironMixin
-   :members:
-   :member-order: bysource
-
-
 .. _app-wsgi-request:
 
 Wsgi Request
@@ -54,27 +46,30 @@ Wsgi File Wrapper
 .. _AJAX: http://en.wikipedia.org/wiki/Ajax_(programming)
 .. _TLS: http://en.wikipedia.org/wiki/Transport_Layer_Security
 """
-from functools import reduce, partial
-from http.client import responses
+from functools import partial
+from inspect import isawaitable
+from http.cookies import SimpleCookie
 
-from pulsar import isawaitable, chain_future, HttpException, create_future
-from pulsar.utils.structures import AttributeDictionary
-from pulsar.utils.httpurl import (Headers, SimpleCookie,
-                                  has_empty_content, REDIRECT_CODES,
-                                  ENCODE_URL_METHODS, JSON_CONTENT_TYPES,
-                                  remove_double_slash, iri_to_uri,
-                                  is_absolute_uri, parse_options_header)
+from pulsar.api import chain_future, HttpException, create_future
+from pulsar.utils.lib import WsgiResponse, wsgi_cached
+from pulsar.utils.system import json
+from pulsar.utils.httpurl import (
+    REDIRECT_CODES, ENCODE_URL_METHODS,
+    remove_double_slash, iri_to_uri, is_absolute_uri, parse_options_header
+)
 
 from .content import HtmlDocument
-from .utils import (set_wsgi_request_class, set_cookie, query_dict,
-                    parse_accept_header, LOGGER, pulsar_cache)
+from .utils import (set_wsgi_request_class, query_dict,
+                    parse_accept_header, LOGGER, PULSAR_CACHE)
 from .structures import ContentAccept, CharsetAccept, LanguageAccept
 from .formdata import parse_form_data
+from .headers import LOCATION
 
 
 HEAD = 'HEAD'
 MAX_BUFFER_SIZE = 2**16
 ONEMB = 2**20
+TEXT_PLAIN = 'text/plain'
 
 
 def redirect(path, code=None, permanent=False):
@@ -82,18 +77,7 @@ def redirect(path, code=None, permanent=False):
         code = 301 if permanent else 302
 
     assert code in REDIRECT_CODES, 'Invalid redirect status code.'
-    return WsgiResponse(code, response_headers=[('location', path)])
-
-
-def cached_property(method):
-    name = method.__name__
-
-    def _(self):
-        if name not in self.cache:
-            self.cache[name] = method(self)
-        return self.cache[name]
-
-    return property(_, doc=method.__doc__)
+    return WsgiResponse(code, response_headers=[(LOCATION, path)])
 
 
 def wsgi_encoder(gen, encoding):
@@ -104,255 +88,22 @@ def wsgi_encoder(gen, encoding):
             yield data
 
 
-class WsgiResponse:
-    """A WSGI response.
-
-    Instances are callable using the standard WSGI call and, importantly,
-    iterable::
-
-        response = WsgiResponse(200)
-
-    A :class:`WsgiResponse` is an iterable over bytes to send back to the
-    requesting client.
-
-    .. attribute:: status_code
-
-        Integer indicating the HTTP status, (i.e. 200)
-
-    .. attribute:: response
-
-        String indicating the HTTP status (i.e. 'OK')
-
-    .. attribute:: status
-
-        String indicating the HTTP status code and response (i.e. '200 OK')
-
-    .. attribute:: content_type
-
-        The content type of this response. Can be ``None``.
-
-    .. attribute:: headers
-
-        The :class:`.Headers` container for this response.
-
-    .. attribute:: environ
-
-        The dictionary of WSGI environment if passed to the constructor.
-
-    .. attribute:: cookies
-
-        A python :class:`SimpleCookie` container of cookies included in the
-        request as well as cookies set during the response.
-    """
-    _iterated = False
-    _started = False
-    DEFAULT_STATUS_CODE = 200
-
-    def __init__(self, status=None, content=None, response_headers=None,
-                 content_type=None, encoding=None, environ=None,
-                 can_store_cookies=True):
-        self.environ = environ
-        self.status_code = status or self.DEFAULT_STATUS_CODE
-        self.encoding = encoding
-        self.cookies = SimpleCookie()
-        self.headers = Headers(response_headers or ())
-        self.content = content
-        self._can_store_cookies = can_store_cookies
-        if content_type is not None:
-            self.content_type = content_type
-
-    @property
-    def started(self):
-        return self._started
-
-    @property
-    def iterated(self):
-        return self._iterated
-
-    @property
-    def path(self):
-        if self.environ:
-            return self.environ.get('PATH_INFO', '')
-
-    @property
-    def method(self):
-        if self.environ:
-            return self.environ.get('REQUEST_METHOD')
-
-    @property
-    def connection(self):
-        if self.environ:
-            return self.environ.get('pulsar.connection')
-
-    @property
-    def content(self):
-        return self._content
-
-    @content.setter
-    def content(self, content):
-        if not self._iterated:
-            if content is None:
-                content = ()
-            else:
-                if isinstance(content, str):
-                    if not self.encoding:   # use utf-8 if not set
-                        self.encoding = 'utf-8'
-                    content = content.encode(self.encoding)
-
-            if isinstance(content, bytes):
-                content = (content,)
-            self._content = content
-        else:
-            raise RuntimeError('Cannot set content. Already iterated')
-
-    def _get_content_type(self):
-        return self.headers.get('content-type')
-
-    def _set_content_type(self, typ):
-        if typ:
-            self.headers['content-type'] = typ
-        else:
-            self.headers.pop('content-type', None)
-    content_type = property(_get_content_type, _set_content_type)
-
-    @property
-    def response(self):
-        return responses.get(self.status_code)
-
-    @property
-    def status(self):
-        return '%s %s' % (self.status_code, self.response)
-
-    def __str__(self):
-        return self.status
-
-    def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self)
-
-    @property
-    def is_streamed(self):
-        """Check if the response is streamed.
-
-        A streamed response is an iterable with no length information.
-        In this case streamed means that there is no information about
-        the number of iterations.
-
-        This is usually `True` if a generator is passed to the response object.
-        """
-        try:
-            len(self.content)
-        except TypeError:
-            return True
-        return False
-
-    def can_set_cookies(self):
-        if self.status_code < 400:
-            return self._can_store_cookies
-
-    def length(self):
-        if not self.is_streamed:
-            return reduce(lambda x, y: x+len(y), self.content, 0)
-
-    def start(self, start_response):
-        assert not self._started
-        self._started = True
-        return start_response(self.status, self.get_headers())
-
-    def __iter__(self):
-        if self._iterated:
-            raise RuntimeError('WsgiResponse can be iterated once only')
-        self._started = True
-        self._iterated = True
-        if self.is_streamed:
-            return wsgi_encoder(self.content, self.encoding or 'utf-8')
-        else:
-            return iter(self.content)
-
-    def close(self):
-        """Close this response, required by WSGI
-        """
-        if self.is_streamed:
-            if hasattr(self.content, 'close'):
-                self.content.close()
-
-    def set_cookie(self, key, **kwargs):
-        """
-        Sets a cookie.
-
-        ``expires`` can be a string in the correct format or a
-        ``datetime.datetime`` object in UTC. If ``expires`` is a datetime
-        object then ``max_age`` will be calculated.
-        """
-        set_cookie(self.cookies, key, **kwargs)
-
-    def delete_cookie(self, key, path='/', domain=None):
-        set_cookie(self.cookies, key, max_age=0, path=path, domain=domain,
-                   expires='Thu, 01-Jan-1970 00:00:00 GMT')
-
-    def get_headers(self):
-        """The list of headers for this response
-        """
-        headers = self.headers
-        if has_empty_content(self.status_code):
-            headers.pop('content-type', None)
-            headers.pop('content-length', None)
-            self._content = ()
-        else:
-            if not self.is_streamed:
-                cl = 0
-                for c in self.content:
-                    cl += len(c)
-                if cl == 0 and self.content_type in JSON_CONTENT_TYPES:
-                    self._content = (b'{}',)
-                    cl = len(self._content[0])
-                headers['Content-Length'] = str(cl)
-            ct = self.content_type
-            # content type encoding available
-            if self.encoding:
-                ct = ct or 'text/plain'
-                if 'charset=' not in ct:
-                    ct = '%s; charset=%s' % (ct, self.encoding)
-            if ct:
-                headers['Content-Type'] = ct
-            if self.method == HEAD:
-                self._content = ()
-        if self.can_set_cookies():
-            for c in self.cookies.values():
-                headers.add_header('Set-Cookie', c.OutputString())
-        return list(headers)
-
-    def has_header(self, header):
-        return header in self.headers
-    __contains__ = has_header
-
-    def __setitem__(self, header, value):
-        self.headers[header] = value
-
-    def __getitem__(self, header):
-        return self.headers[header]
-
-
-class EnvironMixin:
-    """A wrapper around a WSGI_ environ.
-
-    Instances of this class have the :attr:`environ` attribute as their
-    only private data. Every other attribute is stored in the :attr:`environ`
-    itself at the ``pulsar.cache`` wsgi-extension key.
-
-    .. attribute:: environ
-
-        WSGI_ environ dictionary
+class WsgiRequest:
+    """A wsgi request
     """
     __slots__ = ('environ',)
 
-    def __init__(self, environ, name=None):
+    def __init__(self, environ, app_handler=None, urlargs=None):
         self.environ = environ
-        if pulsar_cache not in environ:
-            environ[pulsar_cache] = AttributeDictionary()
-            self.cache.mixins = {}
-            self.cache.logger = LOGGER
-        if name:
-            self.cache.mixins[name] = self
+        if app_handler:
+            self.cache.app_handler = app_handler
+            self.cache.urlargs = urlargs
+
+    def __repr__(self):
+        return self.path
+
+    def __str__(self):
+        return self.__repr__()
 
     @property
     def cache(self):
@@ -360,7 +111,7 @@ class EnvironMixin:
         pulsar-specific data stored in the :attr:`environ` at
         the wsgi-extension key ``pulsar.cache``
         """
-        return self.environ[pulsar_cache]
+        return self.environ[PULSAR_CACHE]
 
     @property
     def connection(self):
@@ -376,34 +127,7 @@ class EnvironMixin:
         if c:
             return c._loop
 
-    def __getattr__(self, name):
-        mixin = self.cache.mixins.get(name)
-        if mixin is None:
-            raise AttributeError("'%s' object has no attribute '%s'" %
-                                 (self.__class__.__name__, name))
-        return mixin
-
-    def get(self, key, default=None):
-        """Shortcut to the :attr:`environ` get method."""
-        return self.environ.get(key, default)
-
-
-class WsgiRequest(EnvironMixin):
-    """An :class:`EnvironMixin` for wsgi requests."""
-    def __init__(self, environ, app_handler=None, urlargs=None):
-        super().__init__(environ)
-        self.cache.cfg = environ.get('pulsar.cfg', {})
-        if app_handler:
-            self.cache.app_handler = app_handler
-            self.cache.urlargs = urlargs
-
-    def __repr__(self):
-        return self.path
-
-    def __str__(self):
-        return self.__repr__()
-
-    @cached_property
+    @wsgi_cached
     def first_line(self):
         env = self.environ
         try:
@@ -411,7 +135,7 @@ class WsgiRequest(EnvironMixin):
         except Exception:
             return '%s %s' % (env.get('REQUEST_METHOD'), env.get('PATH'))
 
-    @cached_property
+    @wsgi_cached
     def content_types(self):
         """List of content types this client supports as a
         :class:`.ContentAccept` object.
@@ -421,7 +145,7 @@ class WsgiRequest(EnvironMixin):
         return parse_accept_header(self.environ.get('HTTP_ACCEPT'),
                                    ContentAccept)
 
-    @cached_property
+    @wsgi_cached
     def charsets(self):
         """List of charsets this client supports as a
         :class:`.CharsetAccept` object.
@@ -431,7 +155,7 @@ class WsgiRequest(EnvironMixin):
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_CHARSET'),
                                    CharsetAccept)
 
-    @cached_property
+    @wsgi_cached
     def encodings(self):
         """List of encodings this client supports as
         :class:`.Accept` object.
@@ -442,7 +166,7 @@ class WsgiRequest(EnvironMixin):
         """
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_ENCODING'))
 
-    @cached_property
+    @wsgi_cached
     def languages(self):
         """List of languages this client accepts as
         :class:`.LanguageAccept` object.
@@ -452,7 +176,7 @@ class WsgiRequest(EnvironMixin):
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
                                    LanguageAccept)
 
-    @cached_property
+    @wsgi_cached
     def cookies(self):
         """Container of request cookies
         """
@@ -492,11 +216,11 @@ class WsgiRequest(EnvironMixin):
         """
         return self.cache.logger
 
-    @cached_property
+    @wsgi_cached
     def response(self):
         """The :class:`WsgiResponse` for this client request.
         """
-        return WsgiResponse(environ=self.environ)
+        return WsgiResponse()
 
     #######################################################################
     #    environ shortcuts
@@ -514,7 +238,7 @@ class WsgiRequest(EnvironMixin):
 
     @property
     def path(self):
-        """Shortcut to the :attr:`~EnvironMixin.environ` ``PATH_INFO`` value.
+        """Shortcut to the :attr:`~.environ` ``PATH_INFO`` value.
         """
         return self.environ.get('PATH_INFO', '/')
 
@@ -527,17 +251,25 @@ class WsgiRequest(EnvironMixin):
         """The request method (uppercase)."""
         return self.environ['REQUEST_METHOD']
 
-    @cached_property
+    @property
+    def input(self):
+        return self.environ.get('wsgi.input')
+
+    @wsgi_cached
     def encoding(self):
         return self.content_type_options[1].get('charset', 'utf-8')
 
-    @cached_property
+    @wsgi_cached
     def content_type_options(self):
         content_type = self.environ.get('CONTENT_TYPE')
         if content_type:
             return parse_options_header(content_type)
         else:
             return None, {}
+
+    def get(self, key, default=None):
+        """Shortcut to the :attr:`environ` get method."""
+        return self.environ.get(key, default)
 
     def data_and_files(self, data=True, files=True, stream=None):
         """Retrieve body data.
@@ -554,7 +286,7 @@ class WsgiRequest(EnvironMixin):
         if self.method in ENCODE_URL_METHODS:
             value = {}, None
         else:
-            value = self.cache.data_and_files
+            value = self.cache.get('data_and_files')
 
         if not value:
             return self._data_and_files(data, files, stream)
@@ -572,28 +304,28 @@ class WsgiRequest(EnvironMixin):
         """
         return self.data_and_files(files=False)
 
-    def _data_and_files(self, data=True, files=True, stream=None, future=None):
-        if future is None:
-            data_files = parse_form_data(self.environ, stream=stream)
+    def _data_and_files(self, data=True, files=True, stream=None, result=None):
+        if result is None:
+            data_files = parse_form_data(self, stream=stream)
             if isawaitable(data_files):
                 return chain_future(
                     data_files,
                     partial(self._data_and_files, data, files, stream))
         else:
-            data_files = future
+            data_files = result
 
         self.cache.data_and_files = data_files
         return self.data_and_files(data, files, stream)
 
-    @cached_property
+    @wsgi_cached
     def url_data(self):
         """A (cached) dictionary containing data from the ``QUERY_STRING``
-        in :attr:`~.EnvironMixin.environ`.
+        in :attr:`~.environ`.
         """
         return query_dict(self.environ.get('QUERY_STRING', ''),
                           encoding=self.encoding)
 
-    @cached_property
+    @wsgi_cached
     def html_document(self):
         """Return a cached instance of :class:`.HtmlDocument`."""
         return HtmlDocument()
@@ -675,6 +407,19 @@ class WsgiRequest(EnvironMixin):
             if not ct and response_content_types:
                 raise HttpException(status=415, msg=request_content_types)
             self.response.content_type = ct
+
+    def json_response(self, data, status_code=None):
+        ct = 'application/json'
+        content_types = self.content_types
+        if not content_types or ct in content_types:
+            response = self.response
+            response.content_type = ct
+            response.content = json.dumps(data)
+            if status_code:
+                response.status_code = status_code
+            return response
+        else:
+            raise HttpException(status=415, msg=content_types)
 
 
 set_wsgi_request_class(WsgiRequest)

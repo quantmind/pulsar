@@ -3,9 +3,9 @@ include LICENSE
 include README.rst
 include docs/make.bat
 include docs/Makefile
-recursive-include examples *.py *.js *.css *.html *.json
+recursive-include requirements
+recursive-include examples *.py *.js *.css *.html
 recursive-include tests *.py *.txt
 recursive-include pulsar/apps/test/plugins/htmlfiles *.js *.css *.html
 recursive-include docs/source *
 recursive-include extensions *.py *.pxd *.pyx *.h *.c
-prune examples/node_modules

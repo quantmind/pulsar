@@ -6,9 +6,10 @@ asynchronous commands on remote servers.
 from abc import ABCMeta, abstractmethod
 from urllib.parse import urlsplit, parse_qsl, urlunparse, urlencode
 
-from pulsar import ImproperlyConfigured, Producer, EventHandler, ProtocolError
-from pulsar.utils.importer import module_attribute
-from pulsar.utils.pep import to_string
+from ...utils.exceptions import ImproperlyConfigured, ProtocolError
+from ...utils.lib import Producer
+from ...utils.importer import module_attribute
+from ...utils.string import to_string
 
 
 data_stores = {}
@@ -69,9 +70,8 @@ class Store(metaclass=ABCMeta):
     registered = False
     default_manager = None
 
-    def __init__(self, name, host, database=None,
+    def __init__(self, host=None, database=None,
                  user=None, password=None, encoding=None, **kw):
-        self._name = name
         self._host = host
         self._encoding = encoding or 'utf-8'
         self._database = database
@@ -80,11 +80,6 @@ class Store(metaclass=ABCMeta):
         self._urlparams = {}
         self._init(**kw)
         self._dns = self.buildurl()
-
-    @property
-    def name(self):
-        '''Store name'''
-        return self._name
 
     @property
     def database(self):
@@ -173,7 +168,7 @@ class Store(metaclass=ABCMeta):
         path = '/%s' % self._database if self._database else ''
         self._urlparams.update(kw)
         query = urlencode(self._urlparams)
-        scheme = self._name
+        scheme = self.name
         if self._scheme:
             scheme = '%s+%s' % (self._scheme, scheme)
         if not host:
@@ -182,16 +177,14 @@ class Store(metaclass=ABCMeta):
 
 
 class RemoteStore(Producer, Store):
-    '''Base class for remote :ref:`data stores <data-stores>`.
+    """Base class for remote :ref:`data stores <data-stores>`.
 
     It is an :class:`.Producer` for accessing and retrieving
     data from remote data servers such as redis.
-    '''
-    MANY_TIMES_EVENTS = ('request',)
-
+    """
     def __init__(self, name, host, loop=None, protocol_factory=None, **kw):
-        super().__init__(loop, protocol_factory=protocol_factory)
-        Store.__init__(self, name, host, **kw)
+        super().__init__(protocol_factory, name=name, loop=loop)
+        Store.__init__(self, host, **kw)
 
     @abstractmethod
     def connect(self):
@@ -270,8 +263,8 @@ class PubSubClient:
         raise NotImplementedError
 
 
-class PubSub(EventHandler):
-    '''A Publish/Subscriber interface.
+class PubSub(Producer):
+    """A Publish/Subscriber interface.
 
     A :class:`.PubSub` handler is never initialised directly, instead,
     the :meth:`~.RemoteStore.pubsub` method of a data :class:`.RemoteStore`
@@ -296,30 +289,21 @@ class PubSub(EventHandler):
 
     An additional ``protocol`` object can be supplied. The protocol must
     implement the ``encode`` and ``decode`` methods.
-    '''
-    MANY_TIMES_EVENTS = ('connection_lost',)
-
-    def __init__(self, store, protocol=None):
-        super().__init__(loop=store._loop)
+    """
+    def __init__(self, store, protocol_factory, protocol=None, **kw):
+        super().__init__(protocol_factory, loop=store._loop, **kw)
         self.store = store
-        self._protocol = protocol
-        self._connection = None
+        self.protocol = protocol
         self._clients = set()
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, self.store)
+        return '%s(%s)' % (self.name, self.store)
     __str__ = __repr__
-
-    @property
-    def protocol(self):
-        """Protocol of this pubsub handler
-        """
-        return self._protocol
 
     def publish_event(self, channel, event, message):
         '''Publish a new event ``message`` to a ``channel``.
         '''
-        assert self._protocol is not None, "Protocol required"
+        assert self.protocol is not None, "Protocol required"
         msg = {'event': event, 'channel': channel}
         if message:
             msg['data'] = message
@@ -394,9 +378,9 @@ class PubSub(EventHandler):
         remove = set()
         channel = to_string(response[0])
         message = response[1]
-        if self._protocol:
+        if self.protocol:
             try:
-                message = self._protocol.decode(message)
+                message = self.protocol.decode(message)
             except ProtocolError:
                 self.logger.exception('Could not decode message')
                 return

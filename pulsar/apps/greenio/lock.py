@@ -1,9 +1,10 @@
 import threading
 from collections import deque
+from asyncio import get_event_loop
 
 from greenlet import getcurrent
 
-from pulsar import get_event_loop, create_future
+from pulsar.api import create_future
 
 from .utils import MustBeInChildGreenlet
 

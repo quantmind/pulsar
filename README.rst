@@ -5,8 +5,8 @@
 |
 |
 
-:Badges: |license|  |pyversions| |status| |pypiversion|
-:Master CI: |master-build|_ |coverage-master| |appveyor|
+:Badges: |license|  |pyversions| |status| |pypiversion| |contributors|
+:Master CI: |master-build|_ |coverage-master| |appveyor| |circleci|
 :Documentation: http://quantmind.github.io/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -17,7 +17,7 @@
 :Keywords: client, server, asynchronous, concurrency, actor, thread, process,
     socket, wsgi, websocket, redis, json-rpc
 
-.. |pypiversion| image:: https://badge.fury.io/py/pulsar.svg
+.. |pypiversion| image:: https://img.shields.io/pypi/v/pulsar.svg
     :target: https://pypi.python.org/pypi/pulsar
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/pulsar.svg
   :target: https://pypi.python.org/pypi/pulsar
@@ -37,7 +37,10 @@
   :target: https://coveralls.io/github/quantmind/pulsar?branch=dev
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/w2ip01j07qm161ei?svg=true
     :target: https://ci.appveyor.com/project/lsbardel/pulsar
-
+.. |contributors| image:: https://img.shields.io/github/contributors/quantmind/pulsar.svg
+    :target: https://github.com/quantmind/pulsar/graphs/contributors
+.. |circleci| image:: https://circleci.com/gh/quantmind/pulsar.svg?style=svg
+    :target: https://circleci.com/gh/quantmind/pulsar
 
 An example of a web server written with ``pulsar`` which responds with
 "Hello World!" for every request:
@@ -88,7 +91,12 @@ asynchronous ``with`` block.
 Installing
 ============
 
-Pulsar has no hard dependencies, install via pip::
+Pulsar has two hard dependencies:
+
+* [multidict](https://github.com/aio-libs/multidict)
+* [async_timeout](https://github.com/aio-libs/async-timeout)
+
+install via pip::
 
     pip install pulsar
 
@@ -158,9 +166,8 @@ uses them to add additional functionalities or improve performance:
 * uvloop_: if available it is possible to use it as the default event loop
   for actors by passing ``--io uv`` in the command line (or ``event_loop="uv"``
   in the config file)
-* http-parser_: if available, the default HttpParser for both client and server
-  is replaced by the C implementation in this package (about three times faster
-  than pulsar python version)
+* httptools_: if available, the default Http Parser for both client and server
+  is replaced by the C implementation in this package
 * setproctitle_: if installed, pulsar can use it to change the processes names
   of the running application
 * psutil_: if installed, a ``system`` key is available in the dictionary
@@ -247,6 +254,6 @@ file in the top distribution directory for the full license text.
 .. _`python-pulsar`: http://stackoverflow.com/questions/tagged/python-pulsar
 .. _`Web Sockets`: http://quantmind.github.io/pulsar/apps/websockets.html
 .. _uvloop: https://github.com/MagicStack/uvloop
-.. _http-parser: https://github.com/benoitc/http-parser
+.. _httptools: https://github.com/MagicStack/httptools
 .. _`Asynchronous WSGI server`: http://quantmind.github.io/pulsar/apps/wsgi/index.html
 .. _`Asynchronous Test suite`: http://quantmind.github.io/pulsar/apps/test.html

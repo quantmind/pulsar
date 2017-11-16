@@ -23,11 +23,9 @@ import logging
 import unittest
 import asyncio
 
-import pulsar
-from pulsar import (
-    get_actor, send, as_gather,
-    format_traceback, ImproperlyConfigured
-)
+from pulsar.api import get_actor, send, spawn, ImproperlyConfigured
+from pulsar.utils.exceptions import format_traceback
+from pulsar.async.futures import as_gather
 from pulsar.apps.data import create_store
 
 
@@ -112,47 +110,6 @@ def get_test_timeout(o, timeout):
     return max(val, timeout)
 
 
-class AsyncAssert:
-    '''A `descriptor`_ added by the test application to all python
-    :class:`~unittest.TestCase` loaded.
-
-    It can be used to invoke the same ``assertXXX`` methods available in
-    the :class:`~unittest.TestCase` in an asynchronous fashion.
-
-    The descriptor is available via the ``async`` attribute.
-    For example::
-
-        class MyTest(unittest.TestCase):
-
-            async def test1(self):
-                await self.wait.assertEqual(3, Future().callback(3))
-                ...
-
-
-    .. _descriptor: http://users.rcn.com/python/download/Descriptor.htm
-    '''
-    def __init__(self, test):
-        self.test = test
-
-    def __get__(self, instance, instance_type=None):
-        if instance is not None:
-            return AsyncAssert(instance)
-        else:
-            return self
-
-    async def assertRaises(self, error, callable, *args, **kwargs):
-        try:
-            await callable(*args, **kwargs)
-        except error:
-            return
-        except Exception:   # pragma    nocover
-            raise self.test.failureException('%s not raised by %s'
-                                             % (error, callable))
-        else:   # pragma    nocover
-            raise self.test.failureException('%s not raised by %s'
-                                             % (error, callable))
-
-
 class ActorTestMixin:
     '''A mixin for :class:`~unittest.TestCase`.
 
@@ -177,7 +134,7 @@ class ActorTestMixin:
         '''Spawn a new actor and perform some tests
         '''
         concurrency = concurrency or self.concurrency
-        ad = pulsar.spawn(concurrency=concurrency, **kwargs)
+        ad = spawn(concurrency=concurrency, **kwargs)
         self.assertTrue(ad.aid)
         self.assertIsInstance(ad, asyncio.Future)
         proxy = await ad
@@ -223,7 +180,7 @@ def dont_run_with_thread(obj):
     '''Decorator for disabling process based test cases when the test suite
     runs in threading, rather than processing, mode.
     '''
-    actor = pulsar.get_actor()
+    actor = get_actor()
     if actor:
         d = unittest.skipUnless(actor.cfg.concurrency == 'process',
                                 'Run only when concurrency is process')

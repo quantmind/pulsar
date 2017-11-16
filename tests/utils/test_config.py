@@ -6,8 +6,12 @@ import tempfile
 import traceback
 import unittest
 
-import pulsar
-from pulsar import get_actor, validate_callable
+from pulsar.api import get_actor
+from pulsar.utils import system
+from pulsar.utils.config import (
+    validate_callable, pass_through, validate_list, validate_bool,
+    validate_pos_int, validate_pos_float, validate_dict, validate_string
+)
 
 from tests.utils import config, post_fork
 
@@ -49,7 +53,6 @@ class TestConfig(unittest.TestCase):
         self.assertFalse('config' in cfg.settings)
 
     def testDefaults(self):
-        from pulsar.utils.config import pass_through
         self.assertFalse(pass_through(None))
         cfg = config()
         self.assertEqual(list(sorted(cfg)), list(sorted(cfg.settings)))
@@ -71,7 +74,6 @@ class TestConfig(unittest.TestCase):
         os.remove(name)
 
     def testSystem(self):
-        from pulsar import system
         cfg = config()
         self.assertEqual(cfg.uid, system.get_uid())
         self.assertEqual(cfg.gid, system.get_gid())
@@ -80,22 +82,22 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg.proc_name, 'bla')
 
     def testValidation(self):
-        self.assertEqual(pulsar.validate_list((1, 2)), [1, 2])
-        self.assertRaises(TypeError, pulsar.validate_list, 'bla')
-        self.assertEqual(pulsar.validate_string(' bla  '), 'bla')
-        self.assertEqual(pulsar.validate_string(None), None)
-        self.assertRaises(TypeError, pulsar.validate_string, [])
-        self.assertEqual(pulsar.validate_bool(True), True)
-        self.assertEqual(pulsar.validate_bool('true '), True)
-        self.assertEqual(pulsar.validate_bool(' false'), False)
-        self.assertRaises(TypeError, pulsar.validate_bool, [])
-        self.assertRaises(ValueError, pulsar.validate_bool, 'foo')
-        self.assertRaises(ValueError, pulsar.validate_pos_int, 'foo')
-        self.assertRaises(ValueError, pulsar.validate_pos_int, -1)
-        self.assertRaises(ValueError, pulsar.validate_pos_float, 'foo')
-        self.assertRaises(ValueError, pulsar.validate_pos_float, -0.001)
-        self.assertEqual(pulsar.validate_pos_float('0.101'), 0.101)
-        self.assertRaises(TypeError, pulsar.validate_dict, 4)
+        self.assertEqual(validate_list((1, 2)), [1, 2])
+        self.assertRaises(TypeError, validate_list, 'bla')
+        self.assertEqual(validate_string(' bla  '), 'bla')
+        self.assertEqual(validate_string(None), None)
+        self.assertRaises(TypeError, validate_string, [])
+        self.assertEqual(validate_bool(True), True)
+        self.assertEqual(validate_bool('true '), True)
+        self.assertEqual(validate_bool(' false'), False)
+        self.assertRaises(TypeError, validate_bool, [])
+        self.assertRaises(ValueError, validate_bool, 'foo')
+        self.assertRaises(ValueError, validate_pos_int, 'foo')
+        self.assertRaises(ValueError, validate_pos_int, -1)
+        self.assertRaises(ValueError, validate_pos_float, 'foo')
+        self.assertRaises(ValueError, validate_pos_float, -0.001)
+        self.assertEqual(validate_pos_float('0.101'), 0.101)
+        self.assertRaises(TypeError, validate_dict, 4)
 
     def test_validate_callable(self):
         self.assertRaises(TypeError, validate_callable(1), None)

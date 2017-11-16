@@ -1,6 +1,7 @@
 import asyncio
+from asyncio import ensure_future
 
-from pulsar import ensure_future, LockError
+from pulsar.api import LockError
 
 
 class RedisLockTests:
@@ -87,7 +88,7 @@ class RedisLockTests:
         eq(await lock.acquire(), True)
         # manually change the token
         await self.client.set(key, 'a')
-        await self.wait.assertRaises(LockError, lock.release)
+        await self.wait(LockError, lock.release)
         # even though we errored, the token is still cleared
         self.assertEqual(lock._token, None)
 
@@ -110,4 +111,4 @@ class RedisLockTests:
                 pass
 
         async with self.client.lock(key):
-            await self.wait.assertRaises(LockError, _lock)
+            await self.wait(LockError, _lock)

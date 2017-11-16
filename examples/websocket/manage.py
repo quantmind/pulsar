@@ -11,7 +11,6 @@ from random import random
 
 from pulsar.apps import ws, wsgi
 from pulsar.utils.system import json
-from pulsar.utils.websocket import frame_parser
 
 
 DIR = os.path.dirname(__file__)
@@ -42,8 +41,8 @@ class Site(wsgi.LazyWsgi):
     def setup(self, environ):
         return wsgi.WsgiHandler(
             [wsgi.Router('/', get=self.home),
-             ws.WebSocket('/data', Graph(), parser_factory=self._factory),
-             ws.WebSocket('/echo', Echo(), parser_factory=self._factory)])
+             ws.WebSocket('/data', Graph()),
+             ws.WebSocket('/echo', Echo())])
 
     def home(self, request):
         response = request.response
@@ -52,10 +51,6 @@ class Site(wsgi.LazyWsgi):
         with open(os.path.join(DIR, 'websocket.html')) as f:
             response.content = f.read() % request.environ
         return response
-
-    def _factory(self, **params):
-        params['pyparser'] = self.pyparser
-        return frame_parser(**params)
 
 
 def server(pyparser=False, **kwargs):

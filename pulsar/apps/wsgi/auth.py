@@ -19,10 +19,10 @@ import os
 import time
 from base64 import b64decode
 
-from pulsar import HttpException
+from pulsar.api import HttpException
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
-                                  quote_header_value, DEFAULT_CHARSET)
-from pulsar.utils.pep import to_bytes
+                                  quote_header_value, CHARSET)
+from pulsar.utils.string import to_bytes
 
 
 _require_quoting = frozenset(['domain', 'nonce', 'opaque', 'realm'])
@@ -158,7 +158,7 @@ def parse_authorization_header(value, charset='utf-8'):
         return
     if auth_type == 'basic':
         try:
-            up = b64decode(auth_info.encode(DEFAULT_CHARSET)).decode(charset)
+            up = b64decode(auth_info.encode(CHARSET)).decode(charset)
             username, password = up.split(':', 1)
         except Exception:
             return

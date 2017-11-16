@@ -2,7 +2,7 @@
 import unittest
 import types
 
-from pulsar import send, get_event_loop
+from pulsar.api import send
 from pulsar.apps import rpc, http
 from pulsar.apps.test import dont_run_with_thread
 
@@ -93,14 +93,14 @@ class TestRpcOnThread(unittest.TestCase):
         response = await self.p.calc.divide(50, 25)
         self.assertEqual(response, 2)
 
-    async def test_info(self):
+    async def __test_info(self):
         response = await self.p.server_info()
         self.assertTrue('server' in response)
         server = response['server']
         self.assertTrue('version' in server)
         app = response['monitors'][self.app_cfg.name]
         if self.concurrency == 'thread':
-            self.assertFalse(app['workers'])
+            self.assertFalse(app.get('workers'))
             worker = app
         else:
             workers = app['workers']
@@ -118,32 +118,30 @@ class TestRpcOnThread(unittest.TestCase):
             self.assertEqual(sock['address'],
                              '%s:%s' % self.app_cfg.addresses[0])
 
-    def test_invalid_params(self):
-        return self.wait.assertRaises(rpc.InvalidParams, self.p.calc.add,
-                                      50, 25, 67)
+    async def test_invalid_params(self):
+        with self.assertRaises(rpc.InvalidParams):
+            await self.p.calc.add(50, 25, 67)
 
-    def test_invalid_params_fromApi(self):
-        return self.wait.assertRaises(rpc.InvalidParams, self.p.calc.divide,
-                                      50, 25, 67)
+    async def test_invalid_params_fromApi(self):
+        with self.assertRaises(rpc.InvalidParams):
+            await self.p.calc.divide(50, 25, 67)
 
     async def test_invalid_function(self):
         p = self.p
-        await self.wait.assertRaises(rpc.NoSuchFunction, p.foo, 'ciao')
-        await self.wait.assertRaises(rpc.NoSuchFunction,
-                                     p.blabla)
-        await self.wait.assertRaises(rpc.NoSuchFunction,
-                                     p.blabla.foofoo)
-        await self.wait.assertRaises(rpc.NoSuchFunction,
-                                     p.blabla.foofoo.sjdcbjcb)
+        with self.assertRaises(rpc.NoSuchFunction):
+            await p.foo('ciao')
+        with self.assertRaises(rpc.NoSuchFunction):
+            await p.blabla()
+        with self.assertRaises(rpc.NoSuchFunction):
+            await p.blabla.foofoo()
+        with self.assertRaises(rpc.NoSuchFunction):
+            await p.blabla.foofoo.sjdcbjcb()
 
-    def testInternalError(self):
-        return self.wait.assertRaises(rpc.InternalError, self.p.calc.divide,
-                                      'ciao', 'bo')
+    async def testInternalError(self):
+        with self.assertRaises(rpc.InternalError):
+            await self.p.calc.divide('ciao', 'bo')
 
-    def testCouldNotserialize(self):
-        return self.wait.assertRaises(rpc.InternalError, self.p.dodgy_method)
-
-    async def testpaths(self):
+    async def test_paths(self):
         '''Fetch a sizable ammount of data'''
         response = await self.p.calc.randompaths(num_paths=20, size=100,
                                                  mu=1, sigma=2)
@@ -243,16 +241,3 @@ class TestRpcOnThread(unittest.TestCase):
 @dont_run_with_thread
 class TestRpcOnProcess(TestRpcOnThread):
     concurrency = 'process'
-
-    async def setUp(self):
-        response = await self.p.ping()
-        self.assertEqual(response, 'pong')
-
-    # Synchronous client
-    async def test_sync_ping(self):
-        await get_event_loop().run_in_executor(None, self._test_sync_ping)
-
-    def _test_sync_ping(self):
-        sync = rpc.JsonProxy(self.uri, sync=True)
-        self.assertEqual(sync.ping(), 'pong')
-        self.assertEqual(sync.ping(), 'pong')

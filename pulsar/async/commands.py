@@ -1,6 +1,6 @@
 from time import time
 
-from pulsar import CommandError
+from ..utils.exceptions import CommandError
 
 from .proxy import command, ActorProxyMonitor
 from .futures import async_while

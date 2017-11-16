@@ -1,6 +1,6 @@
 import unittest
 
-from pulsar import HttpRedirect
+from pulsar.api import HttpRedirect
 
 
 class WsgiRequestTests(unittest.TestCase):

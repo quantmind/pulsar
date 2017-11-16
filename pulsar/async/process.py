@@ -1,5 +1,5 @@
-from pulsar.utils import autoreload
-from pulsar import system
+from ..utils import autoreload
+from ..utils import system
 
 
 class ProcessMixin:
@@ -9,6 +9,7 @@ class ProcessMixin:
 
     def before_start(self, actor):  # pragma    nocover
         actor.start_coverage()
+        actor.logger.info('Booting')
         self._install_signals(actor)
         if actor.cfg.reload and self.is_arbiter():
             autoreload.start()

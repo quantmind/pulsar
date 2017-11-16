@@ -1,45 +1,9 @@
-'''\
-This is a a :ref:`JSON-RPC <apps-rpc>` server with some simple functions.
-To run the server type::
-
-    python manage.py
-
-Open a new shell and launch python and type::
-
-    >>> from pulsar.apps import rpc
-    >>> p = rpc.JsonProxy('http://localhost:8060')
-    >>> p.ping()
-    'pong'
-    >>> p.functions_list()
-    [[...
-    >>> p.calc.add(3,4)
-    7.0
-
-Implementation
------------------
-
-The calculator rpc functions are implemented by the :class:`Calculator`
-handler, while the :class:`Root` handler exposes utility methods from
-the :class:`.PulsarServerCommands` handler.
-
-.. autoclass:: Calculator
-   :members:
-   :member-order: bysource
-
-.. autoclass:: Root
-   :members:
-   :member-order: bysource
-
-.. autoclass:: Site
-   :members:
-   :member-order: bysource
-
-'''
 from random import normalvariate
 
-from pulsar import as_coroutine
-from pulsar.apps import rpc, wsgi
+from pulsar.apps import wsgi
 from pulsar.utils.httpurl import JSON_CONTENT_TYPES
+
+from pulsar.apps import rpc
 
 
 def divide(request, a, b):
@@ -70,21 +34,16 @@ def randompaths(request, num_paths=1, size=250, mu=0, sigma=1):
 
 class RequestCheck:
 
-    async def __call__(self, request, name):
-        data = await as_coroutine(request.body_data())
+    def __call__(self, request, name):
+        data = request.body_data()
         assert(data['method'] == name)
         return True
 
 
 class Root(rpc.PulsarServerCommands):
-    '''Add two rpc methods for testing to the :class:`.PulsarServerCommands`
+    """Add two rpc methods for testing to the :class:`.PulsarServerCommands`
     handler.
-    '''
-    def rpc_dodgy_method(self, request):
-        '''This method will fails because the return object is not
-        json serialisable.'''
-        return Calculator
-
+    """
     rpc_check_request = RequestCheck()
 
 

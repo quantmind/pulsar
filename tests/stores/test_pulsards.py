@@ -5,7 +5,7 @@ import unittest
 import asyncio
 import datetime
 
-import pulsar
+from pulsar.api import send
 from pulsar.utils.string import random_string
 from pulsar.utils.structures import Zset
 from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
@@ -58,6 +58,11 @@ class StoreMixin:
     def randomkey(cls, length=None):
         return random_string(min_length=length, max_length=length)
 
+    async def wait(self, Error, callable, *args, **kwargs):
+        with self.assertRaises(Error) as r:
+            await callable(*args, **kwargs)
+        return r
+
     async def _remove_and_push(self, key, rem=1):
         c = self.client
         self.assertEqual(await c.delete(key), rem)
@@ -85,7 +90,7 @@ class RedisCommands(StoreMixin):
         eq(await c.set(key, 'hello'), True)
         value = await c.dump(key)
         self.assertTrue(value)
-        await self.wait.assertRaises(
+        await self.wait(
             ResponseError, c.restore, key, 0, 'bla')
         eq(await c.restore(key+'2', 0, value), True)
         eq(await c.get(key+'2'), b'hello')
@@ -103,7 +108,7 @@ class RedisCommands(StoreMixin):
         key = self.randomkey()
         c = self.client
         eq = self.assertEqual
-        await self.wait.assertRaises(ResponseError, c.expire, key, 'bla')
+        await self.wait(ResponseError, c.expire, key, 'bla')
         eq(await c.expire(key, 1), False)
         eq(await c.set(key, 1), True)
         eq(await c.expire(key, 10), True)
@@ -117,7 +122,7 @@ class RedisCommands(StoreMixin):
         key = self.randomkey()
         c = self.client
         eq = self.assertEqual
-        await self.wait.assertRaises(ResponseError, c.expireat, key, 'bla')
+        await self.wait(ResponseError, c.expireat, key, 'bla')
         t = int(time.time() + 3)
         eq(await c.expireat(key, t), False)
         eq(await c.set(key, 1), True)
@@ -150,7 +155,7 @@ class RedisCommands(StoreMixin):
         c = self.client
         eq = self.assertEqual
         db = 3 if c.store.database == 4 else 4
-        await self.wait.assertRaises(ResponseError, c.move, key, 'bla')
+        await self.wait(ResponseError, c.move, key, 'bla')
         eq(await c.move(key, db), False)
         eq(await c.set(key, 'ciao'), True)
         eq(await c.move(key, db), True)
@@ -176,7 +181,7 @@ class RedisCommands(StoreMixin):
         des = self.randomkey()
         c = self.client
         eq = self.assertEqual
-        await self.wait.assertRaises(ResponseError, c.rename, key, des)
+        await self.wait(ResponseError, c.rename, key, des)
         eq(await c.set(key, 'hello'), True)
         eq(await c.rename(key, des), True)
         eq(await c.exists(key), False)
@@ -189,10 +194,10 @@ class RedisCommands(StoreMixin):
     ###########################################################################
     #    BAD REQUESTS
     # async def test_no_command(self):
-    #     await self.wait.assertRaises(ResponseError, self.store.execute)
+    #     await self.wait(ResponseError, self.store.execute)
 
     # async def test_bad_command(self):
-    #     await self.wait.assertRaises(ResponseError, self.store.execute,
+    #     await self.wait(ResponseError, self.store.execute,
     #                                   'foo')
     ###########################################################################
     #    STRINGS
@@ -205,7 +210,7 @@ class RedisCommands(StoreMixin):
         eq(await c.append(key, 'a2'), 4)
         eq(await c.get(key), b'a1a2')
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.append, key, 'g')
+        await self.wait(ResponseError, c.append, key, 'g')
 
     async def test_bitcount(self):
         key = self.randomkey()
@@ -229,7 +234,7 @@ class RedisCommands(StoreMixin):
         eq(await c.bitcount(key, -2, -1), 2)
         eq(await c.bitcount(key, 1, 1), 1)
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.bitcount, key)
+        await self.wait(ResponseError, c.bitcount, key)
 
     async def test_bitop_not_empty_string(self):
         key = self.randomkey()
@@ -314,7 +319,7 @@ class RedisCommands(StoreMixin):
         eq(await c.getbit(key, 5), 0)
         eq(await c.setbit(key, 5, 1), 0)
         eq(await c.getbit(key, 5), 1)
-        await self.wait.assertRaises(ResponseError, c.getbit, key, -1)
+        await self.wait(ResponseError, c.getbit, key, -1)
         eq(await c.getbit(key, 4), 0)
         eq(await c.setbit(key, 4, 1), 0)
         # set bit 4
@@ -327,7 +332,7 @@ class RedisCommands(StoreMixin):
         eq(await c.getbit(key, 30), 0)
         #
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.getbit, key, 1)
+        await self.wait(ResponseError, c.getbit, key, 1)
 
     async def test_getrange(self):
         key = self.randomkey()
@@ -340,9 +345,9 @@ class RedisCommands(StoreMixin):
         eq(await c.getrange(key, 5, 5), b' ')
         eq(await c.getrange(key, 20, 25), b'')
         eq(await c.getrange(key, -5, -1), b'there')
-        await self.wait.assertRaises(ResponseError, c.getrange, key, 1, 'b')
+        await self.wait(ResponseError, c.getrange, key, 1, 'b')
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.getrange, key, 1, 2)
+        await self.wait(ResponseError, c.getrange, key, 1, 2)
 
     async def test_getset(self):
         key = self.randomkey()
@@ -502,7 +507,7 @@ class RedisCommands(StoreMixin):
         eq(await c.hdel(key, 'f3'), 1)
         eq(await c.type(key), 'none')
         await self._remove_and_push(key, 0)
-        await self.wait.assertRaises(ResponseError, c.hdel, key, 'foo')
+        await self.wait(ResponseError, c.hdel, key, 'foo')
 
     async def test_hexists(self):
         key = self.randomkey()
@@ -513,7 +518,7 @@ class RedisCommands(StoreMixin):
         eq(await c.hexists(key, 'f3'), True)
         eq(await c.hexists(key, 'f5'), False)
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.hexists, key, 'foo')
+        await self.wait(ResponseError, c.hexists, key, 'foo')
 
     async def test_hset_hget(self):
         key = self.randomkey()
@@ -525,9 +530,9 @@ class RedisCommands(StoreMixin):
         eq(await c.hset(key, 'foo', 6), 0)
         eq(await c.hget(key, 'foo'), b'6')
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.hset, key, 'foo', 7)
-        await self.wait.assertRaises(ResponseError, c.hget, key, 'foo')
-        await self.wait.assertRaises(ResponseError, c.hmset, key, 'foo')
+        await self.wait(ResponseError, c.hset, key, 'foo', 7)
+        await self.wait(ResponseError, c.hget, key, 'foo')
+        await self.wait(ResponseError, c.hmset, key, 'foo')
 
     async def test_hgetall(self):
         key = self.randomkey()
@@ -538,7 +543,7 @@ class RedisCommands(StoreMixin):
         eq(await c.hmset(key, h), True)
         eq(await c.hgetall(key), h)
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.hgetall, key)
+        await self.wait(ResponseError, c.hgetall, key)
 
     async def test_hincrby(self):
         key = self.randomkey()
@@ -548,7 +553,7 @@ class RedisCommands(StoreMixin):
         eq(await c.hincrby(key, 'foo', 2), 3)
         eq(await c.hincrby(key, 'foo', -1), 2)
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.hincrby, key, 'foo', 3)
+        await self.wait(ResponseError, c.hincrby, key, 'foo', 3)
 
     async def test_hincrbyfloat(self):
         key = self.randomkey()
@@ -576,10 +581,10 @@ class RedisCommands(StoreMixin):
         eq(await c.hmget(key, 'f1', 'f3', 'hj'),
            {'f1': b'1', 'f3': b'foo', 'hj': None})
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.hkeys, key)
-        await self.wait.assertRaises(ResponseError, c.hvals, key)
-        await self.wait.assertRaises(ResponseError, c.hlen, key)
-        await self.wait.assertRaises(ResponseError, c.hmget, key, 'f1', 'f2')
+        await self.wait(ResponseError, c.hkeys, key)
+        await self.wait(ResponseError, c.hvals, key)
+        await self.wait(ResponseError, c.hlen, key)
+        await self.wait(ResponseError, c.hmget, key, 'f1', 'f2')
 
     async def test_hsetnx(self):
         key = self.randomkey()
@@ -590,7 +595,7 @@ class RedisCommands(StoreMixin):
         eq(await c.hsetnx(key, 'a', 'bla'), 0)
         eq(await c.hget(key, 'a'), b'foo')
         await self._remove_and_push(key)
-        await self.wait.assertRaises(ResponseError, c.hsetnx, key, 'a', 'jk')
+        await self.wait(ResponseError, c.hsetnx, key, 'a', 'jk')
 
     ###########################################################################
     #    LISTS
@@ -601,7 +606,7 @@ class RedisCommands(StoreMixin):
         bk2 = key2.encode('utf-8')
         eq = self.assertEqual
         c = self.client
-        await self.wait.assertRaises(ResponseError, c.blpop, key1, 'bla')
+        await self.wait(ResponseError, c.blpop, key1, 'bla')
         eq(await c.rpush(key1, 1, 2), 2)
         eq(await c.rpush(key2, 3, 4), 2)
         eq(await c.blpop((key2, key1), 1), (bk2, b'3'))
@@ -663,8 +668,8 @@ class RedisCommands(StoreMixin):
         eq(await c.lindex(key, '3'), None)
         eq(await c.llen(key), 3)
         await self._remove_and_sadd(key)
-        await self.wait.assertRaises(ResponseError, c.lindex, key, '1')
-        await self.wait.assertRaises(ResponseError, c.llen, key)
+        await self.wait(ResponseError, c.lindex, key, '1')
+        await self.wait(ResponseError, c.llen, key)
 
     async def test_linsert(self):
         key = self.randomkey()
@@ -677,11 +682,9 @@ class RedisCommands(StoreMixin):
         eq(await c.linsert(key, 'before', '2', '1.5'), 5)
         eq(await c.lrange(key, 0, -1), [b'1', b'1.5', b'2', b'2.5', b'3'])
         eq(await c.linsert(key, 'before', '100', '1.5'), -1)
-        await self.wait.assertRaises(ResponseError, c.linsert, key,
-                                     'banana', '2', '2.5')
+        await self.wait(ResponseError, c.linsert, key, 'banana', '2', '2.5')
         await self._remove_and_sadd(key)
-        await self.wait.assertRaises(ResponseError, c.linsert, key,
-                                     'after', '2', '2.5')
+        await self.wait(ResponseError, c.linsert, key, 'after', '2', '2.5')
 
     async def test_lpop(self):
         key = self.randomkey()
@@ -694,8 +697,8 @@ class RedisCommands(StoreMixin):
         eq(await c.lpop(key), None)
         eq(await c.type(key), 'none')
         await self._remove_and_sadd(key, 0)
-        await self.wait.assertRaises(ResponseError, c.lpop, key)
-        await self.wait.assertRaises(ResponseError, c.lpush, key, 4)
+        await self.wait(ResponseError, c.lpop, key)
+        await self.wait(ResponseError, c.lpush, key, 4)
 
     async def test_lset(self):
         key = self.randomkey()
@@ -726,7 +729,7 @@ class RedisCommands(StoreMixin):
         eq(await c.rpushx(key, 'c'), 3)
         eq(await c.lrange(key, 0, -1), [b'b', b'a', b'c'])
         await self._remove_and_sadd(key)
-        await self.wait.assertRaises(ResponseError, c.lpushx, key, 'g')
+        await self.wait(ResponseError, c.lpushx, key, 'g')
 
     async def test_lrem(self):
         key = self.randomkey()
@@ -739,11 +742,11 @@ class RedisCommands(StoreMixin):
         eq(await c.lrem(key, -1, 'a'), 1)
         eq(await c.lrange(key, 0, -1), [b'a', b'a', b'b', b'a'])
         eq(await c.lrem(key, 0, 'a'), 3)
-        await self.wait.assertRaises(ResponseError, c.lrem, key, 'g', 'foo')
+        await self.wait(ResponseError, c.lrem, key, 'g', 'foo')
         eq(await c.lrange(key, 0, -1), [b'b'])
         eq(await c.lrem(key, 0, 'b'), 1)
         await self._remove_and_sadd(key, 0)
-        await self.wait.assertRaises(ResponseError, c.lrem, key, 1)
+        await self.wait(ResponseError, c.lrem, key, 1)
 
     async def test_rpop(self):
         key = self.randomkey()
@@ -1155,12 +1158,12 @@ class RedisCommands(StoreMixin):
         pubsub = client.pubsub()
         self.assertEqual(client.store, pubsub.store)
         self.assertEqual(client.store._loop, pubsub._loop)
-        self.assertEqual(pubsub._connection, None)
+        self.assertEqual(pubsub.push_connection, None)
 
     async def test_subscribe_one(self):
         key = self.randomkey()
         pubsub1 = self.client.pubsub()
-        self.assertFalse(pubsub1._connection)
+        self.assertFalse(pubsub1.push_connection)
         # Subscribe to one channel
         await pubsub1.subscribe(key)
         count = await pubsub1.count(key)
@@ -1225,8 +1228,7 @@ class RedisCommands(StoreMixin):
             channel, message = await listener.get()
             self.assertEqual(channel, 'foo')
             self.assertEqual(message, 'hello foo')
-            eq(await pubsub.punsubscribe(), None)
-            # await listener.get()
+            pubsub.punsubscribe()
 
     ###########################################################################
     #    TRANSACTION
@@ -1245,7 +1247,7 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         server = PulsarDS(name=cls.__name__.lower(),
                           bind='127.0.0.1:0',
                           redis_py_parser=cls.redis_py_parser)
-        cls.app_cfg = await pulsar.send('arbiter', 'run', server)
+        cls.app_cfg = await send('arbiter', 'run', server)
         cls.pulsards_uri = 'pulsar://%s:%s' % cls.app_cfg.addresses[0]
         cls.store = cls.create_store('%s/9' % cls.pulsards_uri)
         cls.client = cls.store.client()
@@ -1253,7 +1255,7 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if cls.app_cfg is not None:
-            return pulsar.send('arbiter', 'kill_actor', cls.app_cfg.name)
+            return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     def test_store_methods(self):
         store = self.create_store('%s/8' % self.pulsards_uri)
@@ -1263,8 +1265,3 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         self.assertTrue(store.dns.startswith('%s/10?' % self.pulsards_uri))
         self.assertEqual(store.encoding, 'utf-8')
         self.assertTrue(repr(store))
-
-
-@unittest.skipUnless(pulsar.HAS_C_EXTENSIONS, 'Requires cython extensions')
-class TestPulsarStorePyParser(TestPulsarStore):
-    redis_py_parser = True

@@ -1,18 +1,18 @@
 import unittest
+from urllib.parse import parse_qsl, urlparse
 
 from pulsar.apps.http import (
-    HttpClient, HttpRequest, parse_qsl, urlparse, OAuth1, OAuth2
+    HttpClient, HttpRequest, OAuth1, OAuth2
 )
 
 
 class TestClientCornerCases(unittest.TestCase):
 
     def test_headers(self):
-        headers = HttpClient.DEFAULT_HTTP_HEADERS
-        self.assertEqual(len(headers), 3)
-        accept = headers['accept-encoding']
-        self.assertTrue('gzip' in accept)
-        self.assertTrue('deflate' in accept)
+        http = HttpClient()
+        self.assertEqual(len(http.headers), 5)
+        accept = http.headers.getall('accept-encoding')
+        self.assertEqual(accept, ['deflate', 'gzip'])
 
     def test_override_headers(self):
         headers = {'Accept': 'application/json, text/plain; q=0.8',
@@ -44,11 +44,11 @@ class TestClientCornerCases(unittest.TestCase):
             resource_owner_key='xxxxxxx',
             resource_owner_secret='xxxxxxx'
         )
-        http = HttpClient()
-        await http.post(
-            'https://api.github.com/gists/public',
-            pre_request=oauth
-        )
+        async with HttpClient() as http:
+            await http.post(
+                'https://api.github.com/gists/public',
+                pre_request=oauth
+            )
 
     @unittest.skipUnless(OAuth2.available, 'oauthlib not available')
     async def test_oauth2(self):
@@ -56,10 +56,11 @@ class TestClientCornerCases(unittest.TestCase):
             'random',
             client_secret='xxxxxxx',
             resource_owner_key='xxxxxxx',
-            resource_owner_secret='xxxxxxx'
+            resource_owner_secret='xxxxxxx',
+            access_token='xxxxxx'
         )
-        http = HttpClient()
-        await http.post(
-            'https://api.github.com/gists/public',
-            pre_request=oauth
-        )
+        async with HttpClient() as http:
+            await http.post(
+                'https://api.github.com/gists/public',
+                pre_request=oauth
+            )

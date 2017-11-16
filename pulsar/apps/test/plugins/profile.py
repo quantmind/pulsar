@@ -31,6 +31,7 @@ from datetime import datetime
 from io import StringIO as Stream
 
 import pulsar
+from pulsar.api import Setting
 
 from .base import TestPlugin
 
@@ -124,11 +125,12 @@ class Profile(TestPlugin):
     """TestPlugin for profiling test cases.
     """
     desc = '''Profile tests using the cProfile module'''
-    profile_stats_path = pulsar.Setting(
+    profile_stats_path = Setting(
         flags=['--profile-stats-path'],
         default='htmlprof',
         desc='location of profile directory.',
-        validator=absolute_file)
+        validator=absolute_file
+    )
 
     def configure(self, cfg):
         self.config = cfg

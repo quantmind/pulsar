@@ -1,5 +1,5 @@
-from pulsar import Http404
-from pulsar.apps.wsgi import handle_wsgi_error, WsgiResponse
+from pulsar.api import Http404
+from pulsar.apps.wsgi import handle_wsgi_error
 
 from .utils import wait
 
@@ -36,10 +36,10 @@ class GreenWSGI:
         except Exception as exc:
             response = wait(handle_wsgi_error(environ, exc))
 
-        if isinstance(response, WsgiResponse) and not response.started:
+        if not getattr(response, '__wsgi_started__', True):
             for middleware in self.response_middleware:
                 response = wait(middleware(environ, response)) or response
-            response.start(start_response)
+            response.start(environ, start_response)
         return response
 
 

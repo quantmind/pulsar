@@ -1,224 +1,176 @@
-# Autoreloading launcher.
-# Borrowed from Peter Hunt and the CherryPy project (http://www.cherrypy.org).
-# Some taken from Ian Bicking's Paste (http://pythonpaste.org/).
-#
-# Portions copyright (c) 2004, CherryPy Team (team@cherrypy.org)
-# All rights reserved.
-
 import os
-import signal
 import sys
-import site
 import logging
-from inspect import getfile
+import subprocess
+from itertools import chain
+from asyncio import get_event_loop
 
-try:
-    import termios
-except ImportError:
-    termios = None
 
-USE_INOTIFY = False
-try:
-    # Test whether inotify is enabled and likely to work
-    import pyinotify
-
-    fd = pyinotify.INotifyWrapper.create().inotify_init()
-    if fd >= 0:
-        USE_INOTIFY = True
-        os.close(fd)
-except ImportError:
-    pass
-
-logger = logging.getLogger('pulsar.autoreload')
-
+LOGGER = logging.getLogger('pulsar.autoreload')
 EXIT_CODE = 5
-
-FILE_MODIFIED = 1
-I18N_MODIFIED = 2
-MODULE_BLACKLIST = ('pydev', '_pydev')
-
-_mtimes = {}
-_win = (sys.platform == "win32")
-
-_error_files = []
-_cached_modules = set()
-_cached_filenames = []
+PULSAR_RUN_MAIN = "PULSAR_RUN_MAIN"
 
 
-def module_white_list():
-    stdlib = os.path.dirname(os.path.dirname(sys.executable))
-    sitepackages = site.getsitepackages()
-    for module in sys.modules.values():
-        if in_black_list(module, stdlib, sitepackages):
-            continue
-        yield module
+class Reloader:
+    name = None
 
+    def __init__(self, extra_files=None, interval=1):
+        self.extra_files = set(os.path.abspath(x) for x in extra_files or ())
+        self.interval = interval or 1
+        self._loop = get_event_loop()
 
-def in_black_list(module, stdlib, sitepackages):
-    try:
-        filename = getfile(module)
-        name = module.__name__
-    except Exception:
-        return True
+    def start(self):
+        self.run()
 
-    for blacklist in MODULE_BLACKLIST:
-        if name.startswith(blacklist):
+    def run(self):
+        pass
+
+    def sleep(self):
+        if not self._loop.is_closed():
+            self._loop.call_later(self.interval, self.run)
+
+    def is_closed(self):
+        return self._loop.is_closed()
+
+    def restart_with_reloader(self):
+        """Spawn a new Python interpreter with the same arguments as this one
+        """
+        while True:
+            LOGGER.info('Restarting with %s reloader' % self.name)
+            args = _get_args_for_reloading()
+            new_environ = os.environ.copy()
+            new_environ[PULSAR_RUN_MAIN] = 'true'
+            exit_code = subprocess.call(args, env=new_environ, close_fds=False)
+            if exit_code != EXIT_CODE:
+                return exit_code
+
+    def trigger_reload(self, filename):
+        if self.log_reload(filename):
+            self.exit()
+
+    def log_reload(self, filename):
+        if not self.is_closed():
+            filename = os.path.abspath(filename)
+            LOGGER.info('Detected change in %r, reloading', filename)
             return True
 
-    for package in sitepackages:
-        if filename.startswith(package):
-            return False
-
-    if filename.startswith(stdlib):
-        return True
+    def exit(self):
+        sys.exit(EXIT_CODE)
 
 
-def gen_filenames(only_new=False):
-    """Returns a list of filenames referenced in sys.modules and translation
-    files.
-    """
-    global _cached_modules, _cached_filenames
-    module_values = set(module_white_list())
-    if _cached_modules == module_values:
-        # No changes in module list, short-circuit the function
-        if only_new:
-            return []
-        else:
-            return _cached_filenames
+class StatReloader(Reloader):
+    name = 'stat'
 
-    new_modules = module_values - _cached_modules
-    new_filenames = [filename.__file__ for filename in new_modules
-                     if hasattr(filename, '__file__')]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mtimes = {}
 
-    if only_new:
-        filelist = new_filenames
-    else:
-        filelist = _cached_filenames + new_filenames + _error_files
-    filenames = []
-    for filename in filelist:
-        if not filename:
-            continue
-        if filename.endswith(".pyc") or filename.endswith(".pyo"):
-            filename = filename[:-1]
-        if filename.endswith("$py.class"):
-            filename = filename[:-9] + ".py"
-        if os.path.exists(filename):
-            filenames.append(filename)
-    _cached_modules = _cached_modules.union(new_modules)
-    _cached_filenames += new_filenames
-    return filenames
-
-
-def inotify_code_changed():
-    """
-    Checks for changed code using inotify. After being called
-    it blocks until a change event has been fired.
-    """
-    class EventHandler(pyinotify.ProcessEvent):
-        modified_code = None
-
-        def process_default(self, event):
-            if event.path.endswith('.mo'):
-                EventHandler.modified_code = I18N_MODIFIED
-            else:
-                EventHandler.modified_code = FILE_MODIFIED
-
-    wm = pyinotify.WatchManager()
-    notifier = pyinotify.Notifier(wm, EventHandler())
-
-    def update_watch(sender=None, **kwargs):
-        if sender and getattr(sender, 'handles_files', False):
-            return
-        mask = (
-            pyinotify.IN_MODIFY |
-            pyinotify.IN_DELETE |
-            pyinotify.IN_ATTRIB |
-            pyinotify.IN_MOVED_FROM |
-            pyinotify.IN_MOVED_TO |
-            pyinotify.IN_CREATE
-        )
-        for path in gen_filenames(only_new=True):
-            wm.add_watch(path, mask)
-
-    # Block until an event happens.
-    update_watch()
-    notifier.check_events(timeout=None)
-    notifier.read_events()
-    notifier.process_events()
-    notifier.stop()
-
-    # If we are here the code must have changed.
-    return EventHandler.modified_code
-
-
-def code_changed():
-    global _mtimes, _win
-    for filename in gen_filenames():
-        try:
-            stat = os.stat(filename)
-        except Exception:
-            continue
-        mtime = stat.st_mtime
-        if _win:
-            mtime -= stat.st_ctime
-        if filename not in _mtimes:
-            _mtimes[filename] = mtime
-            continue
-        if mtime != _mtimes[filename]:
-            _mtimes = {}
+    def run(self):
+        for filename in chain(_iter_module_files(), self.extra_files):
             try:
-                del _error_files[_error_files.index(filename)]
-            except ValueError:
-                pass
-            return True
-    return False
+                mtime = os.stat(filename).st_mtime
+            except OSError:
+                continue
+
+            old_time = self.mtimes.get(filename)
+            if old_time is None:
+                self.mtimes[filename] = mtime
+                continue
+            elif mtime > old_time:
+                return self.trigger_reload(filename)
+        self.sleep()
 
 
-def ensure_echo_on():
-    if termios:
-        fd = sys.stdin
-        if fd.isatty():
-            attr_list = termios.tcgetattr(fd)
-            if not attr_list[3] & termios.ECHO:
-                attr_list[3] |= termios.ECHO
-                if hasattr(signal, 'SIGTTOU'):
-                    old_handler = signal.signal(signal.SIGTTOU, signal.SIG_IGN)
-                else:
-                    old_handler = None
-                termios.tcsetattr(fd, termios.TCSANOW, attr_list)
-                if old_handler is not None:
-                    signal.signal(signal.SIGTTOU, old_handler)
+def start(reloader_type='auto', interval=None):
+    reloader = reloaders[reloader_type](interval=interval)
+    try:
+        if os.environ.get(PULSAR_RUN_MAIN) == "true":
+            reloader.run()
+        else:
+            sys.exit(reloader.restart_with_reloader())
+    except KeyboardInterrupt:
+        pass
 
 
-def check_changes():
-    ensure_echo_on()
-    if USE_INOTIFY:
-        return inotify_code_changed()
-    else:
-        return code_changed()
+reloaders = dict(
+    stat=StatReloader,
+    auto=StatReloader
+)
+
+# INTERNALS
 
 
-def restart_with_reloader():
-    while True:
-        args = [sys.executable] + ['-W%s' % o for o in
-                                   sys.warnoptions] + sys.argv
-        if _win:
-            args = ['"%s"' % arg for arg in args]
-        new_environ = os.environ.copy()
-        new_environ["RUN_MAIN"] = 'true'
-        exit_code = os.spawnve(os.P_WAIT, sys.executable, args, new_environ)
-        logger.info('main execution exited with code %d', exit_code)
-        if exit_code != EXIT_CODE:
-            return exit_code
+def _get_args_for_reloading():
+    """Returns the executable. This contains a workaround for windows
+    if the executable is incorrectly reported to not have the .exe
+    extension which can cause bugs on reloading.
+    """
+    rv = [sys.executable]
+    py_script = sys.argv[0]
+    if os.name == 'nt' and not os.path.exists(py_script) and \
+       os.path.exists(py_script + '.exe'):
+        py_script += '.exe'
+    rv.append(py_script)
+    rv.extend(sys.argv[1:])
+    return rv
 
 
-def start():
-    if os.environ.get("RUN_MAIN") != "true":
-        try:
-            exit_code = restart_with_reloader()
-            if exit_code < 0:
-                os.kill(os.getpid(), -exit_code)
+def _iter_module_files():
+    """This iterates over all relevant Python files.  It goes through all
+    loaded files from modules, all files in folders of already loaded modules
+    as well as all files reachable through a package.
+    """
+    # The list call is necessary on Python 3 in case the module
+    # dictionary modifies during iteration.
+    for module in list(sys.modules.values()):
+        if module is None:
+            continue
+        filename = getattr(module, '__file__', None)
+        if filename:
+            while not os.path.isfile(filename):
+                old = filename
+                filename = os.path.dirname(filename)
+                if filename == old:
+                    break
             else:
-                sys.exit(exit_code)
-        except KeyboardInterrupt:
-            pass
+                if filename[-4:] in ('.pyc', '.pyo'):
+                    filename = filename[:-1]
+                yield filename
+
+
+def _find_observable_paths(extra_files=None):
+    """Finds all paths that should be observed."""
+    rv = set(os.path.abspath(x) for x in sys.path)
+
+    for filename in extra_files or ():
+        rv.add(os.path.dirname(os.path.abspath(filename)))
+
+    for module in list(sys.modules.values()):
+        fn = getattr(module, '__file__', None)
+        if fn is None:
+            continue
+        fn = os.path.abspath(fn)
+        rv.add(os.path.dirname(fn))
+
+    return _find_common_roots(rv)
+
+
+def _find_common_roots(paths):
+    """Out of some paths it finds the common roots that need monitoring."""
+    paths = [x.split(os.path.sep) for x in paths]
+    root = {}
+    for chunks in sorted(paths, key=len, reverse=True):
+        node = root
+        for chunk in chunks:
+            node = node.setdefault(chunk, {})
+        node.clear()
+
+    rv = set()
+
+    def _walk(node, path):
+        for prefix, child in node.items():
+            _walk(child, path + (prefix,))
+        if not node:
+            rv.add('/'.join(path))
+    _walk(root, ())
+    return rv

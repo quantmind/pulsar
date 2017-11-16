@@ -16,7 +16,8 @@ if platform.type != 'win':
 
         async def test_verify(self):
             c = HttpClient()
-            await self.wait.assertRaises(SSLError, c.get, self.httpbin())
+            with self.assertRaises(SSLError):
+                await c.get(self.httpbin())
             response = await c.get(self.httpbin(), verify=False)
             self.assertEqual(response.status_code, 200)
             response = await c.get(self.httpbin(), verify=crt)

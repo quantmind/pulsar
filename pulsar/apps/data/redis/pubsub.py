@@ -1,24 +1,12 @@
-from functools import partial
-from asyncio import gather
-
-from pulsar import Protocol
-from pulsar.apps.data import PubSub, Channels, PubSubClient
+from ....utils.lib import ProtocolConsumer
+from ..store import PubSub, PubSubClient
+from ..channels import Channels
 
 
-class PubsubProtocol(Protocol):
+class PubsubProtocolConsumer(ProtocolConsumer):
 
-    def __init__(self, handler, **kw):
-        super().__init__(handler._loop, **kw)
-        self.parser = self._producer._parser_class()
-        self.handler = handler
-
-    async def execute(self, *args):
-        # must be an asynchronous object like the base class method
-        chunk = self.parser.multi_bulk(args)
-        self._transport.write(chunk)
-
-    def data_received(self, data):
-        parser = self.parser
+    def feed_data(self, data):
+        parser = self.connection.parser
         parser.feed(data)
         response = parser.get()
         while response is not False:
@@ -27,21 +15,23 @@ class PubsubProtocol(Protocol):
                     command = response[0]
                     if command == b'message':
                         response = response[1:3]
-                        self.handler.broadcast(response)
+                        self.producer.broadcast(response)
                     elif command == b'pmessage':
                         response = response[2:4]
-                        self.handler.broadcast(response)
+                        self.producer.broadcast(response)
             else:
                 raise response
             response = parser.get()
 
 
 class RedisPubSub(PubSub):
-    '''Asynchronous Publish/Subscriber handler for pulsar and redis stores.
-    '''
+    """Asynchronous Publish/Subscriber handler for pulsar and redis stores.
+    """
+    push_connection = None
+
     def publish(self, channel, message):
-        if self._protocol:
-            message = self._protocol.encode(message)
+        if self.protocol:
+            message = self.protocol.encode(message)
         return self.store.execute('PUBLISH', channel, message)
 
     def count(self, *channels):
@@ -60,12 +50,12 @@ class RedisPubSub(PubSub):
         else:
             return self.store.execute('PUBSUB', 'CHANNELS')
 
+    # SUBSCRIBE CONNECTION
     def psubscribe(self, pattern, *patterns):
         return self._subscribe('PSUBSCRIBE', pattern, *patterns)
 
     def punsubscribe(self, *patterns):
-        if self._connection:
-            return self._connection.execute('PUNSUBSCRIBE', *patterns)
+        self._execute('PUNSUBSCRIBE', *patterns)
 
     def subscribe(self, channel, *channels):
         return self._subscribe('SUBSCRIBE', channel, *channels)
@@ -73,33 +63,32 @@ class RedisPubSub(PubSub):
     def unsubscribe(self, *channels):
         '''Un-subscribe from a list of ``channels``.
         '''
-        if self._connection:
-            return self._connection.execute('UNSUBSCRIBE', *channels)
+        return self._execute('UNSUBSCRIBE', *channels)
 
     async def close(self):
         '''Stop listening for messages.
         '''
-        if self._connection:
-            await gather(
-                self._connection.execute('PUNSUBSCRIBE'),
-                self._connection.execute('UNSUBSCRIBE'),
-                loop=self._loop
-            )
-            await self._connection.close()
+        if self.push_connection:
+            self._execute('PUNSUBSCRIBE')
+            self._execute('UNSUBSCRIBE')
+            await self.push_connection.close()
 
     #    INTERNALS
-    async def _subscribe(self, *args):
-        if not self._connection:
-            protocol_factory = partial(PubsubProtocol, self,
-                                       producer=self.store)
-            self._connection = await self.store.connect(protocol_factory)
-            self._connection.bind_event('connection_lost', self._conn_lost)
-        result = await self._connection.execute(*args)
-        return result
+    def _execute(self, *args):
+        if self.push_connection:
+            data = self.push_connection.parser.multi_bulk(args)
+            self.push_connection.write(data)
 
-    def _conn_lost(self, con, exc=None):
-        self._connection = None
-        self.fire_event('connection_lost')
+    async def _subscribe(self, *args):
+        if not self.push_connection:
+            self.push_connection = await self.store.connect(
+                self.create_protocol)
+            self.push_connection.upgrade(PubsubProtocolConsumer)
+            self.push_connection.event('connection_lost').bind(self._conn_lost)
+        self._execute(*args)
+
+    def _conn_lost(self, _, **kw):
+        self.push_connection = None
 
 
 class RedisChannels(Channels, PubSubClient):
@@ -109,7 +98,7 @@ class RedisChannels(Channels, PubSubClient):
         assert pubsub.protocol, "protocol required for channels"
         super().__init__(pubsub.store, **kw)
         self.pubsub = pubsub
-        self.pubsub.bind_event('connection_lost', self._connection_lost)
+        self.pubsub.event('connection_lost').bind(self._connection_lost)
         self.pubsub.add_client(self)
 
     def lock(self, name, **kwargs):
@@ -153,6 +142,10 @@ class RedisChannels(Channels, PubSubClient):
 
         :return: a coroutine and therefore it must be awaited
         """
-        self.pubsub.remove_callback('connection_lost', self._connection_lost)
+        push_connection = self.pubsub.push_connection
         self.status = self.statusType.closed
-        await self.pubsub.close()
+        if push_connection:
+            push_connection.event('connection_lost').unbind(
+                self._connection_lost
+            )
+            await self.pubsub.close()

@@ -79,7 +79,7 @@ class Test(orig.test):
 
     def get_test_parameters(self):
         params = self.test_params
-        params['verbosity'] = self.verbose+1
+        params['verbosity'] = self.verbose + 1
         return params
 
     def _slugify(self, name):

@@ -2,10 +2,12 @@ import sys
 import threading
 import logging
 from collections import deque
+from inspect import isawaitable
+from asyncio import get_event_loop
 
-from pulsar import create_future, ensure_future, AsyncObject, get_event_loop
+from pulsar.api import create_future, ensure_future, AsyncObject
 
-from .utils import wait, GreenletWorker, isawaitable, getcurrent
+from .utils import wait, GreenletWorker, getcurrent
 
 
 _DEFAULT_WORKERS = 100
@@ -124,15 +126,22 @@ class GreenPool(AsyncObject):
             task = green.switch(task)
 
             # if an asynchronous result is returned, await
-            while isawaitable(task):
+            while True:
                 try:
                     task = await task
+                except TypeError as exc:
+                    if isawaitable(task):
+                        task = self._dispach_error(green, exc)
+                    else:
+                        break
                 except Exception as exc:
-                    # This call can return an asynchronous component
-                    exc_info = sys.exc_info()
-                    if not exc_info[0]:
-                        exc_info = (exc, None, None)
-                    task = green.throw(*exc_info)
+                    task = self._dispach_error(green, exc)
+
+    def _dispach_error(self, green, exc):
+        exc_info = sys.exc_info()
+        if not exc_info[0]:
+            exc_info = (exc, None, None)
+        return green.throw(*exc_info)
 
     def _green_run(self):
         # The run method of a worker greenlet

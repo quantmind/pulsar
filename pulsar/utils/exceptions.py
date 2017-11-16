@@ -3,46 +3,14 @@ A list of all Exception specific to pulsar library.
 '''
 import traceback
 
-from .httpurl import Headers
-
-
-__all__ = ['PulsarException',
-           'MonitorStarted',
-           'ImproperlyConfigured',
-           'CommandError',
-           'CommandNotFound',
-           'ProtocolError',
-           'EventAlreadyRegistered',
-           'InvalidOperation',
-           'HaltServer',
-           'LockError',
-           #
-           # HTTP client exception
-           'HttpRequestException',
-           'HttpConnectionError',
-           'HttpProxyError',
-           'SSLError',
-           #
-           # HTTP Exceptions
-           'HttpException',
-           'HttpRedirect',
-           'BadRequest',
-           'Http401',
-           'PermissionDenied',
-           'Http404',
-           'MethodNotAllowed',
-           'HttpGone',
-           'Unsupported',
-           'UnprocessableEntity',
-           #
-           'format_traceback']
+from multidict import CIMultiDict
 
 
 class PulsarException(Exception):
     '''Base class of all Pulsar exceptions.'''
 
 
-class MonitorStarted(PulsarException):
+class ActorStarted(PulsarException):
     exit_code = 0
 
 
@@ -166,12 +134,10 @@ class HttpException(PulsarException):
         self.handler = handler
         self.strict = strict
         self.content_type = content_type
-        self._headers = Headers.make(headers)
+        if not isinstance(headers, CIMultiDict):
+            headers = CIMultiDict(headers or ())
+        self.headers = headers
         super().__init__(msg)
-
-    @property
-    def headers(self):
-        return list(self._headers)
 
 
 @httperror
@@ -183,7 +149,8 @@ class HttpRedirect(HttpException):
     status = 302
 
     def __init__(self, location, status=None, headers=None, **kw):
-        headers = Headers.make(headers)
+        if not isinstance(headers, CIMultiDict):
+            headers = CIMultiDict(headers or ())
         headers['location'] = location
         super().__init__(status=status or self.status, headers=headers, **kw)
 
@@ -191,7 +158,7 @@ class HttpRedirect(HttpException):
     def location(self):
         '''The value in the ``Location`` header entry.
         '''
-        return self._headers['location']
+        return self.headers['location']
 
 
 @httperror
@@ -243,3 +210,9 @@ class UnprocessableEntity(HttpException):
 
 def format_traceback(exc):
     return traceback.format_exception(exc.__class__, exc, exc.__traceback__)
+
+
+def reraise(tp, value, tb=None):
+    if value.__traceback__ is not tb:
+        raise value.with_traceback(tb)
+    raise value

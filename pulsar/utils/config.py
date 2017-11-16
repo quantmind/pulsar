@@ -26,15 +26,15 @@ import textwrap
 import logging
 import pickle
 import types
+from typing import Any
 
 from pulsar import __version__, SERVER_NAME
 from . import system
-from .string import camel_to_dash
+from .string import camel_to_dash, to_bytes
 from .internet import parse_address
 from .importer import import_system_file
-from .httpurl import setDefaultHttpParser, HttpParser
 from .log import configured_logger
-from .pep import to_bytes
+from .structures import as_tuple
 
 
 __all__ = [
@@ -57,7 +57,7 @@ KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
 
-def pass_through(arg):
+def pass_through(arg: Any) -> None:
     """A dummy function accepting one parameter only.
 
     It does nothing and it is used as default by
@@ -66,7 +66,7 @@ def pass_through(arg):
     pass
 
 
-def set_if_avail(container, key, value, *skip_values):
+def set_if_avail(container, key, value, *skip_values) -> None:
     if value is not None and value not in skip_values:
         container[key] = value
 
@@ -137,7 +137,7 @@ class Config:
     def __init__(self, description=None, epilog=None,
                  version=None, apps=None, include=None,
                  exclude=None, settings=None, prefix=None,
-                 name=None, log_name=None, **params):
+                 name=None, log_name=None, **params) -> None:
         self.settings = {} if settings is None else settings
         self.params = {}
         self.name = name
@@ -488,65 +488,67 @@ class Setting(metaclass=SettingMeta):
     Most parameters can be specified on the command line,
     all of them on a ``config`` file.
     """
-    creation_count = 0
-    virtual = True
+    creation_count = 0  # type: int
+    virtual = True      # type: bool
     """If set to ``True`` the settings won't be loaded.
 
     It can be only used as base class for other settings."""
-    name = None
+    name = None         # type: str
     """The key to access this setting in a :class:`Config` container."""
-    validator = None
+    validator = None    # type: Callable
     """A validating function for this setting.
 
     It provided it must be a function accepting one positional argument,
     the value to validate."""
-    value = None
+    value = None        # type: Any
     """The actual value for this setting."""
-    default = None
+    default = None      # type: Any
     """The default value for this setting."""
-    imported = False
+    imported = False    # type: bool
     """Was the value imported and set from the config file?"""
-    nargs = None
+    nargs = None        # type: str
     """The number of command-line arguments that should be consumed"""
-    const = None
+    const = None        # type: Any
     """A constant value required by some action and nargs selections"""
-    app = None
+    app = None          # type: Any
     """Setting for a specific :class:`Application`."""
-    section = None
+    section = None      # type: str
     """Setting section, used for creating the
     :ref:`settings documentation <settings>`."""
-    flags = None
+    flags = None        # type: List
     """List of options strings, e.g. ``[-f, --foo]``."""
-    choices = None
+    choices = None      # type: List
     """Restrict the argument to the choices provided."""
-    type = None
+    type = None         # type: Any
     """The type to which the command-line argument should be converted"""
-    meta = None
+    meta = None         # type: str
     """Same usage as ``metavar`` in the python :mod:`argparse` module. It is
     the name for the argument in usage message."""
-    action = None
+    action = None       # type: str
     """The basic type of action to be taken when this argument is encountered
     at the command line"""
-    short = None
+    short = None        # type: str
     """Optional shot description string"""
-    desc = None
+    desc = None         # type: str
     """Description string"""
-    is_global = False
+    is_global = False   # type: bool
     """``True`` only for
     :ref:`global settings <setting-section-global-server-settings>`."""
     orig_name = None
 
     def __init__(self, name=None, flags=None, action=None, type=None,
                  default=None, nargs=None, desc=None, validator=None,
-                 app=None, meta=None, choices=None, const=None):
+                 app=None, meta=None, choices=None, const=None,
+                 required=None) -> None:
         self.extra = e = {}
         self.app = app or self.app
         set_if_avail(e, 'choices', choices or self.choices)
         set_if_avail(e, 'const', const or self.const)
         set_if_avail(e, 'type', type or self.type, 'string')
+        set_if_avail(e, 'required', required)
         self.default = default if default is not None else self.default
         self.desc = desc or self.desc
-        self.flags = flags or self.flags
+        self.flags = as_tuple(flags or self.flags)
         self.action = action or self.action
         self.meta = meta or self.meta
         self.name = name or self.name
@@ -616,21 +618,22 @@ class Setting(metaclass=SettingMeta):
         :attr:`nargs` and :attr:`name` are defined.
         """
         default = self.default if set_default else None
-        kwargs = {'nargs': self.nargs}
+        kwargs = dict(
+            nargs=self.nargs,
+            default=default,
+            help="%s [%s]" % (self.short, default)
+        )
         kwargs.update(self.extra)
         if self.flags:
             args = tuple(self.flags)
             kwargs.update({'dest': self.name,
-                           'action': self.action or "store",
-                           'default': default,
-                           'help': "%s [%s]" % (self.short, self.default)})
+                           'action': self.action or "store"})
             if kwargs["action"] != "store":
                 kwargs.pop("type", None)
                 kwargs.pop("nargs", None)
         elif self.nargs and self.name:
             args = (self.name,)
-            kwargs.update({'metavar': self.meta or None,
-                           'help': self.short})
+            kwargs.update({'metavar': self.meta or None})
         else:
             # Not added to argparser
             return
@@ -722,6 +725,7 @@ def validate_dict(val):
 
 
 def validate_callable(arity):
+
     def _validate_callable(val):
         if not hasattr(val, '__call__'):
             raise TypeError("Value is not callable: %s" % val)
@@ -731,7 +735,7 @@ def validate_callable(arity):
         else:
             discount = 0
             cval = val
-        result = inspect.getargspec(cval)
+        result = inspect.getfullargspec(cval)
         nargs = len(result.args) - discount
         if result.defaults:
             group = tuple(range(nargs-len(result.defaults), nargs+1))
@@ -740,6 +744,7 @@ def validate_callable(arity):
         if arity not in group:
             raise TypeError("Value must have an arity of: %s" % arity)
         return val
+
     return _validate_callable
 
 
@@ -785,24 +790,10 @@ class HttpProxyServer(Global):
             os.environ['wss_proxy'] = self.value
 
 
-class HttpPyParser(Global):
-    flags = ["--http-py-parser"]
-    validator = validate_bool
-    action = "store_true"
-    default = False
-    desc = """\
-        Set the python parser as default (for testing).
-        """
-
-    def on_start(self):
-        if self.value:
-            setDefaultHttpParser(HttpParser)
-
-
 class HttpKeepAlive(Global):
     name = "http_keep_alive"
     flags = ["--http-keep-alive"]
-    default = 70
+    default = 75
     type = int
     desc = """\
         Keep HTTP connections alive for this number of seconds
@@ -1066,6 +1057,16 @@ class Timeout(Setting):
     desc = """\
         Workers silent for more than this many seconds are
         killed and restarted."""
+
+
+class ExitTimeout(Setting):
+    name = "exit_timeout"
+    section = "Worker Processes"
+    flags = ["--exit-timeout"]
+    validator = validate_pos_int
+    type = int
+    default = 3
+    desc = """Tmeout when exiting an actor."""
 
 
 class ThreadWorkers(Setting):

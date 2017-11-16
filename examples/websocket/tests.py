@@ -2,11 +2,11 @@
 import unittest
 import asyncio
 
-from pulsar import send, HAS_C_EXTENSIONS
+from pulsar.api import send
 from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
 
-from examples.websocket.manage import server, frame_parser
+from examples.websocket.manage import server
 
 
 class Echo(WS):
@@ -32,14 +32,13 @@ class Echo(WS):
 
 
 class TestWebSocket(unittest.TestCase):
-    pyparser = False
     app_cfg = None
     concurrency = 'process'
 
     @classmethod
     async def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__,
-                   concurrency=cls.concurrency, pyparser=cls.pyparser)
+                   concurrency=cls.concurrency)
         cls.app_cfg = await send('arbiter', 'run', s)
         addr = cls.app_cfg.addresses[0]
         cls.uri = 'http://{0}:{1}'.format(*addr)
@@ -51,12 +50,7 @@ class TestWebSocket(unittest.TestCase):
         if cls.app_cfg is not None:
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
-    def _frame_parser(self, **params):
-        params['pyparser'] = self.pyparser
-        return frame_parser(**params)
-
     def http(self, **params):
-        params['frame_parser'] = self._frame_parser
         return HttpClient(**params)
 
     def test_hybikey(self):
@@ -91,9 +85,8 @@ class TestWebSocket(unittest.TestCase):
         self.assertEqual(ws.connection, response.connection)
         self.assertEqual(ws.handler, handler)
         #
-        # on_finished
-        self.assertTrue(response.on_finished.done())
-        self.assertFalse(ws.on_finished.done())
+        self.assertTrue(response.event('post_request').fired())
+        self.assertFalse(ws.event('post_request').fired())
         # Send a message to the websocket
         ws.write('Hi there!')
         message = await handler.get()
@@ -128,7 +121,7 @@ class TestWebSocket(unittest.TestCase):
         self.assertEqual(message, 'CLOSE')
         self.assertTrue(ws.close_reason)
         self.assertEqual(ws.close_reason[0], 1001)
-        self.assertTrue(ws._connection.closed)
+        self.assertTrue(ws.connection.closed)
 
     async def test_home(self):
         c = self.http()
@@ -145,8 +138,3 @@ class TestWebSocket(unittest.TestCase):
         ws.write('data')
         message = await handler.get()
         self.assertTrue(message)
-
-
-@unittest.skipUnless(HAS_C_EXTENSIONS, "Requires C extensions")
-class TestWebSocketPyParser(TestWebSocket):
-    pyparser = True

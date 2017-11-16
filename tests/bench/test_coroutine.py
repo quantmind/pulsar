@@ -1,6 +1,7 @@
 import unittest
+from asyncio import get_event_loop
 
-from pulsar import create_future, get_event_loop
+from pulsar.api import create_future
 
 
 DELAY = 0

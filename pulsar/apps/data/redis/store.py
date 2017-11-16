@@ -1,51 +1,22 @@
 from functools import partial
 
-from pulsar import Connection, Pool, get_actor
-from pulsar.utils.pep import to_string
-from pulsar.apps.data import RemoteStore
-from pulsar.apps.ds import redis_parser
+from ....async.clients import Pool
+from ....utils.string import to_string
+from ..store import RemoteStore
 
-from .client import RedisClient, Pipeline, Consumer, ResponseError
+from .client import RedisClient, Pipeline, Consumer, RedisStoreConnection
 from .pubsub import RedisPubSub, RedisChannels
-
-
-class RedisStoreConnection(Connection):
-
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        self.parser = self._producer._parser_class()
-
-    async def execute(self, *args, **options):
-        consumer = self.current_consumer()
-        await consumer.start((args, options))
-        result = await consumer.on_finished
-        if isinstance(result, ResponseError):
-            raise result.exception
-        return result
-
-    async def execute_pipeline(self, commands, raise_on_error=True):
-        consumer = self.current_consumer()
-        consumer.start((commands, raise_on_error, []))
-        result = await consumer.on_finished
-        if isinstance(result, ResponseError):
-            raise result.exception
-        return result
 
 
 class RedisStore(RemoteStore):
     '''Redis :class:`.Store` implementation.
     '''
-    protocol_factory = partial(RedisStoreConnection, Consumer)
     supported_queries = frozenset(('filter', 'exclude'))
 
-    def _init(self, namespace=None, parser_class=None, pool_size=50,
+    def _init(self, namespace=None, pool_size=10,
               decode_responses=False, **kwargs):
+        self.protocol_factory = partial(RedisStoreConnection, Consumer)
         self._decode_responses = decode_responses
-        if not parser_class:
-            actor = get_actor()
-            pyparser = actor.cfg.redis_py_parser if actor else False
-            parser_class = redis_parser(pyparser)
-        self._parser_class = parser_class
         if namespace:
             self._urlparams['namespace'] = namespace
         self._pool = Pool(self.connect, pool_size=pool_size, loop=self._loop)
@@ -77,7 +48,7 @@ class RedisStore(RemoteStore):
         return Pipeline(self)
 
     def pubsub(self, protocol=None):
-        return RedisPubSub(self, protocol=protocol)
+        return RedisPubSub(self, self.protocol_factory, protocol=protocol)
 
     def channels(self, protocol=None, **kw):
         return RedisChannels(self.pubsub(protocol=protocol), **kw)
@@ -87,13 +58,13 @@ class RedisStore(RemoteStore):
 
     async def execute(self, *args, **options):
         connection = await self._pool.connect()
-        with connection:
+        async with connection:
             result = await connection.execute(*args, **options)
             return result
 
     async def execute_pipeline(self, commands, raise_on_error=True):
         conn = await self._pool.connect()
-        with conn:
+        async with conn:
             result = await conn.execute_pipeline(commands, raise_on_error)
             return result
 

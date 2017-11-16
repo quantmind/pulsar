@@ -57,37 +57,35 @@ WSGI Server
 """
 from functools import partial
 
-import pulsar
 from pulsar.apps.socket import SocketServer, Connection
 
 from .html import HtmlVisitor
-from .content import (String, Html, Json, HtmlDocument, Links, Scripts, Media,
+from .content import (String, Html, HtmlDocument, Links, Scripts, Media,
                       html_factory)
 from .middleware import (clean_path_middleware, authorization_middleware,
                          wait_for_body_middleware, middleware_in_executor)
 from .response import AccessControl, GZipMiddleware
-from .wrappers import EnvironMixin, WsgiResponse, WsgiRequest, cached_property
-from .server import HttpServerResponse, test_wsgi_environ, AbortWsgi
+from .wrappers import WsgiResponse, WsgiRequest, wsgi_cached
+from .server import HttpServerResponse, AbortWsgi
 from .route import route, Route
 from .handlers import WsgiHandler, LazyWsgi
 from .routers import (Router, MediaRouter, MediaMixin, RouterParam,
                       file_response)
 from .auth import HttpAuthenticate, parse_authorization_header
 from .formdata import parse_form_data
+from .headers import HOP_HEADERS
 from .utils import (handle_wsgi_error, render_error_debug, wsgi_request,
-                    set_wsgi_request_class, dump_environ, HOP_HEADERS)
+                    set_wsgi_request_class, dump_environ)
 
 __all__ = [
     # Server
     'WSGIServer',
     'HttpServerResponse',
-    'test_wsgi_environ',
     'AbortWsgi',
     #
     # Content strings
     'String',
     'Html',
-    'Json',
     'HtmlDocument',
     'Links',
     'Scripts',
@@ -106,10 +104,9 @@ __all__ = [
     'GZipMiddleware',
     #
     # WSGI Wrappers
-    'EnvironMixin',
     'WsgiResponse',
     'WsgiRequest',
-    'cached_property',
+    'wsgi_cached',
     #
     # WSGI Handlers
     'WsgiHandler',
@@ -141,11 +138,13 @@ class WSGIServer(SocketServer):
     '''A WSGI :class:`.SocketServer`.
     '''
     name = 'wsgi'
-    cfg = pulsar.Config(apps=['socket'],
-                        server_software=pulsar.SERVER_SOFTWARE)
 
-    def protocol_factory(self):
+    def server_factory(self, *args, idx=0, **kw):
+        server = super().server_factory(*args, **kw)
         cfg = self.cfg
-        consumer_factory = partial(HttpServerResponse, cfg.callable, cfg,
-                                   cfg.server_software)
-        return partial(Connection, consumer_factory)
+        server.keep_alive = cfg.http_keep_alive
+        server.wsgi_callable = self.callable(idx)
+        return server
+
+    def protocol_factory(self, idx=0):
+        return partial(Connection, HttpServerResponse)

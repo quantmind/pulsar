@@ -3,17 +3,13 @@ import threading
 import logging
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
 from collections import OrderedDict
 from threading import current_thread
-
-from asyncio import Future
-
-from pulsar.utils.config import Global
-from pulsar.utils.system import current_process, platform
-
-from asyncio import ensure_future
 from inspect import isawaitable
+from asyncio import Future, ensure_future
+
+from ..utils.config import Config, Global
+from ..utils.system import current_process, platform
 
 
 __all__ = ['get_event_loop',
@@ -30,7 +26,6 @@ __all__ = ['get_event_loop',
            'NOTHING',
            'EVENT_LOOPS',
            'Future',
-           'reraise',
            'isawaitable',
            'ensure_future',
            'CANCELLED_ERRORS']
@@ -38,12 +33,6 @@ __all__ = ['get_event_loop',
 
 _EVENT_LOOP_CLASSES = (asyncio.AbstractEventLoop,)
 CANCELLED_ERRORS = (asyncio.CancelledError,)
-
-
-def reraise(tp, value, tb=None):
-    if value.__traceback__ is not tb:
-        raise value.with_traceback(tb)
-    raise value
 
 
 def isfuture(x):
@@ -88,6 +77,7 @@ else:
 try:    # add uvloop if available
     import uvloop
     EVENT_LOOPS['uv'] = uvloop.Loop
+    # Future = uvloop.Future
 except Exception:     # pragma    nocover
     pass
 
@@ -181,14 +171,12 @@ def cfg():
     actor = get_actor()
     if actor:
         return actor.cfg
+    else:
+        return Config()
 
 
 def cfg_value(setting, value=None):
-    if value is None:
-        actor = get_actor()
-        if actor:
-            return actor.cfg.get(setting)
-    return value
+    return cfg().get(setting) if value is None else value
 
 
 class EventLoopPolicy(asyncio.DefaultEventLoopPolicy):
@@ -201,10 +189,10 @@ class EventLoopPolicy(asyncio.DefaultEventLoopPolicy):
 
     @property
     def _local(self):
-        l = getattr(current_process(), '_event_loop_policy', None)
-        if l is None:
-            self._local = l = self._Local()
-        return l
+        lp = getattr(current_process(), '_event_loop_policy', None)
+        if lp is None:
+            self._local = lp = self._Local()
+        return lp
 
     @_local.setter
     def _local(self, v):

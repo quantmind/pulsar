@@ -10,47 +10,16 @@ response to an :ref:`HTTP client request <app-wsgi-request>`.
 A string can be ``html``, ``json``, ``plain text`` or any other valid HTTP
 content type.
 
-The main class of this module is the :class:`String`, which can be
-considered as the atomic component of an asynchronous web framework::
-
-    >>> from pulsar.apps.wsgi import String
-    >>> string = String('Hello')
-    >>> string.render()
-    'Hello'
-    >>> string.render()
-    ...
-    RuntimeError: String already streamed
-
-An :class:`String` can only be rendered once, and it accepts
-:ref:`asynchronous components  <tutorials-coroutine>`::
-
-    >>> a = Future()
-    >>> string = String('Hello, ', a)
-    >>> value = string.render()
-    >>> value
-    MultiFuture (pending)
-    >>> value.done()
-    False
-
-Once the future is done, we have the concatenated string::
-
-    >>> a.set_result('World!')
-    'World!'
-    >>> value.done()
-    True
-    >>> value.result()
-    'Hello, World!'
-
 Design
 ===============
 
-The :meth:`~String.do_stream` method is responsible for the streaming
+The :meth:`~String.stream` method is responsible for the streaming
 of ``strings`` or :ref:`asynchronous components  <tutorials-coroutine>`.
 It can be overwritten by subclasses to customise the way an
 :class:`String` streams its :attr:`~String.children`.
 
 On the other hand, the :meth:`~String.to_string` method is responsible
-for the concatenation of ``strings`` and, like :meth:`~String.do_stream`,
+for the concatenation of ``strings`` and, like :meth:`~String.stream`,
 it can be customised by subclasses.
 
 
@@ -143,14 +112,10 @@ Html Factory
 '''
 import re
 from collections import Mapping
-from functools import partial
 
-from pulsar import HttpException
-from pulsar import multi_async, chain_future, isawaitable
-from pulsar.utils.slugify import slugify
-from pulsar.utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
-from pulsar.utils.pep import to_string
-from pulsar.utils.system import json
+from ...utils.exceptions import HttpException
+from ...utils.slugify import slugify
+from ...utils.html import INLINE_TAGS, escape, dump_data_value, child_tag
 
 from .html import html_visitor, newline
 
@@ -168,18 +133,6 @@ def stream_to_string(stream):
             yield value
         else:
             yield str(value)
-
-
-def stream_mapping(value, request):
-    result = {}
-    async = False
-    for key, value in value.items():
-        if isinstance(value, String):
-            value = value.render(request)
-        if isawaitable(value):
-            async = True
-        result[key] = value
-    return multi_async(result) if async else result
 
 
 def attr_iter(attrs):
@@ -326,30 +279,7 @@ class String:
         parent.append(self)
         return self
 
-    def stream(self, request):
-        '''An iterable over strings or asynchronous elements.
-
-        This is the most important method of an :class:`String`.
-        It is called by :meth:`http_response` or by the :attr:`parent`
-        of this :class:`String`.
-        It returns an iterable (list, tuple or a generator) over
-        strings (``unicode/str`` for python 2, ``str`` only for python 3) or
-        :ref:`asynchronous elements <tutorials-coroutine>` which result in
-        strings. This method can be called **once only**, otherwise a
-        :class:`RuntimeError` occurs.
-
-        This method should not be overwritten, instead one should use the
-        :meth:`do_stream` to customise behaviour.
-        '''
-        if self._streamed:
-            raise RuntimeError('%s already streamed' % self)
-        self._streamed = True
-        if self._before_stream:
-            for cbk in self._before_stream:
-                cbk(request, self)
-        return self.do_stream(request)
-
-    def do_stream(self, request):
+    def stream(self, request, counter=0):
         '''Returns an iterable over strings or asynchronous components.
 
         If :ref:`asynchronous elements <tutorials-coroutine>` are included
@@ -361,32 +291,27 @@ class String:
         if self._children:
             for child in self._children:
                 if isinstance(child, String):
-                    for bit in child.stream(request):
-                        yield bit
+                    yield from child.stream(request, counter+1)
                 else:
                     yield child
 
-    def http_response(self, request, *stream):
+    def http_response(self, request):
         '''Return a :class:`.WsgiResponse` or a :class:`~asyncio.Future`.
 
         This method asynchronously wait for :meth:`stream` and subsequently
         returns a :class:`.WsgiResponse`.
         '''
-        if not stream:
-            return self.render(request,
-                               partial(self.http_response, request))
-        stream = stream[0]
         content_types = request.content_types
         if not content_types or self._content_type in content_types:
             response = request.response
             response.content_type = self._content_type
             response.encoding = self.charset
-            response.content = self.to_string(stream)
+            response.content = self.to_bytes()
             return response
         else:
             raise HttpException(status=415, msg=request.content_types)
 
-    def to_string(self, streams):
+    def to_bytes(self, request=None):
         '''Called to transform the collection of
         ``streams`` into the content string.
         This method can be overwritten by derived classes.
@@ -395,82 +320,21 @@ class String:
             ``strings/bytes`` used to build the final ``string/bytes``.
         :return: a string or bytes
         '''
-        return to_string(''.join(stream_to_string(streams)))
+        data = bytearray()
+        for chunk in self.stream(request):
+            if isinstance(chunk, str):
+                chunk = chunk.encode(self.charset)
+            data.extend(chunk)
+        return bytes(data)
 
-    def before_render(self, callback):
-        '''Add a callback to be executed before this content is rendered
-
-        The callback accept ``request`` and ``self`` as the only
-        two arguments
-        '''
-        if not self._before_stream:
-            self._before_stream = []
-        self._before_stream.append(callback)
-
-    def render(self, request=None, callback=None):
+    def to_string(self, request=None):
         '''Render this string.
 
         This method returns a string or a :class:`~asyncio.Future` which
         results in a string. On the other hand, the callable method of
         a :class:`.String` **always** returns a :class:`~asyncio.Future`.
         '''
-        stream = []
-        async = False
-        for data in self.stream(request):
-            if isawaitable(data):
-                async = True
-            stream.append(data)
-
-        if not callback:
-            callback = self.to_string
-
-        if async:
-            return chain_future(multi_async(stream), callback=callback)
-        else:
-            return callback(stream)
-
-    def __call__(self, request):
-        stream = multi_async(self.stream(request))
-        return chain_future(stream, callback=self.to_string)
-
-
-class Json(String):
-    '''An :class:`String` which renders into a json string.
-
-    The :attr:`String.content_type` attribute is set to
-    ``application/json``.
-
-    .. attribute:: as_list
-
-        If ``True``, the content is always a list of objects.
-        Default ``False``.
-
-    .. attribute:: parameters
-
-        Additional dictionary of parameters passed during initialisation.
-    '''
-    _default_content_type = 'application/json'
-
-    def _setup(self, as_list=False, **params):
-        self.as_list = as_list
-        super()._setup(**params)
-
-    def do_stream(self, request):
-        if self._children:
-            for child in self._children:
-                if isinstance(child, String):
-                    for bit in child.stream(request):
-                        yield bit
-                elif isinstance(child, Mapping):
-                    yield stream_mapping(child, request)
-                else:
-                    yield child
-
-    def to_string(self, stream):
-        stream = stream
-        if len(stream) == 1 and not self.as_list:
-            stream = stream[0]
-        return json.dumps(stream, ensure_ascii=self.charset == 'ascii')
+        return self.to_bytes(request).decode(self.charset)
 
 
 def html_factory(tag, **defaults):
@@ -720,27 +584,26 @@ class Html(String):
         '''
         pass
 
-    def do_stream(self, request):
+    def stream(self, request, counter=0):
         self.add_media(request)
         tag = self._tag
         n = '\n' if tag in newline else ''
         if tag and tag in INLINE_TAGS:
-            yield '<%s%s>%s' % (tag, self.flatatt(), n)
+            yield '<%s%s>\n' % (tag, self.flatatt())
         else:
             if tag:
                 if not self._children:
-                    yield '<%s%s></%s>%s' % (tag, self.flatatt(), tag, n)
+                    yield '<%s%s></%s>\n' % (tag, self.flatatt(), tag)
                 else:
                     yield '<%s%s>%s' % (tag, self.flatatt(), n)
             if self._children:
                 for child in self._children:
                     if isinstance(child, String):
-                        for bit in child.stream(request):
-                            yield bit
+                        yield from child.stream(request, counter+1)
                     else:
                         yield child
                 if tag:
-                    yield '</%s>%s' % (tag, n)
+                    yield '</%s>\n' % tag
 
     def _attrdata(self, cont, name, *val):
         if not name:
@@ -861,7 +724,7 @@ class Links(Media):
             if condition:
                 value = Html(None, '<!--[if %s]>\n' % condition,
                              value, '<![endif]-->\n')
-            value = value.render()
+            value = value.to_string()
             if value not in self.children:
                 if index is None:
                     self.children.append(value)
@@ -884,7 +747,7 @@ class Scripts(Media):
     def script(self, src, type=None, **kwargs):
         type = type or 'application/javascript'
         path = self.absolute_path(src)
-        return Html('script', src=path, type=type, **kwargs).render()
+        return Html('script', src=path, type=type, **kwargs).to_string()
 
     def insert(self, index, child, **kwargs):
         '''add a new script to the container.
@@ -976,7 +839,7 @@ class Head(Html):
     def __init__(self, media_path=None, title=None, meta=None, minified=False,
                  asset_protocol=None, **params):
         super().__init__('head', **params)
-        self.title = title
+        self.append(Html('title', title or ''))
         self.append(Html(None, meta))
         self.append(Links(media_path, minified=minified,
                           asset_protocol=asset_protocol))
@@ -987,49 +850,57 @@ class Head(Html):
         self.add_meta(charset=self.charset)
 
     @property
+    def title(self):
+        return self._children[0]._children[0]
+
+    @title.setter
+    def title(self, value):
+        self._children[0]._children[0] = value
+
+    @property
     def meta(self):
-        return self._children[0]
-
-    def __get_media_path(self):
-        return self.links.media_path
-
-    def __set_media_path(self, media_path):
-        self.links.media_path = media_path
-        self.scripts.media_path = media_path
-    media_path = property(__get_media_path, __set_media_path)
-
-    def __get_links(self):
         return self._children[1]
 
-    def __set_links(self, links):
-        self._children[1] = links
-    links = property(__get_links, __set_links)
+    @property
+    def media_path(self):
+        return self.links.media_path
 
-    def __get_css(self):
+    @media_path.setter
+    def media_path(self, media_path):
+        self.links.media_path = media_path
+        self.scripts.media_path = media_path
+
+    @property
+    def links(self):
         return self._children[2]
 
-    def __set_css(self, css):
-        self._children[2] = css
-    embedded_css = property(__get_css, __set_css)
+    @links.setter
+    def links(self, links):
+        self._children[2] = links
 
-    def __get_js(self):
+    @property
+    def embedded_css(self):
         return self._children[3]
 
-    def __set_js(self, js):
-        self._children[3] = js
-    embedded_js = property(__get_js, __set_js)
+    @embedded_css.setter
+    def embedded_css(self, css):
+        self._children[3] = css
 
-    def __get_scripts(self):
+    @property
+    def embedded_js(self):
         return self._children[4]
 
-    def __set_scripts(self, scripts):
-        self._children[4] = scripts
-    scripts = property(__get_scripts, __set_scripts)
+    @embedded_js.setter
+    def embedded_js(self, js):
+        self._children[4] = js
 
-    def do_stream(self, request):
-        if self.title:
-            self._children.insert(0, '<title>%s</title>\n' % self.title)
-        return super().do_stream(request)
+    @property
+    def scripts(self):
+        return self._children[5]
+
+    @scripts.setter
+    def scripts(self, scripts):
+        self._children[5] = scripts
 
     def add_meta(self, **kwargs):
         '''Add a new :class:`Html` meta tag to the :attr:`meta` collection.'''
@@ -1083,19 +954,19 @@ class Head(Html):
 
 
 class Body(Html):
-
     def __init__(self, **kwargs):
         super().__init__('body')
+        self.embedded_js = Embedded('script', type='text/javascript')
         self.scripts = Scripts(**kwargs)
-        self.before_render(add_scripts)
 
-
-def add_scripts(request, body):
-    body.append(body.scripts)
+    def stream(self, request, counter=0):
+        yield from super().stream(request, counter)
+        yield from self.embedded_js.stream(request, counter)
+        yield from self.scripts.stream(request, counter)
 
 
 class HtmlDocument(Html):
-    '''An :class:`.Html` component rendered as an HTML5_ document.
+    """An :class:`.Html` component rendered as an HTML5_ document.
 
     An instance of this class can be obtained via the
     :attr:`.WsgiRequest.html_document` attribute.
@@ -1109,44 +980,23 @@ class HtmlDocument(Html):
         The body part of this :class:`HtmlDocument`, an :class:`.Html` element
 
     .. _HTML5: http://www.w3schools.com/html/html5_intro.asp
-    '''
-    _template = ('<!DOCTYPE html>\n'
-                 '<html%s>\n'
-                 '%s%s'
-                 '</html>')
-
+    """
     def __init__(self, title=None, media_path='/media/', charset=None,
-                 minified=False, loop=None, asset_protocol=None, **params):
-        super().__init__(None, **params)
-        self.head = Head(title=title, media_path=media_path, minified=minified,
-                         charset=charset, asset_protocol=asset_protocol)
-        self.body = Body(media_path=media_path, minified=minified,
-                         asset_protocol=asset_protocol)
+                 minified=False, asset_protocol=None, **params):
+        super().__init__('html', **params)
+        self.append(Head(title=title, media_path=media_path, minified=minified,
+                    charset=charset, asset_protocol=asset_protocol))
+        self.append(Body(media_path=media_path, minified=minified,
+                         asset_protocol=asset_protocol))
 
-    def do_stream(self, request):
-        # stream the body
-        body = self.body.render(request)
-        # the body has asynchronous components
-        # delay the header until later
-        if isawaitable(body):
-            yield self._html(request, body)
+    @property
+    def head(self):
+        return self._children[0]
 
-        head = self.head.render(request)
-        #
-        # header not ready (this should never occur really)
-        if isawaitable(head):
-            yield self._html(request, body, head)
-        else:
-            yield self._template % (self.flatatt(), head, body)
+    @property
+    def body(self):
+        return self._children[1]
 
-    async def _html(self, request, body, head=None):
-        '''Asynchronous rendering
-        '''
-        if head is None:
-            body = await body
-            head = self.head.render(request)
-
-        if isawaitable(head):
-            head = await head
-
-        return self._template % (self.flatatt(), head, body)
+    def stream(self, request, counter=0):
+        yield '<!DOCTYPE html>\n'
+        yield from super().stream(request, counter)

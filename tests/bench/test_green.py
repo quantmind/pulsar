@@ -1,6 +1,6 @@
 import unittest
 
-from pulsar import send
+from pulsar.api import send
 
 try:
     from pulsar.apps import greenio
@@ -24,7 +24,7 @@ class EchoGreen(Echo):
         with connection:
             consumer = connection.current_consumer()
             consumer.start(message)
-            greenio.wait(consumer.on_finished)
+            greenio.wait(consumer.event('post_request').waiter())
             return consumer if self.full_response else consumer.buffer
 
 

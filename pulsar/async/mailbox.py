@@ -1,4 +1,4 @@
-'''Actors communicate with each other by sending and receiving messages.
+"""Actors communicate with each other by sending and receiving messages.
 The :mod:`pulsar.async.mailbox` module implements the message passing layer
 via a bidirectional socket connections between the :class:`.Arbiter`
 and any :class:`.Actor`.
@@ -33,7 +33,7 @@ The implementation details are outlined below:
 
 Implementation
 =========================
-  For the curious this is how the internal protocol is implemented
+For the curious this is how the internal protocol is implemented
 
 Protocol
 ~~~~~~~~~~~~
@@ -49,24 +49,28 @@ Client
   :members:
   :member-order: bysource
 
-'''
+"""
 import socket
 import pickle
+import logging
+from functools import partial
 from collections import namedtuple
+from inspect import isawaitable
 
-from pulsar import ProtocolError, CommandError
-from pulsar.utils.internet import nice_address
-from pulsar.utils.websocket import frame_parser
-from pulsar.utils.string import gen_unique_id
+from ..utils.exceptions import CommandError
+from ..utils.internet import nice_address
+from ..utils.websocket import frame_parser
+from ..utils.string import gen_unique_id
+from ..utils.lib import ProtocolConsumer
 
-from .access import get_actor, isawaitable, create_future, ensure_future
-from .futures import task
+from .protocols import Connection
+from .access import get_actor
 from .proxy import actor_identity, get_proxy, get_command, ActorProxy
-from .protocols import Protocol
 from .clients import AbstractClient
 
 
 CommandRequest = namedtuple('CommandRequest', 'actor caller connection')
+LOGGER = logging.getLogger('pulsar.mailbox')
 
 
 def create_aid():
@@ -80,8 +84,11 @@ async def command_in_context(command, caller, target, args, kwargs,
         raise CommandError('unknown %s' % command)
     request = CommandRequest(target, caller, connection)
     result = cmnd(request, args, kwargs)
-    if isawaitable(result):
+    try:
         result = await result
+    except TypeError:
+        if isawaitable(result):
+            raise
     return result
 
 
@@ -112,104 +119,103 @@ class ProxyMailbox:
         pass
 
 
-class Message:
-    '''A message which travels from actor to actor.
-    '''
-    def __init__(self, data, waiter=None):
-        self.data = data
-        self.waiter = waiter
+class MessageConsumer(ProtocolConsumer):
+    tasks = None
+    parser = None
+    worker = None
+    parser = None
+    debug = False
+    pending_responses = None
 
-    def __repr__(self):
-        return self.data.get('command', 'unknown')
-    __str__ = __repr__
+    def start_request(self):
+        actor = get_actor()
+        self.parser = frame_parser(kind=2)
+        self.pending_responses = {}
+        self.tasks = {}
+        self.logger = actor.logger
+        self.debug = actor.cfg.debug
+        self.event('post_request').bind(self._cancel_tasks)
 
-    @classmethod
-    def command(cls, command, sender, target, args, kwargs):
+    def feed_data(self, data):
+        msg = self.parser.decode(data)
+        while msg:
+            try:
+                message = pickle.loads(msg.body)
+            except Exception:
+                self.logger.exception('could not decode message body')
+            else:
+                # Avoid to create a task on callbacks
+                if message.get('command') == 'callback':
+                    self._on_callback(message)
+                else:
+                    task = self._loop.create_task(self._on_message(message))
+                    self.tasks[message['id']] = task
+            msg = self.parser.decode()
+
+    def send(self, command, sender, target, args, kwargs):
+        """Used by the server to send messages to the client.
+        Returns a future.
+        """
         command = get_command(command)
         data = {'command': command.__name__,
+                'id': create_aid(),
                 'sender': actor_identity(sender),
                 'target': actor_identity(target),
                 'args': args if args is not None else (),
                 'kwargs': kwargs if kwargs is not None else {}}
-        waiter = create_future()
+
+        waiter = self._loop.create_future()
+        ack = None
         if command.ack:
-            data['ack'] = create_aid()
+            ack = create_aid()
+            data['ack'] = ack
+            self.pending_responses[ack] = waiter
+
+        try:
+            self.write(data)
+        except Exception as exc:
+            waiter.set_exception(exc)
+            if ack:
+                self.pending_responses.pop(ack, None)
         else:
-            waiter.set_result(None)
-        return cls(data, waiter)
+            if not ack:
+                waiter.set_result(None)
+        return waiter
 
-    @classmethod
-    def callback(cls, result, ack):
-        data = {'command': 'callback', 'result': result, 'ack': ack}
-        return cls(data)
-
-
-class MailboxProtocol(Protocol):
-    '''The :class:`.Protocol` for internal message passing between actors.
-
-    Encoding and decoding uses the unmasked websocket protocol.
-    '''
-    def __init__(self, **kw):
-        super().__init__(**kw)
-        self._pending_responses = {}
-        self._parser = frame_parser(kind=2, pyparser=True)
-        actor = get_actor()
-        if actor.is_arbiter():
-            self.bind_event('connection_lost', self._connection_lost)
-
-    def request(self, command, sender, target, args, kwargs):
-        '''Used by the server to send messages to the client.'''
-        req = Message.command(command, sender, target, args, kwargs)
-        self._start(req)
-        return req.waiter
-
-    def data_received(self, data):
-        # Feed data into the parser
-        msg = self._parser.decode(data)
-        while msg:
-            try:
-                message = pickle.loads(msg.body)
-            except Exception as e:
-                raise ProtocolError('Could not decode message body: %s' % e)
-            ensure_future(self._on_message(message), loop=self._loop)
-            msg = self._parser.decode()
-
-    ########################################################################
-    #    INTERNALS
-    def _start(self, req):
-        if req.waiter and 'ack' in req.data:
-            self._pending_responses[req.data['ack']] = req.waiter
-            try:
-                self._write(req)
-            except Exception as exc:
-                req.waiter.set_exception(exc)
-        else:
-            self._write(req)
-
-    def _connection_lost(self, _, exc=None):
-        if exc:
+    def write(self, msg):
+        obj = pickle.dumps(msg, protocol=2)
+        data = self.parser.encode(obj, opcode=2)
+        try:
+            self.connection.write(data)
+        except (socket.error, RuntimeError):
             actor = get_actor()
-            if actor.is_running():
-                actor.logger.warning('Connection lost with actor')
+            if actor.is_running() and not actor.is_arbiter():
+                self.logger.warning('Lost connection with arbiter')
+                self._loop.stop()
+
+    def _on_callback(self, message):
+        ack = message.get('ack')
+        if not ack:
+            self.logger.error('A callback without id')
+        else:
+            if self.debug:
+                self.logger.debug('Callback from "%s"', ack)
+            pending = self.pending_responses.pop(ack)
+            pending.set_result(message.get('result'))
 
     async def _on_message(self, message):
-        actor = get_actor()
-        command = message.get('command')
-        ack = message.get('ack')
-        if command == 'callback':
-            if not ack:
-                raise ProtocolError('A callback without id')
+        try:
+            actor = get_actor()
+            command = message.get('command')
+            ack = message.get('ack')
             try:
-                pending = self._pending_responses.pop(ack)
-            except KeyError:
-                raise KeyError('Callback %s not in pending callbacks' % ack)
-            pending.set_result(message.get('result'))
-        else:
-            try:
+                if self.debug:
+                    self.logger.debug('Got message "%s"', command)
                 target = actor.get_actor(message['target'])
                 if target is None:
-                    raise CommandError('cannot execute "%s", unknown actor '
-                                       '"%s"' % (command, message['target']))
+                    raise CommandError(
+                        'cannot execute "%s", unknown actor '
+                        '"%s"' % (command, message['target']))
                 # Get the caller proxy without throwing
                 caller = get_proxy(actor.get_actor(message['sender']),
                                    safe=True)
@@ -223,41 +229,42 @@ class MailboxProtocol(Protocol):
                                               *message['args'],
                                               **message['kwargs'])
                 else:
-                    result = await command_in_context(command, caller, target,
+                    result = await command_in_context(command, caller,
+                                                      target,
                                                       message['args'],
                                                       message['kwargs'],
                                                       self)
+
             except CommandError as exc:
                 self.logger.warning('Command error: %s' % exc)
                 result = None
-            except Exception as exc:
+            except Exception:
                 self.logger.exception('Unhandled exception')
                 result = None
             if ack:
-                self._start(Message.callback(result, ack))
+                data = {'command': 'callback', 'result': result, 'ack': ack}
+                self.write(data)
+        finally:
+            self.tasks.pop(message['id'], None)
 
-    def _write(self, req):
-        obj = pickle.dumps(req.data, protocol=2)
-        data = self._parser.encode(obj, opcode=2)
-        try:
-            self._transport.write(data)
-        except (socket.error, RuntimeError):
-            actor = get_actor()
-            if actor.is_running() and not actor.is_arbiter():
-                actor.logger.warning('Lost connection with arbiter')
-                actor._loop.stop()
+    def _cancel_tasks(self, _, **kw):
+        if self.tasks:
+            for task in self.tasks.values():
+                task.cancel()
+            self.tasks = {}
+
+
+mailbox_protocol = partial(Connection, MessageConsumer)
 
 
 class MailboxClient(AbstractClient):
-    '''Used by actors to send messages to other actors via the arbiter.
-    '''
-    protocol_factory = MailboxProtocol
-
+    """Used by actors to send messages to other actors via the arbiter.
+    """
     def __init__(self, address, actor, loop):
-        super().__init__(loop)
+        super().__init__(mailbox_protocol, loop=loop,
+                         name='%s-mailbox' % actor, logger=LOGGER)
         self.address = address
-        self.name = 'Mailbox for %s' % actor
-        self._connection = None
+        self.connection = None
 
     def connect(self):
         return self.create_connection(self.address)
@@ -265,20 +272,20 @@ class MailboxClient(AbstractClient):
     def __repr__(self):
         return '%s %s' % (self.name, nice_address(self.address))
 
-    @task
-    async def request(self, command, sender, target, args, kwargs):
-        # the request method
-        if self._connection is None:
-            self._connection = await self.connect()
-            self._connection.bind_event('connection_lost', self._lost)
-        req = Message.command(command, sender, target, args, kwargs)
-        self._connection._start(req)
-        response = await req.waiter
+    async def send(self, command, sender, target, args, kwargs):
+        if self.connection is None:
+            self.connection = await self.connect()
+            consumer = self.connection.current_consumer()
+            self.connection.event('connection_lost').bind(self._lost)
+            consumer.start()
+        else:
+            consumer = self.connection.current_consumer()
+        response = await consumer.send(command, sender, target, args, kwargs)
         return response
 
     def close(self):
-        if self._connection:
-            self._connection.close()
+        if self.connection:
+            self.connection.abort()
 
     def start_serving(self):    # pragma    nocover
         pass

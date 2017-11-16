@@ -46,19 +46,19 @@ def checkarity(func, args, kwargs, discount=0):
 
     # Length of parameter OK, check names
     if len_args_input < len_args:
-        l = minlen - len_args_input
+        le = minlen - len_args_input
         for arg in spec.args[discount:]:
             if args:
                 args.pop(0)
             else:
-                if l > 0:
+                if le > 0:
                     if defaults:
                         defaults.pop(0)
                     elif arg not in kwargs:
                         return ('"{0}" has missing "{1}" parameter.'
                                 .format(func.__name__, arg))
                 kwargs.pop(arg, None)
-            l -= 1
+            le -= 1
         if kwargs and maxlen:
             s = ''
             if len(kwargs) > 1:

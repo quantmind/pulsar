@@ -1,85 +1,18 @@
-'''This is a substantial module which imports several classes and functions
-from the standard library in a python 2.6 to python 3.3 compatible fashion.
-On top of that, it implements the :class:`HttpClient` for handling synchronous
-and asynchronous HTTP requests in a pythonic way.
-
-It is a thin layer on top of urllib2 in python2 / urllib in Python 3.
-Several opensource efforts have been used as source of snippets:
-
-* http-parser_
-* request_
-* urllib3_
-* werkzeug_
-
-
-.. _tools-http-headers:
-
-HTTP Headers
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: Headers
-   :members:
-   :member-order: bysource
-
-
-.. _tools-http-parser:
-
-HTTP Parser
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: HttpParser
-   :members:
-   :member-order: bysource
-
-
-.. _http-parser: https://github.com/benoitc/http-parser
-.. _urllib3: https://github.com/shazow/urllib3
-.. _request: https://github.com/kennethreitz/requests
-.. _werkzeug: https://github.com/mitsuhiko/werkzeug
-.. _`HTTP cookie`: http://en.wikipedia.org/wiki/HTTP_cookie
-'''
 import os
-import sys
 import re
 import string
 import mimetypes
 from hashlib import sha1, md5
 from uuid import uuid4
-from email.utils import formatdate
 from io import BytesIO
-import zlib
-from collections import deque, OrderedDict
 from urllib import request as urllibr
 from http import client as httpclient
-from urllib.parse import quote, urlsplit, splitport
+from urllib.parse import quote, splitport
 from http.cookiejar import CookieJar, Cookie
 from http.cookies import SimpleCookie
 
 from .structures import mapping_iterator
 from .string import to_bytes, to_string
-from .html import capfirst
-#
-# The http_parser has several bugs, therefore it is switched off
-hasextensions = False
-CHttpParser = None
-try:
-    from http_parser.parser import HttpParser as CHttpParser
-
-    hasextensions = True
-except ImportError:
-    pass
-
-_Http_Parser = CHttpParser
-
-
-def setDefaultHttpParser(parser):   # pragma    nocover
-    global _Http_Parser
-    _Http_Parser = parser
-
-
-def http_parser(**kwargs):
-    global _Http_Parser
-    return _Http_Parser(**kwargs)
 
 
 getproxies_environment = urllibr.getproxies_environment
@@ -95,7 +28,7 @@ tls_schemes = ('https', 'wss')
 # The reserved URI characters (RFC 3986 - section 2.2)
 # Default is charset is "iso-8859-1" (latin-1) from section 3.7.1
 # http://www.ietf.org/rfc/rfc2616.txt
-DEFAULT_CHARSET = 'ISO-8859-1'
+CHARSET = 'ISO-8859-1'
 URI_GEN_DELIMS = frozenset(':/?#[]@')
 URI_SUB_DELIMS = frozenset("!$&'()*+,;=")
 URI_RESERVED_SET = URI_GEN_DELIMS.union(URI_SUB_DELIMS)
@@ -113,13 +46,24 @@ JSON_CONTENT_TYPES = ('application/json',
                       'text/json',
                       'text/x-json')
 # ###################################################    REQUEST METHODS
-ENCODE_URL_METHODS = frozenset(['DELETE', 'GET', 'HEAD', 'OPTIONS'])
-ENCODE_BODY_METHODS = frozenset(['PATCH', 'POST', 'PUT', 'TRACE'])
+GET = 'GET'
+DELETE = 'DELETE'
+HEAD = 'HEAD'
+OPTIONS = 'OPTIONS'
+PATCH = 'PATCH'
+POST = 'POST'
+PUT = 'PUT'
+TRACE = 'TRACE'
+
+
+ENCODE_URL_METHODS = frozenset((DELETE, GET, HEAD, OPTIONS))
+ENCODE_BODY_METHODS = frozenset((PATCH, POST, PUT, TRACE))
 REDIRECT_CODES = (301, 302, 303, 305, 307)
 NO_CONTENT_CODES = frozenset((204, 304))
 
 CRLF = '\r\n'
 LWS = '\r\n '
+SEP = ': '
 
 
 def escape(s):
@@ -234,40 +178,9 @@ def remove_double_slash(route):
     return route
 
 
-def has_empty_content(status, method=None):
-    """204, 304 and 1xx codes have no content, same for HEAD requests"""
-    return (status in NO_CONTENT_CODES or
-            100 <= status < 200 or
-            method == "HEAD")
-
-
 def is_succesful(status):
     '''2xx status is succesful'''
     return status >= 200 and status < 300
-
-
-def capheader(name):
-    name = name.replace('_', '-')
-    return '-'.join((b for b in (capfirst(n) for n in name.split('-')) if b))
-
-
-def header_field(name):
-    """Return a header `name` in Camel case.
-
-    For example::
-
-        header_field('connection') == 'Connection'
-        header_field('accept-charset') == 'Accept-Charset'
-
-    If ``header_set`` is given, only return headers included in the set.
-    """
-    return capheader(name.lower())
-
-
-#    HEADERS UTILITIES
-HEADER_FIELDS_JOINER = {'Cookie': '; ',
-                        'Set-Cookie': None,
-                        'Set-Cookie2': None}
 
 
 def split_comma(value):
@@ -280,14 +193,6 @@ def parse_cookies(value):
 
 header_parsers = {'Connection': split_comma,
                   'Cookie': parse_cookies}
-
-
-def header_values(header, value):
-    assert isinstance(value, str)
-    if header in header_parsers:
-        return header_parsers[header](value)
-    else:
-        return [value]
 
 
 def quote_header_value(value, extra_chars='', allow_token=True):
@@ -392,626 +297,6 @@ def parse_options_header(header, options=None):
     return ctype, options
 
 
-class Headers:
-    '''Utility for managing HTTP headers for both clients and servers.
-
-    It has a dictionary like interface with few extra functions to facilitate
-    the insertion of multiple header values. Header fields are
-    **case insensitive**, therefore doing::
-
-        >>> h = Headers()
-        >>> h['Content-Length'] = '1050'
-
-    is equivalent to
-
-        >>> h['content-length'] = '1050'
-
-    :param headers: optional iterable over header field/value pairs.
-    :param kind: optional headers type, one of ``server``, ``client`` or
-        ``both``.
-    :param strict: if ``True`` only valid headers field will be included.
-
-    This :class:`Headers` container maintains an ordering as suggested by
-    http://www.w3.org/Protocols/rfc2616/rfc2616.html:
-
-    .. epigraph::
-
-        The order in which header fields with differing field names are
-        received is not significant. However, it is "good practice" to send
-        general-header fields first, followed by request-header or
-        response-header fields, and ending with the entity-header fields.
-
-        -- rfc2616 section 4.2
-
-    The strict parameter is rarely used and it forces the omission on
-    non-standard header fields.
-    '''
-    @classmethod
-    def make(cls, headers):
-        if not isinstance(headers, cls):
-            headers = cls(headers)
-        return headers
-
-    def __init__(self, *args, **kwargs):
-        self._headers = OrderedDict()
-        if args or kwargs:
-            self.update(*args, **kwargs)
-
-    def __repr__(self):
-        return self._headers.__repr__()
-
-    def __str__(self):
-        return '\r\n'.join(self._ordered())
-
-    def __bytes__(self):
-        return str(self).encode(DEFAULT_CHARSET)
-
-    def __len__(self):
-        return len(self._headers)
-
-    def update(self, *args, **kwargs):
-        """Extend the headers with an ``iterable``.
-
-        :param iterable: a dictionary or an iterable over keys, values tuples.
-        """
-        if len(args) == 1:
-            for key, value in mapping_iterator(args[0]):
-                self.add_header(key, value)
-        elif args:
-            raise TypeError('update expected at most 1 arguments, got %d' %
-                            len(args))
-        for key, value in kwargs.items():
-            self.add_header(key, value)
-
-    def override(self, iterable):
-        '''Extend headers by overriding fields form iterable.
-
-        :param iterable: a dictionary or an iterable over keys, values tuples.
-        '''
-        seen = set()
-        for key, value in mapping_iterator(iterable):
-            key = key.lower()
-            if key in seen:
-                self.add_header(key, value)
-            else:
-                seen.add(key)
-                self[key] = value
-
-    def copy(self):
-        return self.__class__(self)
-
-    def __contains__(self, key):
-        return header_field(key) in self._headers
-
-    def __getitem__(self, key):
-        key = header_field(key)
-        values = self._headers[key]
-        joiner = HEADER_FIELDS_JOINER.get(key, ', ')
-        if joiner is None:
-            joiner = '; '
-        return joiner.join(values)
-
-    def __delitem__(self, key):
-        self._headers.__delitem__(header_field(key))
-
-    def __setitem__(self, key, value):
-        key = header_field(key)
-        if key and value:
-            if not isinstance(value, list):
-                value = header_values(key, value)
-            self._headers[key] = value
-
-    def get(self, key, default=None):
-        '''Get the field value at ``key`` as comma separated values.
-
-        For example::
-
-            >>> from pulsar.utils.httpurl import Headers
-            >>> h = Headers(kind='client')
-            >>> h.add_header('accept-encoding', 'gzip')
-            >>> h.add_header('accept-encoding', 'deflate')
-            >>> h.get('accept-encoding')
-
-        results in::
-
-            'gzip, deflate'
-        '''
-        if key in self:
-            return self.__getitem__(key)
-        else:
-            return default
-
-    def get_all(self, key, default=None):
-        '''Get the values at header ``key`` as a list rather than a
-        string separated by comma (which is returned by the
-        :meth:`get` method).
-
-        For example::
-
-            >>> from pulsar.utils.httpurl import Headers
-            >>> h = Headers(kind='client')
-            >>> h.add_header('accept-encoding', 'gzip')
-            >>> h.add_header('accept-encoding', 'deflate')
-            >>> h.get_all('accept-encoding')
-
-        results in::
-
-            ['gzip', 'deflate']
-        '''
-        return self._headers.get(header_field(key), default)
-
-    def has(self, field, value):
-        '''Check if ``value`` is available in header ``field``.'''
-        value = value.lower()
-        for c in self.get_all(field, ()):
-            if c.lower() == value:
-                return True
-        return False
-
-    def pop(self, key, *args):
-        return self._headers.pop(header_field(key), *args)
-
-    def clear(self):
-        '''Same as :meth:`dict.clear`, it removes all headers.
-        '''
-        self._headers.clear()
-
-    def getheaders(self, key):  # pragma    nocover
-        '''Required by cookielib in python 2.
-
-        If the key is not available, it returns an empty list.
-        '''
-        return self._headers.get(header_field(key), [])
-
-    def add_header(self, key, values):
-        '''Add ``values`` to ``key`` header.
-
-        If the header is already available, append the value to the list.
-
-        :param key: header name
-        :param values: a string value or a list/tuple of strings values
-            for header ``key``
-        '''
-        key = header_field(key)
-        if key and values:
-            if not isinstance(values, (tuple, list)):
-                values = header_values(key, values)
-            current = self._headers.get(key, [])
-            for value in values:
-                if value and value not in current:
-                    current.append(value)
-            self._headers[key] = current
-
-    def remove_header(self, key, value=None):
-        '''Remove the header at ``key``.
-
-        If ``value`` is provided, it removes only that value if found.
-        '''
-        key = header_field(key)
-        if key:
-            if value:
-                value = value.lower()
-                values = self._headers.get(key, [])
-                removed = None
-                for v in values:
-                    if v.lower() == value:
-                        removed = v
-                        values.remove(v)
-                self._headers[key] = values
-                return removed
-            else:
-                return self._headers.pop(key, None)
-
-    def flat(self, version, status):
-        '''Full headers bytes representation'''
-        vs = version + (status, self)
-        return ('HTTP/%s.%s %s\r\n%s' % vs).encode(DEFAULT_CHARSET)
-
-    def __iter__(self):
-        dj = ', '
-        for k, values in self._headers.items():
-            joiner = HEADER_FIELDS_JOINER.get(k, dj)
-            if joiner:
-                yield k, joiner.join(values)
-            else:
-                for value in values:
-                    yield k, value
-
-    def _ordered(self):
-        for key, header in self:
-            yield "%s: %s" % (key, header)
-        yield ''
-        yield ''
-
-
-###############################################################################
-#    HTTP PARSER
-###############################################################################
-METHOD_RE = re.compile("[A-Z0-9$-_.]{3,20}")
-VERSION_RE = re.compile("HTTP/(\d+).(\d+)")
-STATUS_RE = re.compile("(\d{3})\s*(\w*)")
-HEADER_RE = re.compile("[\x00-\x1F\x7F()<>@,;:\[\]={} \t\\\\\"]")
-
-# errors
-BAD_FIRST_LINE = 0
-INVALID_HEADER = 1
-INVALID_CHUNK = 2
-
-
-class InvalidRequestLine(Exception):
-    """ error raised when first line is invalid """
-
-
-class InvalidHeader(Exception):
-    """ error raised on invalid header """
-
-
-class InvalidChunkSize(Exception):
-    """ error raised when we parse an invalid chunk size """
-
-
-class HttpParser:
-    '''A python HTTP parser.
-
-    Original code from https://github.com/benoitc/http-parser
-
-    2011 (c) Benoit Chesneau <benoitc@e-engura.org>
-    '''
-    def __init__(self, kind=2, decompress=False):
-        self.decompress = decompress
-        # errors vars
-        self.errno = None
-        self.errstr = ""
-        # protected variables
-        self._buf = []
-        self._version = None
-        self._method = None
-        self._status_code = None
-        self._status = None
-        self._reason = None
-        self._url = None
-        self._path = None
-        self._query_string = None
-        self._kind = kind
-        self._fragment = None
-        self._headers = Headers()
-        self._chunked = False
-        self._body = []
-        self._trailers = None
-        self._partial_body = False
-        self._clen = None
-        self._clen_rest = None
-        # private events
-        self.__on_firstline = False
-        self.__on_headers_complete = False
-        self.__on_message_begin = False
-        self.__on_message_complete = False
-        # decompress
-        self.__decompress_obj = None
-        self.__decompress_first_try = True
-
-    @property
-    def kind(self):
-        return self._kind
-
-    def get_version(self):
-        return self._version
-
-    def get_method(self):
-        return self._method
-
-    def get_status_code(self):
-        return self._status_code
-
-    def get_url(self):
-        return self._url
-
-    def get_path(self):
-        return self._path
-
-    def get_query_string(self):
-        return self._query_string
-
-    def get_fragment(self):
-        return self._fragment
-
-    def get_headers(self):
-        return self._headers
-
-    def recv_body(self):
-        """ return last chunk of the parsed body"""
-        body = b''.join(self._body)
-        self._body = []
-        self._partial_body = False
-        return body
-
-    def is_headers_complete(self):
-        """ return True if all headers have been parsed. """
-        return self.__on_headers_complete
-
-    def is_partial_body(self):
-        """ return True if a chunk of body have been parsed """
-        return self._partial_body
-
-    def is_message_begin(self):
-        """ return True if the parsing start """
-        return self.__on_message_begin
-
-    def is_message_complete(self):
-        """ return True if the parsing is done (we get EOF) """
-        return self.__on_message_complete
-
-    def is_chunked(self):
-        """ return True if Transfer-Encoding header value is chunked"""
-        return self._chunked
-
-    def execute(self, data, length):
-        # end of body can be passed manually by putting a length of 0
-        if length == 0:
-            self.__on_message_complete = True
-            return length
-        #
-        data = bytes(data)
-        # start to parse
-        nb_parsed = 0
-        while True:
-            if not self.__on_firstline:
-                idx = data.find(b'\r\n')
-                if idx < 0:
-                    self._buf.append(data)
-                    return len(data)
-                else:
-                    self.__on_firstline = True
-                    self._buf.append(data[:idx])
-                    first_line = to_string(b''.join(self._buf),
-                                           DEFAULT_CHARSET)
-                    rest = data[idx+2:]
-                    data = b''
-                    if self._parse_firstline(first_line):
-                        nb_parsed = nb_parsed + idx + 2
-                        self._buf = [rest]
-                    else:
-                        return nb_parsed
-            elif not self.__on_headers_complete:
-                if data:
-                    self._buf.append(data)
-                    data = b''
-                try:
-                    to_parse = b''.join(self._buf)
-                    ret = self._parse_headers(to_parse)
-                    if ret is False:
-                        return length
-                    nb_parsed = nb_parsed + (len(to_parse) - ret)
-                except InvalidHeader as e:
-                    self.errno = INVALID_HEADER
-                    self.errstr = str(e)
-                    return nb_parsed
-            elif not self.__on_message_complete:
-                self.__on_message_begin = True
-                if data:
-                    self._buf.append(data)
-                    data = b''
-                ret = self._parse_body()
-                if ret is None:
-                    return length
-                elif ret < 0:
-                    return ret
-                elif ret == 0:
-                    self.__on_message_complete = True
-                    return length
-                else:
-                    nb_parsed = max(length, ret)
-            else:
-                return 0
-
-    def _parse_firstline(self, line):
-        try:
-            if self.kind == 2:  # auto detect
-                try:
-                    self._parse_request_line(line)
-                except InvalidRequestLine:
-                    self._parse_response_line(line)
-            elif self.kind == 1:
-                self._parse_response_line(line)
-            elif self.kind == 0:
-                self._parse_request_line(line)
-        except InvalidRequestLine as e:
-            self.errno = BAD_FIRST_LINE
-            self.errstr = str(e)
-            return False
-        return True
-
-    def _parse_response_line(self, line):
-        bits = line.split(None, 1)
-        if len(bits) != 2:
-            raise InvalidRequestLine(line)
-
-        # version
-        matchv = VERSION_RE.match(bits[0])
-        if matchv is None:
-            raise InvalidRequestLine("Invalid HTTP version: %s" % bits[0])
-        self._version = (int(matchv.group(1)), int(matchv.group(2)))
-
-        # status
-        matchs = STATUS_RE.match(bits[1])
-        if matchs is None:
-            raise InvalidRequestLine("Invalid status %" % bits[1])
-
-        self._status = bits[1]
-        self._status_code = int(matchs.group(1))
-        self._reason = matchs.group(2)
-
-    def _parse_request_line(self, line):
-        bits = line.split(None, 2)
-        if len(bits) != 3:
-            raise InvalidRequestLine(line)
-        # Method
-        if not METHOD_RE.match(bits[0]):
-            raise InvalidRequestLine("invalid Method: %s" % bits[0])
-        self._method = bits[0].upper()
-        # URI
-        self._url = bits[1]
-        parts = urlsplit('http://dummy.com%s' % bits[1])
-        self._path = parts.path or ""
-        self._query_string = parts.query or ""
-        self._fragment = parts.fragment or ""
-        # Version
-        match = VERSION_RE.match(bits[2])
-        if match is None:
-            raise InvalidRequestLine("Invalid HTTP version: %s" % bits[2])
-        self._version = (int(match.group(1)), int(match.group(2)))
-
-    def _parse_headers(self, data):
-        if data == b'\r\n':
-            self.__on_headers_complete = True
-            self._buf = []
-            return 0
-        idx = data.find(b'\r\n\r\n')
-        if idx < 0:  # we don't have all headers
-            return False
-        chunk = to_string(data[:idx], DEFAULT_CHARSET)
-        # Split lines on \r\n keeping the \r\n on each line
-        lines = deque(('%s\r\n' % line for line in chunk.split('\r\n')))
-        # Parse headers into key/value pairs paying attention
-        # to continuation lines.
-        while len(lines):
-            # Parse initial header name : value pair.
-            curr = lines.popleft()
-            if curr.find(":") < 0:
-                continue
-            name, value = curr.split(":", 1)
-            name = name.rstrip(" \t").upper()
-            if HEADER_RE.search(name):
-                raise InvalidHeader("invalid header name %s" % name)
-            name, value = header_field(name.strip()), [value.lstrip()]
-            # Consume value continuation lines
-            while len(lines) and lines[0].startswith((" ", "\t")):
-                value.append(lines.popleft())
-            value = ''.join(value).rstrip()
-            self._headers.add_header(name, value)
-        # detect now if body is sent by chunks.
-        clen = self._headers.get('Content-Length')
-        if 'Transfer-Encoding' in self._headers:
-            te = self._headers['Transfer-Encoding'].lower()
-            self._chunked = (te == 'chunked')
-        else:
-            self._chunked = False
-        #
-        status = self._status_code
-        if status and has_empty_content(status, self._method):
-            clen = 0
-        elif clen is not None:
-            try:
-                clen = int(clen)
-            except ValueError:
-                clen = None
-            else:
-                if clen < 0:  # ignore nonsensical negative lengths
-                    clen = None
-        #
-        if clen is None:
-            self._clen_rest = sys.maxsize
-        else:
-            self._clen_rest = self._clen = clen
-        #
-        # detect encoding and set decompress object
-        if self.decompress and 'Content-Encoding' in self._headers:
-            encoding = self._headers['Content-Encoding']
-            if encoding == "gzip":
-                self.__decompress_obj = zlib.decompressobj(16+zlib.MAX_WBITS)
-                self.__decompress_first_try = False
-            elif encoding == "deflate":
-                self.__decompress_obj = zlib.decompressobj()
-
-        rest = data[idx+4:]
-        self._buf = [rest]
-        self.__on_headers_complete = True
-        self.__on_message_begin = True
-        return len(rest)
-
-    def _parse_body(self):
-        data = b''.join(self._buf)
-        #
-        if not self._chunked:
-            #
-            if not data and self._clen is None:
-                if not self._status:    # message complete only for servers
-                    self.__on_message_complete = True
-            else:
-                if self._clen_rest is not None:
-                    self._clen_rest -= len(data)
-
-                # maybe decompress
-                data = self._decompress(data)
-
-                self._partial_body = True
-                if data:
-                    self._body.append(data)
-                self._buf = []
-                if self._clen_rest <= 0:
-                    self.__on_message_complete = True
-            return
-        else:
-            try:
-                size, rest = self._parse_chunk_size(data)
-            except InvalidChunkSize as e:
-                self.errno = INVALID_CHUNK
-                self.errstr = "invalid chunk size [%s]" % str(e)
-                return -1
-            if size == 0:
-                return size
-            if size is None or len(rest) < size + 2:
-                return None
-            body_part, rest = rest[:size], rest[size:]
-
-            # maybe decompress
-            body_part = self._decompress(body_part)
-            self._partial_body = True
-            self._body.append(body_part)
-            rest = rest[2:]
-            self._buf = [rest] if rest else []
-            return len(rest) + 2
-
-    def _parse_chunk_size(self, data):
-        idx = data.find(b'\r\n')
-        if idx < 0:
-            return None, None
-        line, rest_chunk = data[:idx], data[idx+2:]
-        chunk_size = line.split(b';', 1)[0].strip()
-        try:
-            chunk_size = int(chunk_size, 16)
-        except ValueError:
-            raise InvalidChunkSize(chunk_size)
-        if chunk_size == 0:
-            self._parse_trailers(rest_chunk)
-            return 0, None
-        return chunk_size, rest_chunk
-
-    def _parse_trailers(self, data):
-        idx = data.find(b'\r\n\r\n')
-        if data[:2] == b'\r\n':
-            self._trailers = self._parse_headers(data[:idx])
-
-    def _decompress(self, data):
-        deco = self.__decompress_obj
-        if deco is not None:
-            if not self.__decompress_first_try:
-                data = deco.decompress(data)
-            else:
-                try:
-                    data = deco.decompress(data)
-                except zlib.error:
-                    self.__decompress_obj = zlib.decompressobj(-zlib.MAX_WBITS)
-                    deco = self.__decompress_obj
-                    data = deco.decompress(data)
-                self.__decompress_first_try = False
-        return data
-
-
-if not hasextensions:   # pragma    nocover
-    setDefaultHttpParser(HttpParser)
-
-
 # ############################################    UTILITIES, ENCODERS, PARSERS
 absolute_http_url_re = re.compile(r"^https?://", re.I)
 
@@ -1105,20 +390,6 @@ def hexmd5(x):
 
 def hexsha1(x):
     return sha1(to_bytes(x)).hexdigest()
-
-
-def http_date(epoch_seconds=None):
-    """
-    Formats the time to match the RFC1123 date format as specified by HTTP
-    RFC2616 section 3.3.1.
-
-    Accepts a floating point number expressed in seconds since the epoch, in
-    UTC - such as that outputted by time.time(). If set to None, defaults to
-    the current time.
-
-    Outputs a string in the format 'Wdy, DD Mon YYYY HH:MM:SS GMT'.
-    """
-    return formatdate(epoch_seconds, usegmt=True)
 
 
 # ################################################################# COOKIES
@@ -1239,15 +510,16 @@ class CacheControl:
             if etag:
                 headers['etag'] = '"%s"' % etag
             if self.private:
-                headers.add_header('cache-control', 'private')
+                headers.add('cache-control', 'private')
             else:
-                headers.add_header('cache-control', 'public')
+                headers.add('cache-control', 'public')
             if self.must_revalidate:
-                headers.add_header('cache-control', 'must-revalidate')
+                headers.add('cache-control', 'must-revalidate')
             elif self.proxy_revalidate:
-                headers.add_header('cache-control', 'proxy-revalidate')
+                headers.add('cache-control', 'proxy-revalidate')
         else:
             headers['cache-control'] = 'no-cache'
+        return headers
 
 
 def chunk_encoding(chunk):

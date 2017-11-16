@@ -22,7 +22,7 @@ class HttpStream:
     def done(self):
         """Check if the stream is finished
         """
-        return self._response.on_finished.fired()
+        return self._response.event('post_request').fired()
 
     async def read(self, n=None):
         """Read all content
@@ -61,15 +61,12 @@ class HttpStream:
         else:
             return await self._queue.get()
 
-    def __call__(self, response, exc=None, **kw):
-        if self._streamed and response.parser.is_headers_complete():
-            assert response is self._response
-            self._queue.put_nowait(response.recv_body())
+    def feed_data(self, body):
+        self._queue.put_nowait(body)
 
 
 def _start_iter(self):
     if self._streamed:
         raise StreamConsumedError
     self._streamed = True
-    self(self._response)
     return self

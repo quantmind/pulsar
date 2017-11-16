@@ -1,8 +1,7 @@
 import unittest
-from asyncio import gather
+from asyncio import gather, new_event_loop, get_event_loop
 
-from pulsar import (send, new_event_loop, get_application,
-                    run_in_loop, get_event_loop)
+from pulsar.api import send, get_application
 from pulsar.apps.test import dont_run_with_thread
 
 from examples.echo.manage import server, Echo, EchoServerProtocol
@@ -67,8 +66,7 @@ class TestEchoServerThread(unittest.TestCase):
     async def test_info(self):
         info = await send(self.server_cfg.name, 'info')
         self.assertIsInstance(info, dict)
-        self.assertEqual(info['actor']['name'], self.server_cfg.name)
-        self.assertEqual(info['actor']['concurrency'], self.concurrency)
+        self.assertEqual(info['server']['name'], self.server_cfg.name)
 
     async def test_connection(self):
         client = Echo(self.server_cfg.addresses[0], full_response=True)
@@ -86,21 +84,21 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)
         self.assertEqual(client.sessions, 0)
-        self.assertEqual(client._requests_processed, 0)
+        self.assertEqual(client.requests_processed, 0)
         #
         response = await client(b'test connection')
         self.assertEqual(response, b'test connection')
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 1)
         self.assertEqual(client.sessions, 1)
-        self.assertEqual(client._requests_processed, 1)
+        self.assertEqual(client.requests_processed, 1)
         #
         response = await client(b'test connection 2')
         self.assertEqual(response, b'test connection 2')
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 1)
         self.assertEqual(client.sessions, 1)
-        self.assertEqual(client._requests_processed, 2)
+        self.assertEqual(client.requests_processed, 2)
         #
         result = await gather(client(b'ciao'),
                               client(b'pippo'),
@@ -112,10 +110,10 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 2)
         self.assertEqual(client.sessions, 2)
-        self.assertEqual(client._requests_processed, 5)
+        self.assertEqual(client.requests_processed, 5)
         #
         # drop a connection
-        await run_in_loop(client._loop, self._drop_conection, client)
+        self._drop_conection(client)
         #
         result = await gather(client(b'ciao'),
                               client(b'pippo'),
@@ -124,14 +122,14 @@ class TestEchoServerThread(unittest.TestCase):
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 2)
         self.assertEqual(client.sessions, 3)
-        self.assertEqual(client._requests_processed, 8)
+        self.assertEqual(client.requests_processed, 8)
         #
-        await run_in_loop(client._loop, client.pool.close)
+        await client.pool.close()
         #
         self.assertEqual(client.pool.in_use, 0)
         self.assertEqual(client.pool.available, 0)
         self.assertEqual(client.sessions, 3)
-        self.assertEqual(client._requests_processed, 8)
+        self.assertEqual(client.requests_processed, 8)
 
     def _drop_conection(self, client):
         conn1 = client.pool._queue.get_nowait()

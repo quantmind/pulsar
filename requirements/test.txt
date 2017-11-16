@@ -1,0 +1,9 @@
+flake8
+coverage
+cython
+greenlet
+flask
+oauthlib
+requests
+certifi
+twine

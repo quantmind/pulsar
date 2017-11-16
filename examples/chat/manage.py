@@ -40,16 +40,16 @@ Implementation
 import os
 import time
 
-from pulsar import create_future, ensure_future
+from pulsar.api import create_future, ensure_future
 from pulsar.apps.wsgi import (Router, WsgiHandler, LazyWsgi, WSGIServer,
-                              GZipMiddleware)
+                              GZipMiddleware, wsgi_request)
 from pulsar.apps.ws import WS, WebSocket
 from pulsar.apps.rpc import PulsarServerCommands
 from pulsar.apps.data import create_store, PubSubClient
 from pulsar.utils.httpurl import JSON_CONTENT_TYPES
 from pulsar.apps.ds import pulsards_url
 from pulsar.utils.system import json
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 
 CHAT_DIR = os.path.dirname(__file__)
 
@@ -102,10 +102,10 @@ class Chat(WS):
         '''
         if msg:
             lines = []
-            for l in msg.split('\n'):
-                l = l.strip()
-                if l:
-                    lines.append(l)
+            for li in msg.split('\n'):
+                li = li.strip()
+                if li:
+                    lines.append(li)
             msg = ' '.join(lines)
             if msg:
                 return self.pubsub.publish(self.channel, msg)
@@ -137,8 +137,9 @@ class WebChat(LazyWsgi):
         Check :ref:`lazy wsgi handler <wsgi-lazy-handler>`
         section for further information.
         '''
-        cfg = environ['pulsar.cfg']
-        loop = environ['pulsar.connection']._loop
+        request = wsgi_request(environ)
+        cfg = request.cache.cfg
+        loop = request.cache._loop
         self.store = create_store(cfg.data_store, loop=loop)
         pubsub = self.store.pubsub(protocol=Protocol())
         channel = '%s_webchat' % self.name

@@ -2,7 +2,7 @@
 import unittest
 import asyncio
 
-from pulsar import send
+from pulsar.api import send
 from pulsar.apps import rpc, http, ws
 from pulsar.apps.test import dont_run_with_thread
 from pulsar.utils.system import json
@@ -56,7 +56,7 @@ class TestWebChat(unittest.TestCase):
         self.assertTrue(ws.connection)
         #
         # The connection should not be in the connection pool
-        pool = self.http.connection_pools.get(ws._request.key)
+        pool = self.http.connection_pools.get(ws.request.key)
         self.assertIsInstance(pool, self.http.connection_pool)
         self.assertFalse(ws.connection in pool)
 

@@ -36,20 +36,15 @@ benchmark plugin evaluate the performance and display results:
 .. autoclass:: BenchMark
 
 '''
-import sys
 import time
 import math
 from inspect import isawaitable
 from unittest import TestSuite
 
-import pulsar
+from pulsar.api import Setting
+from pulsar.utils.config import validate_pos_int
 
 from .base import WrapTest, TestPlugin
-
-if sys.platform == "win32":  # pragma    nocover
-    default_timer = time.clock
-else:
-    default_timer = time.time
 
 
 BENCHMARK_TEMPLATE = ('{0[name]}: repeated {0[repeat]}(x{0[times]}) times, '
@@ -79,7 +74,7 @@ class BenchTest(WrapTest):
     async def _call(self):
         testMethod = self.testMethod
         testStartUp = getattr(self.test, 'startUp', lambda: None)
-        testGetTime = getattr(self.test, 'getTime', lambda dt: dt)
+        testGetTime = getattr(self.test, 'getTime', simple)
         testGetInfo = getattr(self.test, 'getInfo', simple)
         testGetSummary = getattr(self.test, 'getSummary', simple)
         t = 0
@@ -90,11 +85,13 @@ class BenchTest(WrapTest):
             DT = 0
             for r in range(self.number):
                 testStartUp()
-                start = default_timer()
+                start = time.monotonic()
                 result = testMethod()
+                delta = time.monotonic() - start
                 if isawaitable(result):
+                    start = time.monotonic()
                     await result
-                delta = default_timer() - start
+                    delta += time.monotonic() - start
                 dt = testGetTime(delta)
                 testGetInfo(info, delta, dt)
                 DT += dt
@@ -109,12 +106,13 @@ class BenchMark(TestPlugin):
     '''Benchmarking addon for pulsar test suite.'''
     desc = '''Run benchmarks function flagged with __benchmark__ attribute'''
 
-    repeat = pulsar.Setting(flags=['--repeat'],
-                            type=int,
-                            default=10,
-                            validator=pulsar.validate_pos_int,
-                            desc=('Default number of repetition '
-                                  'when benchmarking.'))
+    repeat = Setting(
+        flags=['--repeat'],
+        type=int,
+        default=10,
+        validator=validate_pos_int,
+        desc='Default number of repetition when benchmarking.'
+    )
 
     def loadTestsFromTestCase(self, test_cls):
         bench = getattr(test_cls, '__benchmark__', False)

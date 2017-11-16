@@ -1,12 +1,8 @@
-'''
-Error classes and redis parser function
-'''
-import pulsar
-
-from .pyparser import Parser
+from ...utils.exceptions import PulsarException
+from ...utils.lib import RedisParser
 
 
-class RedisError(pulsar.PulsarException):
+class RedisError(PulsarException):
     '''Redis Error Base class'''
     pass
 
@@ -43,19 +39,5 @@ def response_error(response):
     return EXCEPTION_CLASSES[error_code](response)
 
 
-def PyRedisParser():
-    return Parser(InvalidResponse, response_error)
-
-
-if pulsar.HAS_C_EXTENSIONS:
-    from pulsar.utils.lib import RedisParser as _RedisParser
-
-    def RedisParser():
-        return _RedisParser(InvalidResponse, response_error)
-
-else:    # pragma nocover
-    RedisParser = PyRedisParser
-
-
-def redis_parser(py_redis_parser=False):
-    return PyRedisParser if py_redis_parser else RedisParser
+def redis_parser():
+    return RedisParser(InvalidResponse, response_error)

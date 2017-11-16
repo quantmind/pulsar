@@ -1,10 +1,8 @@
 import inspect
 
-from pulsar import HttpException
+from pulsar.api import HttpException
 from pulsar.utils.tools import checkarity
 
-__all__ = ['RpcHandler', 'rpc_method', 'InvalidRequest', 'InvalidParams',
-           'NoSuchFunction', 'InternalError']
 
 _exceptions = {}
 
@@ -73,7 +71,6 @@ def rpc_method(func, doc=None, format='json', request_handler=None):
         request = args[0]
         if request_handler:
             kwargs = request_handler(request, format, kwargs)
-        request.format = kwargs.pop('format', format)
         try:
             return func(*args, **kwargs)
         except TypeError:

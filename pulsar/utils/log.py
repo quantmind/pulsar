@@ -43,6 +43,11 @@ LOGGING_CONFIG = {
         'silent': {
             'class': 'pulsar.utils.log.Silence',
         },
+        'console_simple': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'message'
+        },
         'console': {
             'level': 'DEBUG',
             'class': 'pulsar.utils.log.ColoredStream',
@@ -331,9 +336,7 @@ class ColoredStream(logging.StreamHandler):   # pragma    nocover
         try:
             self.color(record)
             self.flush()
-        except (KeyboardInterrupt, SystemExit):  # pragma: no cover
-            raise
-        except:
+        except Exception:
             self.handleError(record)
 
     def color(self, record):

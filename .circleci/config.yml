@@ -1,0 +1,47 @@
+version: 2
+jobs:
+    build-main:
+        working_directory: ~/pulsar-current
+        docker:
+          - image: python:3.6.3
+          - image: redis
+        steps:
+          - checkout
+          - run:
+              name: install packages
+              command: ci/install.sh
+          - run:
+              name: test
+              command: make compile && make test
+          - run:
+              name: run and publish coverage
+              command: make coverage
+    lagacy:
+        working_directory: ~/pulsar-legacy
+        docker:
+          - image: python:3.5.4
+          - image: redis
+        steps:
+          - checkout
+          - run:
+              command:
+                  make clean && make testall
+    deploy:
+        docker:
+            working_directory: ~/pulsar-deploy
+        docker:
+          - image: quay.io/pypa/manylinux1_x86_64
+        steps:
+          - checkout
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build-main
+      - deploy:
+          requires:
+            - build-main
+          filters:
+            branches:
+              only: deploy

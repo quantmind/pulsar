@@ -132,9 +132,7 @@ Periodic task
 ------------------
 
 Each :class:`.Actor`, including the :class:`.Arbiter` and :class:`.Monitor`,
-perform one crucial periodic task at given intervals. The next
-call of the task is stored in the :attr:`.Actor.next_periodic_task`
-attribute.
+perform one crucial periodic task at given intervals.
 
 Periodic task are implemented by the :meth:`Concurrency.periodic_task` method.
 

@@ -3,7 +3,7 @@ import unittest
 import asyncio
 
 import pulsar
-from pulsar import send, multi_async
+from pulsar.api import send, CommandError, get_actor
 from pulsar.apps.test import TestSuite
 from pulsar.apps.test.plugins import profile
 from pulsar.utils.version import get_version
@@ -22,7 +22,7 @@ async def wait(actor, period=0.5):
 class TestTestWorker(unittest.TestCase):
 
     def test_TestSuiteMonitor(self):
-        arbiter = pulsar.get_actor()
+        arbiter = get_actor()
         self.assertTrue(len(arbiter.monitors) >= 1)
         monitor = arbiter.registered['test']
         app = monitor.app
@@ -30,16 +30,16 @@ class TestTestWorker(unittest.TestCase):
 
     async def test_unknown_send_target(self):
         # The target does not exists
-        await self.wait.assertRaises(pulsar.CommandError, send,
-                                     'vcghdvchdgcvshcd', 'ping')
+        with self.assertRaises(CommandError):
+            await send('vcghdvchdgcvshcd', 'ping')
 
     async def test_multiple_execute(self):
-        m = await multi_async((
+        m = await asyncio.gather(
             send('arbiter', 'run', wait, 1.2),
             send('arbiter', 'ping'),
             send('arbiter', 'echo', 'ciao!'),
             send('arbiter', 'run', wait, 2.1),
-            send('arbiter', 'echo', 'ciao again!'))
+            send('arbiter', 'echo', 'ciao again!')
         )
         self.assertTrue(m[0] >= 1.1)
         self.assertEqual(m[1], 'pong')

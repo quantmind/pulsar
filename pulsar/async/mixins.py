@@ -1,4 +1,9 @@
-from .access import create_future
+import time
+
+from asyncio import Queue, CancelledError
+
+
+DEFAULT_LIMIT = 2**16
 
 
 class FlowControl:
@@ -7,15 +12,40 @@ class FlowControl:
     This implements the protocol methods :meth:`pause_writing`,
     :meth:`resume_writing`.
     """
+    _b_limit = 2*DEFAULT_LIMIT
     _paused = False
-    _write_waiter = None
+    _buffer_size = 0
+    _waiter = None
 
-    def __init__(self, low_limit=None, high_limit=None, **kw):
-        self._low_limit = low_limit
-        self._high_limit = high_limit
-        self.bind_event('connection_made', self._set_flow_limits)
-        self.bind_event('connection_lost', self._wakeup_waiter)
-        self.bind_event('after_write', self._make_write_waiter)
+    def write(self, data):
+        """Write ``data`` into the wire.
+
+        Returns an empty tuple or a :class:`~asyncio.Future` if this
+        protocol has paused writing.
+        """
+        if self.closed:
+            raise ConnectionResetError(
+                'Transport closed - cannot write on %s' % self
+            )
+        else:
+            t = self.transport
+            if self._paused or self._buffer:
+                self._buffer.appendleft(data)
+                self._buffer_size += len(data)
+                self._write_from_buffer()
+                if self._buffer_size > 2 * self._b_limit:
+                    if self._waiter and not self._waiter.cancelled():
+                        self.logger.warning(
+                            '%s buffer size is %d: limit is %d ',
+                            self._buffer_size, self._b_limit
+                        )
+                    else:
+                        t.pause_reading()
+                        self._waiter = self._loop.create_future()
+            else:
+                t.write(data)
+            self.changed()
+            return self._waiter
 
     def pause_writing(self):
         '''Called by the transport when the buffer goes over the
@@ -26,7 +56,6 @@ class FlowControl:
         '''
         assert not self._paused
         self._paused = True
-        self._transport.pause_reading()
 
     def resume_writing(self, exc=None):
         '''Resume writing.
@@ -36,36 +65,41 @@ class FlowControl:
         '''
         assert self._paused
         self._paused = False
-        waiter = self._write_waiter
+        waiter = self._waiter
         if waiter is not None:
-            self._write_waiter = None
+            self._waiter = None
             if not waiter.done():
                 if exc is None:
                     waiter.set_result(None)
                 else:
                     waiter.set_exception(exc)
-        self._transport.resume_reading()
+            self.transport.resume_reading()
+        self._write_from_buffer()
 
     # INTERNAL CALLBACKS
+    def _write_from_buffer(self):
+        t = self.transport
+        if not t:
+            return
+        while not self._paused and self._buffer:
+            if t.is_closing():
+                self.producer.logger.debug(
+                    'Transport closed - cannot write on %s', self
+                )
+                break
+            data = self._buffer.pop()
+            self._buffer_size -= len(data)
+            self.transport.write(data)
+
     def _set_flow_limits(self, _, exc=None):
         if not exc:
-            self._transport.set_write_buffer_limits(self._low_limit,
-                                                    self._high_limit)
+            self.transport.set_write_buffer_limits(high=self._limit)
 
     def _wakeup_waiter(self, _, exc=None):
         # Wake up the writer if currently paused.
         if not self._paused:
             return
         self.resume_writing(exc=exc)
-
-    def _make_write_waiter(self, _, exc=None):
-        # callback for the after_write event
-        if self._paused:
-            waiter = self._write_waiter
-            assert waiter is None or waiter.cancelled()
-            waiter = create_future(self._loop)
-            self.logger.debug('Waiting for write buffer to drain')
-            self._write_waiter = waiter
 
 
 class Timeout:
@@ -83,28 +117,95 @@ class Timeout:
         '''Set a new :attr:`timeout` for this protocol
         '''
         if self._timeout is None:
-            self.bind_event('connection_made', self._add_timeout)
-            self.bind_event('connection_lost', self._cancel_timeout)
-            self.bind_event('before_write', self._cancel_timeout)
-            self.bind_event('after_write', self._add_timeout)
-            self.bind_event('data_received', self._cancel_timeout)
-            self.bind_event('data_processed', self._add_timeout)
+            self.event('connection_made').bind(self._add_timeout)
+            self.event('connection_lost').bind(self._cancel_timeout)
         self._timeout = timeout or 0
         self._add_timeout(None)
 
     # INTERNALS
     def _timed_out(self):
+        if self.last_change:
+            gap = time.time() - self.last_change
+            if gap < self._timeout:
+                self._timeout_handler = None
+                return self._add_timeout(None, timeout=self._timeout-gap)
         self.close()
         self.logger.debug('Closed idle %s.', self)
 
-    def _add_timeout(self, _, exc=None, **kw):
+    def _add_timeout(self, _, exc=None, timeout=None):
         if not self.closed:
             self._cancel_timeout(_, exc=exc)
-            if self._timeout and not exc:
-                self._timeout_handler = self._loop.call_later(self._timeout,
-                                                              self._timed_out)
+            timeout = timeout or self._timeout
+            if timeout and not exc:
+                self._timeout_handler = self._loop.call_later(
+                    timeout, self._timed_out
+                )
 
     def _cancel_timeout(self, _, exc=None, **kw):
         if self._timeout_handler:
             self._timeout_handler.cancel()
             self._timeout_handler = None
+
+
+class Pipeline:
+    """Pipeline protocol consumers once reading is finished
+
+    This mixin can be used by TCP connections to pipeline response writing
+    """
+    _pipeline = None
+
+    def pipeline(self, consumer):
+        """Add a consumer to the pipeline
+        """
+        if self._pipeline is None:
+            self._pipeline = ResponsePipeline(self)
+            self.event('connection_lost').bind(self._close_pipeline)
+        self._pipeline.put(consumer)
+
+    def close_pipeline(self):
+        if self._pipeline:
+            p, self._pipeline = self._pipeline, None
+            return p.close()
+
+    def _close_pipeline(self, _, **kw):
+        self.close_pipeline()
+
+
+class ResponsePipeline:
+    """Maintains a queue of responses to send back to the client
+    """
+    def __init__(self, connection):
+        self.connection = connection
+        self.queue = Queue(loop=connection._loop)
+        self.logger = connection.producer.logger
+        self.debug = connection._loop.get_debug()
+        self.worker = self.queue._loop.create_task(self._process())
+
+    def put(self, consumer):
+        """Put a protocol consumer in the response pipeline
+        """
+        self.queue.put_nowait(consumer)
+
+    async def _process(self):
+        while True:
+            try:
+                consumer = await self.queue.get()
+                if self.debug:
+                    self.logger.debug('Connection pipeline process %s',
+                                      consumer)
+                await consumer.write_response()
+            except (CancelledError, GeneratorExit, RuntimeError):
+                break
+            except Exception:
+                self.logger.exception('Critical exception in %s '
+                                      'response pipeline', self.connection)
+                self.connection.close()
+                break
+        # help gc
+        self.connection = None
+        self.queue = None
+        self.worker = None
+
+    def close(self):
+        self.worker.cancel()
+        return self.worker

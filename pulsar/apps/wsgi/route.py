@@ -52,10 +52,10 @@ Route
 import re
 from collections import namedtuple
 
-from pulsar import Http404
+from pulsar.api import Http404
 from pulsar.utils.httpurl import (iri_to_uri, remove_double_slash,
                                   ENCODE_URL_METHODS, ENCODE_BODY_METHODS)
-from pulsar.utils.pep import to_string
+from pulsar.utils.string import to_string
 from pulsar.utils.slugify import slugify
 
 
@@ -257,6 +257,7 @@ class Route:
 
     .. _werkzeug: https://github.com/mitsuhiko/werkzeug
     '''
+
     def __init__(self, rule, defaults=None, is_re=False):
         rule = remove_double_slash('/%s' % rule)
         self.defaults = defaults if defaults is not None else {}
@@ -407,7 +408,7 @@ class Route:
             rule = rule[:-1]
         if not rule:
             return Route('/'), None
-        bits = ('/'+rule).split('/')
+        bits = ('/' + rule).split('/')
         last = Route(bits[-1] if self.is_leaf else bits[-1] + '/')
         if len(bits) > 1:
             return Route('/'.join(bits[:-1]) + '/'), last
@@ -499,6 +500,7 @@ class NumberConverter(BaseConverter):
 
     :internal:
     """
+
     def __init__(self, fixed_digits=0, min=None, max=None):
         self.fixed_digits = fixed_digits
         self.min = min

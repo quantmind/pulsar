@@ -2,12 +2,16 @@
 import time
 import unittest
 
-from pulsar.utils.httpurl import (Headers, CacheControl,
+from pulsar.utils.lib import http_date
+from pulsar.utils.html import capfirst
+from pulsar.utils.httpurl import (CacheControl,
                                   urlquote, unquote_unreserved, requote_uri,
-                                  remove_double_slash, appendslash, capfirst,
-                                  encode_multipart_formdata, http_date,
+                                  remove_double_slash, appendslash,
+                                  encode_multipart_formdata,
                                   cookiejar_from_dict)
 from pulsar.apps.http import Auth, HTTPBasicAuth, HTTPDigestAuth
+
+from multidict import CIMultiDict
 
 
 class TestAuth(unittest.TestCase):
@@ -29,30 +33,33 @@ class TestAuth(unittest.TestCase):
         self.assertEqual(auth.options['realm'], 'fake realm')
 
     def test_CacheControl(self):
-        headers = Headers()
+        headers = CIMultiDict()
         c = CacheControl()
         self.assertFalse(c.private)
         self.assertFalse(c.maxage)
         c(headers)
-        self.assertEqual(headers['cache-control'], 'no-cache')
+        self.assertEqual(', '.join(headers.getall('cache-control')),
+                         'no-cache')
         c = CacheControl(maxage=3600)
         c(headers)
-        self.assertEqual(headers['cache-control'], 'max-age=3600, public')
+        self.assertEqual(', '.join(headers.getall('cache-control')),
+                         'max-age=3600, public')
         c = CacheControl(maxage=3600, private=True)
         c(headers)
-        self.assertEqual(headers['cache-control'], 'max-age=3600, private')
+        self.assertEqual(', '.join(headers.getall('cache-control')),
+                         'max-age=3600, private')
         c = CacheControl(maxage=3600, must_revalidate=True)
         c(headers)
-        self.assertEqual(headers['cache-control'],
+        self.assertEqual(', '.join(headers.getall('cache-control')),
                          'max-age=3600, public, must-revalidate')
         c = CacheControl(maxage=3600, proxy_revalidate=True)
         c(headers)
-        self.assertEqual(headers['cache-control'],
+        self.assertEqual(', '.join(headers.getall('cache-control')),
                          'max-age=3600, public, proxy-revalidate')
         c = CacheControl(maxage=3600, proxy_revalidate=True,
                          nostore=True)
         c(headers)
-        self.assertEqual(headers['cache-control'],
+        self.assertEqual(', '.join(headers.getall('cache-control')),
                          'no-store, no-cache, must-revalidate, max-age=0')
 
 

@@ -5,14 +5,9 @@ from base64 import b64encode
 from urllib.parse import urlparse
 
 from pulsar.utils.httpurl import (parse_dict_header, hexmd5, hexsha1,
-                                  to_string, DEFAULT_CHARSET)
+                                  to_string, CHARSET)
 
-from .plugins import request_again, noerror
-
-
-__all__ = ['Auth',
-           'HTTPBasicAuth',
-           'HTTPDigestAuth']
+from .plugins import request_again
 
 
 class Auth:
@@ -38,15 +33,15 @@ class HTTPBasicAuth(Auth):
     def type(self):
         return 'basic'
 
-    def __call__(self, response, exc=None):
+    def __call__(self, response, **kw):
         # pre_request event. Must return response instance!
         response.request.headers['Authorization'] = self.header()
         return response
 
     def header(self):
         b64 = b64encode(('%s:%s' % (
-            self.username, self.password)).encode(DEFAULT_CHARSET))
-        return 'Basic %s' % to_string(b64.strip(), DEFAULT_CHARSET)
+            self.username, self.password)).encode(CHARSET))
+        return 'Basic %s' % to_string(b64.strip(), CHARSET)
 
     def __repr__(self):
         return 'Basic: %s' % self.username
@@ -65,7 +60,7 @@ class HTTPDigestAuth(Auth):
     def type(self):
         return 'digest'
 
-    def __call__(self, response, exc=None):
+    def __call__(self, response, **kw):
         # pre_request event. Must return response instance!
         # If we have a saved nonce, skip the 401
         if self.last_nonce:
@@ -74,7 +69,7 @@ class HTTPDigestAuth(Auth):
                 self.encode(request.method, request.full_url)
         else:
             # add post request handler
-            response.bind_event('post_request', self.handle_401)
+            response.event('post_request').bind(self.handle_401)
         return response
 
     def __repr__(self):
@@ -125,7 +120,6 @@ class HTTPDigestAuth(Auth):
             base += ', qop=%s, nc=%s, cnonce="%s"' % (qop, ncvalue, cnonce)
         return 'Digest %s' % base
 
-    @noerror
     def handle_401(self, response, exc=None):
         """Takes the given response and tries digest-auth, if needed."""
         if response.status_code == 401:

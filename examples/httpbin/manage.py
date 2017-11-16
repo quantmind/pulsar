@@ -27,17 +27,15 @@ from itertools import repeat, chain
 from random import random
 from base64 import b64encode
 
-import pulsar
-from pulsar import (HttpRedirect, HttpException, version, JAPANESE, CHINESE,
-                    ensure_future)
-from pulsar.utils.httpurl import (Headers, ENCODE_URL_METHODS,
-                                  ENCODE_BODY_METHODS)
+from pulsar import version, JAPANESE, CHINESE, HINDI
+from pulsar.api import HttpRedirect, HttpException
+from pulsar.utils.httpurl import ENCODE_URL_METHODS, ENCODE_BODY_METHODS
 from pulsar.utils.html import escape
 from pulsar.apps import wsgi, ws
-from pulsar.apps.wsgi import (route, Html, Json, HtmlDocument, GZipMiddleware,
-                              String)
-from pulsar.utils.structures import MultiValueDict
+from pulsar.apps.wsgi import route, Html, HtmlDocument, GZipMiddleware, String
 from pulsar.utils.system import json
+
+from multidict import CIMultiDict, MultiDict
 
 METHODS = frozenset(chain((m.lower() for m in ENCODE_URL_METHODS),
                           (m.lower() for m in ENCODE_BODY_METHODS)))
@@ -55,16 +53,19 @@ def asset(name, mode='r'):
         return data
 
 
+def as_dict(m):
+    if isinstance(m, MultiDict):
+        return dict(((k, m.getall(k)) for k in m))
+    return m
+
+
 class BaseRouter(wsgi.Router):
     ########################################################################
     #    INTERNALS
-    def bind_server_event(self, request, event, handler):
-        consumer = request.environ['pulsar.connection'].current_consumer()
-        consumer.bind_event(event, handler)
 
     def info_data_response(self, request, **params):
         data = self.info_data(request, **params)
-        return Json(data).http_response(request)
+        return request.json_response(data)
 
     def info_data(self, request, **params):
         headers = self.getheaders(request)
@@ -72,35 +73,31 @@ class BaseRouter(wsgi.Router):
                 'headers': headers,
                 'pulsar': self.pulsar_info(request)}
         if request.method in ENCODE_URL_METHODS:
-            data['args'] = dict(request.url_data)
+            data['args'] = as_dict(request.url_data)
         else:
             args, files = request.data_and_files()
-            jfiles = MultiValueDict()
+            jfiles = MultiDict()
             if files:
-                for name, parts in files.lists():
-                    for part in parts:
-                        try:
-                            part = part.string()
-                        except UnicodeError:
-                            part = part.base64()
-                        jfiles[name] = part
-            if isinstance(args, MultiValueDict):
-                args = dict(args)
-
-            data.update((('args', args),
-                         ('files', dict(jfiles))))
+                for name, part in files.items():
+                    try:
+                        part = part.string()
+                    except UnicodeError:
+                        part = part.base64()
+                    jfiles.add(name, part)
+            data.update((('args', as_dict(args)),
+                         ('files', as_dict(jfiles))))
         data.update(params)
         return data
 
     def getheaders(self, request):
-        headers = Headers(kind='client')
+        headers = CIMultiDict()
         for k in request.environ:
             if k.startswith('HTTP_'):
                 headers[k[5:].replace('_', '-')] = request.environ[k]
         return dict(headers)
 
     def pulsar_info(self, request):
-        return request.get('pulsar.connection').info()
+        return request.cache.connection.info()
 
 
 class HttpBin(BaseRouter):
@@ -123,7 +120,7 @@ class HttpBin(BaseRouter):
         html.head.links.append('httpbin.css')
         html.head.links.append('favicon.ico', rel="icon", type='image/x-icon')
         html.head.scripts.append('httpbin.js')
-        ul = ul.render(request)
+        ul = ul.to_string(request)
         templ = asset('template.html')
         body = templ % (title, JAPANESE, CHINESE, version, pyversion, ul)
         html.body.append(body)
@@ -185,7 +182,7 @@ class HttpBin(BaseRouter):
     def cookies(self, request):
         cookies = request.cookies
         d = dict(((c.key, c.value) for c in cookies.values()))
-        return Json({'cookies': d}).http_response(request)
+        return request.json_response({'cookies': d})
 
     @route('cookies/set/<name>/<value>', title='Sets a simple cookie',
            defaults={'name': 'package', 'value': 'pulsar'})
@@ -210,16 +207,21 @@ class HttpBin(BaseRouter):
         class Gen:
             headers = None
 
-            def __call__(self, server, **kw):
-                self.headers = server.headers
+            def __call__(self, server, data=None):
+                headers = {}
+                for hv in bytes(data).decode('utf-8').split('\r\n'):
+                    hv = hv.split(':')
+                    if len(hv) >= 2:
+                        headers[hv[0].strip()] = (':'.join(hv[1:])).strip()
+                self.headers = json.dumps(headers).encode('utf-8')
 
             def generate(self):
                 # yield a byte so that headers are sent
                 yield b''
                 # we must have the headers now
-                yield json.dumps(dict(self.headers))
+                yield self.headers
         gen = Gen()
-        self.bind_server_event(request, 'on_headers', gen)
+        request.cache.event('on_headers').bind(gen)
         request.response.content = gen.generate()
         request.response.content_type = 'application/json'
         return request.response
@@ -230,8 +232,8 @@ class HttpBin(BaseRouter):
     def challenge_auth(self, request):
         auth = request.get('http.authorization')
         if auth and auth.authenticated(request.environ, **request.urlargs):
-            return Json({'authenticated': True,
-                         'username': auth.username}).http_response(request)
+            return request.json_response({'authenticated': True,
+                                          'username': auth.username})
         raise wsgi.HttpAuthenticate('basic')
 
     @route('digest-auth/<username>/<password>/<qop>',
@@ -242,8 +244,8 @@ class HttpBin(BaseRouter):
     def challenge_digest_auth(self, request):
         auth = request.get('http.authorization')
         if auth and auth.authenticated(request.environ, **request.urlargs):
-            return Json({'authenticated': True,
-                         'username': auth.username}).http_response(request)
+            return request.json_response({'authenticated': True,
+                                          'username': auth.username})
         raise wsgi.HttpAuthenticate('digest', qop=[request.urlargs['qop']])
 
     @route('stream/<int(min=1):m>/<int(min=1):n>',
@@ -298,17 +300,17 @@ class HttpBin(BaseRouter):
     def get_pulsar(self, request):
         data = [
             'pulsar',
-            pulsar.JAPANESE,
-            pulsar.CHINESE,
-            pulsar.HINDI
+            JAPANESE,
+            CHINESE,
+            HINDI
         ]
-        return Json(data).http_response(request)
+        return request.json_response(data)
 
     ########################################################################
     #    BENCHMARK ROUTES
     @route()
     def json(self, request):
-        return Json({'message': "Hello, World!"}).http_response(request)
+        return request.json_response({'message': "Hello, World!"})
 
     @route()
     def plaintext(self, request):
@@ -318,24 +320,21 @@ class HttpBin(BaseRouter):
 class Upload(BaseRouter):
     response_content_types = ['multipart/form-data']
 
-    def put(self, request):
-        return ensure_future(self._async_put(request))
-
-    async def _async_put(self, request):
+    async def put(self, request):
         headers = self.getheaders(request)
         data = {'method': request.method,
                 'headers': headers,
                 'pulsar': self.pulsar_info(request),
-                'args': MultiValueDict(),
-                'files': MultiValueDict()}
+                'args': MultiDict(),
+                'files': MultiDict()}
         request.cache.response_data = data
         await request.data_and_files(stream=partial(self.stream, request))
-        data['args'] = dict(data['args'])
-        data['files'] = dict(data['files'])
-        return Json(data).http_response(request)
+        data['args'] = as_dict(data['args'])
+        data['files'] = as_dict(data['files'])
+        return request.json_response(data)
 
     def stream(self, request, part):
-        if request.cache.current_data is not part:
+        if request.cache.get('current_data') is not part:
             request.cache.current_data = part
             request.cache.current_data_buffer = []
 
@@ -352,7 +351,7 @@ class Upload(BaseRouter):
                 except UnicodeError:
                     data = b64encode(data)
 
-            store[part.name] = data.decode('utf-8')
+            store.add(part.name, data.decode('utf-8'))
 
 
 class ExpectFail(BaseRouter):

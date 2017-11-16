@@ -1,4 +1,4 @@
-'''This example is a simple WSGI_ script which displays
+"""This example is a simple WSGI_ script which displays
 the ``Hello World!`` message. To run the script type::
 
     python manage.py
@@ -12,8 +12,8 @@ To see all options available type::
 .. autofunction:: server
 
 .. _WSGI: http://www.python.org/dev/peps/pep-3333/
-'''
-from pulsar import MethodNotAllowed
+"""
+from pulsar.api import MethodNotAllowed
 from pulsar.apps import wsgi
 
 

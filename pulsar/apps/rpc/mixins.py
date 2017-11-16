@@ -1,10 +1,6 @@
-import pulsar
-from pulsar import isawaitable
+from pulsar.api import send
 
 from .jsonrpc import JSONRPC
-
-
-__all__ = ['PulsarServerCommands']
 
 
 class PulsarServerCommands(JSONRPC):
@@ -25,10 +21,12 @@ class PulsarServerCommands(JSONRPC):
         It invokes the :meth:`extra_server_info` for adding custom
         information.
         '''
-        info = await pulsar.send('arbiter', 'info')
+        info = await send('arbiter', 'info')
         info = self.extra_server_info(request, info)
-        if isawaitable(info):
+        try:
             info = await info
+        except TypeError:
+            pass
         return info
 
     def rpc_functions_list(self, request):
@@ -42,7 +40,7 @@ class PulsarServerCommands(JSONRPC):
 
     def rpc_kill_actor(self, request, aid):
         '''Kill the actor with id equal to *aid*.'''
-        return pulsar.send('arbiter', 'kill_actor', aid)
+        return send('arbiter', 'kill_actor', aid)
 
     def extra_server_info(self, request, info):
         '''An internal method.

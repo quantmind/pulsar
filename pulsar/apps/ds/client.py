@@ -1,9 +1,9 @@
 import time
-from functools import partial
+from collections import OrderedDict
 
-import pulsar
-from pulsar.utils.structures import OrderedDict
-from pulsar.utils.pep import to_string
+from .parser import redis_parser
+from ...utils.string import to_string
+from ...utils.lib import ProtocolConsumer
 
 from .parser import CommandError
 
@@ -41,10 +41,17 @@ class command:
         return f
 
 
-class ClientMixin:
+class PulsarStoreClient(ProtocolConsumer):
 
-    def __init__(self, store):
-        self.store = store
+    def start_request(self):
+        self.cfg = self.producer.cfg
+        self.store = self.producer.store()
+        self.parser = redis_parser()
+        self.started = time.time()
+        self.channels = set()
+        self.patterns = set()
+        self.watched_keys = None
+        self.password = b''
         self.database = 0
         self.transaction = None
         self.last_command = ''
@@ -72,10 +79,10 @@ class ClientMixin:
                 return self.reply_error('Blocked client cannot request')
             if self.transaction is not None and command not in 'exec':
                 self.transaction.append((handle, request))
-                return self._transport.write(self.store.QUEUED)
-        self._execute_command(handle, request)
+                return self.connection.write(self.store.QUEUED)
+        self.execute_command(handle, request)
 
-    def _execute_command(self, handle, request):
+    def execute_command(self, handle, request):
         try:
             if request:
                 command = request[0]
@@ -99,54 +106,6 @@ class ClientMixin:
         finally:
             self.last_command = command
 
-    def reply_ok(self):
-        raise NotImplementedError
-
-    def reply_status(self, status):
-        raise NotImplementedError
-
-    def reply_error(self, value, prefix=None):
-        raise NotImplementedError
-
-    def reply_wrongtype(self):
-        raise NotImplementedError
-
-    def reply_int(self, value):
-        raise NotImplementedError
-
-    def reply_one(self):
-        raise NotImplementedError
-
-    def reply_zero(self):
-        raise NotImplementedError
-
-    def reply_bulk(self, value):
-        raise NotImplementedError
-
-    def reply_multi_bulk(self, value):
-        raise NotImplementedError
-
-    def reply_multi_bulk_len(self, len):
-        raise NotImplementedError
-
-
-class PulsarStoreClient(pulsar.Protocol, ClientMixin):
-    '''Used both by client and server'''
-
-    def __init__(self, cfg, *args, **kw):
-        super().__init__(*args, **kw)
-        ClientMixin.__init__(self, self._producer._key_value_store)
-        self.cfg = cfg
-        self.parser = self._producer._parser_class()
-        self.started = time.time()
-        self.channels = set()
-        self.patterns = set()
-        self.watched_keys = None
-        self.password = b''
-        self.bind_event('connection_lost',
-                        partial(self.store._remove_connection, self))
-
-    # Client Mixin Implementation
     def reply_ok(self):
         self._write(self.store.OK)
 
@@ -184,7 +143,7 @@ class PulsarStoreClient(pulsar.Protocol, ClientMixin):
         self._write(self.store._parser.multi_bulk_len(value))
 
     # Protocol Implementaton
-    def data_received(self, data):
+    def feed_data(self, data):
         self.parser.feed(data)
         request = self.parser.get()
         while request is not False:
@@ -197,8 +156,8 @@ class PulsarStoreClient(pulsar.Protocol, ClientMixin):
     def _write(self, response):
         if self.transaction is not None:
             self.transaction.append(response)
-        elif not self._transport._closing:
-            self._transport.write(response)
+        else:
+            self.connection.write(response)
 
 
 class Blocked:

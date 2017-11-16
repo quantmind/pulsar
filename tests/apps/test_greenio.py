@@ -2,7 +2,7 @@ import unittest
 import asyncio
 from unittest import mock
 
-from pulsar import Future, send, get_event_loop
+from pulsar.api import send, create_future
 from pulsar.apps import wsgi
 
 from examples.echo.manage import server, Echo
@@ -33,8 +33,7 @@ class TestGreenIO(unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
-                   concurrency=cls.cfg.concurrency)
+        s = server(name=cls.__name__.lower(), bind='127.0.0.1:0')
         cls.server_cfg = await send('arbiter', 'run', s)
         cls.client = EchoGreen(cls.server_cfg.addresses[0])
 
@@ -50,10 +49,10 @@ class TestGreenIO(unittest.TestCase):
     async def test_pool(self):
         pool = greenio.GreenPool()
         self.assertTrue(pool._loop)
-        self.assertEqual(pool._loop, get_event_loop())
+        self.assertEqual(pool._loop, asyncio.get_event_loop())
         self.assertFalse(pool._greenlets)
         future = pool.submit(lambda: 'Hi!')
-        self.assertIsInstance(future, Future)
+        self.assertIsInstance(future, asyncio.Future)
         result = await future
         self.assertEqual(result, 'Hi!')
         self.assertEqual(len(pool._greenlets), 1)
@@ -73,7 +72,8 @@ class TestGreenIO(unittest.TestCase):
     async def test_error_in_pool(self):
         # Test an error
         pool = greenio.GreenPool()
-        await self.wait.assertRaises(RuntimeError, pool.submit, raise_error)
+        with self.assertRaises(RuntimeError):
+            await pool.submit(raise_error)
         self.assertEqual(len(pool._greenlets), 1)
         self.assertEqual(len(pool._available), 1)
 
@@ -132,7 +132,7 @@ class TestGreenIO(unittest.TestCase):
         child = greenio.greenlet(_test_lock)
         future = child.switch(lock)
 
-        self.assertIsInstance(future, Future)
+        self.assertIsInstance(future, asyncio.Future)
         self.assertEqual(lock.locked(), green)
 
         # release the lock
@@ -165,11 +165,11 @@ class TestGreenIO(unittest.TestCase):
         http = greenio.GreenHttp()
         response = http.get('http://quantmind.com')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.text())
+        self.assertTrue(response.text)
 
 
 async def async_function(test):
-    future = asyncio.Future()
+    future = create_future()
     future._loop.call_later(1, future.set_result, True)
     result = await future
     test.assertEqual(result, True)

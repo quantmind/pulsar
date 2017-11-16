@@ -1,8 +1,7 @@
-from pulsar import Http404, isawaitable
+from pulsar.api import Http404
 from pulsar.utils.log import LocalMixin, local_method
 
 from .utils import handle_wsgi_error
-from .wrappers import WsgiResponse
 
 
 class WsgiHandler:
@@ -43,8 +42,11 @@ class WsgiHandler:
         try:
             for middleware in self.middleware:
                 response = middleware(environ, start_response)
-                if isawaitable(response):
-                    response = await response
+                if response:
+                    try:
+                        response = await response
+                    except TypeError:
+                        pass
                 if response is not None:
                     break
             if response is None:
@@ -53,12 +55,16 @@ class WsgiHandler:
         except Exception as exc:
             response = handle_wsgi_error(environ, exc)
 
-        if isinstance(response, WsgiResponse) and not response.started:
+        if not getattr(response, '__wsgi_started__', True):
             for middleware in self.response_middleware:
-                response = middleware(environ, response) or response
-                if isawaitable(response):
-                    response = await response
-            response.start(start_response)
+                result = middleware(environ, response)
+                if result:
+                    try:
+                        response = await result
+                    except TypeError:
+                        response = result
+
+            response.start(environ, start_response)
         return response
 
     def _sync_call(self, environ, start_response):
@@ -74,10 +80,10 @@ class WsgiHandler:
         except Exception as exc:
             response = handle_wsgi_error(environ, exc)
 
-        if isinstance(response, WsgiResponse) and not response.started:
+        if not getattr(response, '__wsgi_started__', True):
             for middleware in self.response_middleware:
                 response = middleware(environ, response) or response
-            response.start(start_response)
+            response.start(environ, start_response)
         return response
 
 
@@ -92,7 +98,9 @@ class LazyWsgi(LocalMixin):
     causing serialisation issues.
     '''
     def __call__(self, environ, start_response):
-        return self.handler(environ)(environ, start_response)
+        if not hasattr(self, '_local'):
+            return self.handler(environ)(environ, start_response)
+        return self._local.handler(environ, start_response)
 
     @local_method
     def handler(self, environ=None):

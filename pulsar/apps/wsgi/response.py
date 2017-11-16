@@ -28,9 +28,8 @@ AccessControl
 
 '''
 import re
+from io import BytesIO
 from gzip import GzipFile
-
-from pulsar.utils.httpurl import BytesIO
 
 
 re_accepts_gzip = re.compile(r'\bgzip\b')
@@ -100,34 +99,30 @@ http://jython.xhaus.com/http-compression-in-python-and-jython
 
     def available(self, environ, response):
         # It's not worth compressing non-OK or really short responses
-        try:
-            if response.status_code == 200 and not response.is_streamed:
-                if response.length() < self.min_length:
+        if response.status_code == 200:
+            if (response.length() or 0) < self.min_length:
+                return False
+            headers = response.headers
+            ctype = headers.get('Content-Type', '').lower()
+            # Avoid gzipping if we've already got a content-encoding.
+            if 'Content-Encoding' in headers:
+                return False
+            # MSIE have issues with gzipped response of various
+            # content types.
+            if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
+                if not ctype.startswith("text/") or "javascript" in ctype:
                     return False
-                headers = response.headers
-                ctype = headers.get('Content-Type', '').lower()
-                # Avoid gzipping if we've already got a content-encoding.
-                if 'Content-Encoding' in headers:
-                    return False
-                # MSIE have issues with gzipped response of various
-                # content types.
-                if "msie" in environ.get('HTTP_USER_AGENT', '').lower():
-                    if not ctype.startswith("text/") or "javascript" in ctype:
-                        return False
-                ae = environ.get('HTTP_ACCEPT_ENCODING', '')
-                if not re_accepts_gzip.search(ae):
-                    return False
-                if re_media_type.match(ctype):
-                    return False
-                return True
-        except Exception:
-            raise
+            ae = environ.get('HTTP_ACCEPT_ENCODING', '')
+            if not re_accepts_gzip.search(ae):
+                return False
+            if re_media_type.match(ctype):
+                return False
+            return True
 
     def execute(self, environ, response):
         headers = response.headers
-        headers.add_header('Vary', 'Accept-Encoding')
-        content = b''.join(response.content)
-        response.content = (self.compress_string(content),)
+        headers.add('Vary', 'Accept-Encoding')
+        response.content = self.compress_string(b''.join(response.content))
         response.headers['Content-Encoding'] = 'gzip'
 
     def compress_string(self, s):

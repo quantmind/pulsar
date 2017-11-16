@@ -1,6 +1,6 @@
 import asyncio
 
-from pulsar import create_future
+from pulsar.api import create_future
 from pulsar.apps.data.channels import StatusType, Json
 
 

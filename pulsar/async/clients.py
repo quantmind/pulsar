@@ -1,18 +1,16 @@
 import logging
 from functools import reduce
+import asyncio
+
+from async_timeout import timeout
 
 from pulsar.utils.internet import is_socket_closed
 
-import asyncio
-
-from .futures import AsyncObject
+from .futures import AsyncObject, Bench
 from .protocols import Producer
 
 
-__all__ = ['Pool', 'PoolConnection', 'AbstractClient', 'AbstractUdpClient']
-
-
-logger = logging.getLogger('pulsar.pool')
+logger = logging.getLogger('pulsar.clients')
 
 
 class Pool(AsyncObject):
@@ -107,7 +105,9 @@ class Pool(AsyncObject):
             while queue.qsize():
                 connection = queue.get_nowait()
                 if connection:
-                    waiters.append(connection.close())
+                    closed = connection.close()
+                    if closed:
+                        waiters.append(closed)
             in_use = self._in_use_connections
             self._in_use_connections = set()
             for connection in in_use:
@@ -123,8 +123,8 @@ class Pool(AsyncObject):
             connection = queue.get_nowait()
         # wait for one to be available
         elif self.in_use + self._connecting >= queue._maxsize:
-            connection = await asyncio.wait_for(queue.get(), self._timeout,
-                                                loop=self._loop)
+            with timeout(self._timeout, loop=self._loop):
+                connection = await queue.get()
         else:   # must create a new connection
             self._connecting += 1
             try:
@@ -204,7 +204,7 @@ class PoolConnection:
             conn, self.connection = self.connection, None
             return conn
 
-    def detach(self, discard=True):
+    async def detach(self, discard=True):
         '''Remove the underlying :attr:`connection` from the connection
         :attr:`pool`.
         '''
@@ -214,10 +214,10 @@ class PoolConnection:
             self.connection._exit_ = False
             return self
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, type, value, traceback):
+    async def __aexit__(self, type, value, traceback):
         if getattr(self.connection, '_exit_', True):
             self.close()
         else:
@@ -252,37 +252,27 @@ class ClientMixin:
 
 
 class AbstractClient(Producer, ClientMixin):
-    '''A :class:`.Producer` for a client connections.
-    '''
+    """A :class:`.Producer` for client connections.
+    """
     def connect(self):
         '''Abstract method for creating a connection.
         '''
         raise NotImplementedError
 
-    async def create_connection(self, address, protocol_factory=None, **kw):
-        '''Helper method for creating a connection to an ``address``.
-        '''
+    async def create_connection(self, address=None, protocol_factory=None,
+                                **kwargs):
+        """Helper method for creating a connection to an ``address``.
+        """
+        loop = self._loop
         protocol_factory = protocol_factory or self.create_protocol
         if isinstance(address, tuple):
-            host, port = address
-            if self.debug:
-                self.logger.debug('Create connection %s:%s', host, port)
-            _, protocol = await self._loop.create_connection(
-                protocol_factory, host, port, **kw)
-            await protocol.event('connection_made')
-        else:
-            raise NotImplementedError('Could not connect to %s' %
-                                      str(address))
+            kwargs['host'] = address[0]
+            kwargs['port'] = address[1]
+        _, protocol = await loop.create_connection(protocol_factory, **kwargs)
+        event = protocol.event('connection_made')
+        if not event.fired():
+            await event.waiter()
         return protocol
-
-
-class AbstractUdpClient(Producer, ClientMixin):
-    '''A :class:`.Producer` for a client udp connections.
-    '''
-    def create_endpoint(self):
-        '''Abstract method for creating the endpoint
-        '''
-        raise NotImplementedError
 
     async def create_datagram_endpoint(self, protocol_factory=None, **kw):
         '''Helper method for creating a connection to an ``address``.
@@ -290,5 +280,24 @@ class AbstractUdpClient(Producer, ClientMixin):
         protocol_factory = protocol_factory or self.create_protocol
         _, protocol = await self._loop.create_datagram_endpoint(
             protocol_factory, **kw)
-        await protocol.event('connection_made')
+        event = protocol.event('connection_made')
+        if not event.fired():
+            await event.waiter()
         return protocol
+
+    def timeit(self, method, times, *args, **kwargs):
+        '''Useful utility for benchmarking an asynchronous ``method``.
+
+        :param method: the name of the ``method`` to execute
+        :param times: number of times to execute the ``method``
+        :param args: positional arguments to pass to the ``method``
+        :param kwargs: key-valued arguments to pass to the ``method``
+        :return: a :class:`~asyncio.Future` which results in a :class:`Bench`
+            object if successful
+
+        The usage is simple::
+
+            >>> b = self.timeit('asyncmethod', 100)
+        '''
+        bench = Bench(times, loop=self._loop)
+        return bench(getattr(self, method), *args, **kwargs)

@@ -8,12 +8,18 @@ from urllib.parse import parse_qs
 from base64 import b64encode
 from functools import reduce
 from cgi import valid_boundary, parse_header
+from inspect import isawaitable
+from asyncio import ensure_future
+from typing import Dict, Callable
 
-from pulsar import HttpException, BadRequest, isawaitable, ensure_future
+from multidict import MultiDict
+
+from pulsar.api import HttpException, BadRequest
 from pulsar.utils.system import convert_bytes
-from pulsar.utils.structures import MultiValueDict, mapping_iterator
-from pulsar.utils.httpurl import (DEFAULT_CHARSET, ENCODE_BODY_METHODS,
+from pulsar.utils.structures import mapping_iterator
+from pulsar.utils.httpurl import (CHARSET, ENCODE_BODY_METHODS,
                                   JSON_CONTENT_TYPES, parse_options_header)
+from .headers import CONTENT_LENGTH
 
 
 FORM_ENCODED_TYPES = ('application/x-www-form-urlencoded',
@@ -24,51 +30,36 @@ LARGE_BODY_CODE = 403
 
 
 def http_protocol(parser):
-    version = parser.get_version()
-    return "HTTP/%s" % ".".join(('%s' % v for v in version))
+    return "HTTP/%s" % parser.get_http_version()
 
 
 class HttpBodyReader:
-    _expect_sent = None
-    _waiting = None
+    """Asynchronous body reader and parser
 
-    def __init__(self, headers, parser, transport, limit, **kw):
-        self.headers = headers
-        self.parser = parser
+    An instance of this class is injected into the wsgi.input key
+    of the WSGI environment
+    """
+    def __init__(self, transport, limit, environ):
         self.limit = limit
-        self.reader = asyncio.StreamReader(**kw)
+        self.transport = transport
+        self.reader = asyncio.StreamReader()
         self.reader.set_transport(transport)
         self.feed_data = self.reader.feed_data
         self.feed_eof = self.reader.feed_eof
-
-    def waiting_expect(self):
-        '''``True`` when the client is waiting for 100 Continue.
-        '''
-        if self._expect_sent is None:
-            if (not self.reader.at_eof() and
-                    self.headers.has('expect', '100-continue')):
-                return True
-            self._expect_sent = ''
-        return False
-
-    def can_continue(self):
-        if self.waiting_expect():
-            if self.parser.get_version() < (1, 1):
-                raise HttpException(status=417)
-            else:
-                msg = '%s 100 Continue\r\n\r\n' % http_protocol(self.parser)
-                self._expect_sent = msg
-                self.reader._transport.write(msg.encode(DEFAULT_CHARSET))
+        self.environ = environ
+        self._expect_sent = None
+        self._waiting = None
 
     def fail(self):
-        if self.waiting_expect():
+        if self._waiting_expect():
             raise HttpException(status=417)
 
     def read(self, n=-1):
-        self.can_continue()
+        self._can_continue()
         return self.reader.read(n=n)
 
     async def readline(self):
+        self._can_continue()
         try:
             line = await self.reader.readuntil(b'\n')
         except asyncio.streams.LimitOverrunError as exc:
@@ -78,12 +69,31 @@ class HttpBodyReader:
         return line
 
     def readexactly(self, n):
-        self.can_continue()
+        self._can_continue()
         return self.reader.readexactly(n)
 
+    def _waiting_expect(self):
+        '''``True`` when the client is waiting for 100 Continue.
+        '''
+        if self._expect_sent is None:
+            if self.environ.get('HTTP_EXPECT', '').lower() == '100-continue':
+                return True
+            self._expect_sent = ''
+        return False
 
-def parse_form_data(environ, stream=None, **kw):
-    '''Parse form data from an environ dict and return a (forms, files) tuple.
+    def _can_continue(self):
+        if self._waiting_expect():
+            protocol = self.environ.get('SERVER_PROTOCOL')
+            if protocol == 'HTTP/1.0':
+                raise HttpException(status=417)
+            else:
+                msg = '%s 100 Continue\r\n\r\n' % protocol
+                self._expect_sent = msg
+                self.transport.write(msg.encode(CHARSET))
+
+
+def parse_form_data(request, stream=None, **kw):
+    '''Parse form data from an request and return a (forms, files) tuple.
 
     Both tuple values are dictionaries with the form-field name as a key
     (unicode) and lists as values (multiple values per key are possible).
@@ -92,17 +102,16 @@ def parse_form_data(environ, stream=None, **kw):
     because the form-field was a file-upload or the value is to big to fit
     into memory limits.
 
-    :parameter environ: A WSGI environment dict.
+    :parameter request: Request object (WSGI environ wrapper).
     :parameter stream: Optional callable accepting one parameter only, the
         instance of :class:`FormDecoder` being parsed. If provided, the
         callable is invoked when data or partial data has been successfully
         parsed.
     '''
-    method = environ.get('REQUEST_METHOD', 'GET').upper()
-    if method not in ENCODE_BODY_METHODS:
+    if request.method not in ENCODE_BODY_METHODS:
         raise HttpException(status=422)
 
-    content_type = environ.get('CONTENT_TYPE')
+    content_type = request.get('CONTENT_TYPE')
     if content_type:
         content_type, options = parse_options_header(content_type)
         options.update(kw)
@@ -110,52 +119,58 @@ def parse_form_data(environ, stream=None, **kw):
         options = kw
 
     if content_type == 'multipart/form-data':
-        decoder = MultipartDecoder(environ, options, stream)
+        decoder = MultipartDecoder(request, options, stream)
     elif content_type in FORM_ENCODED_TYPES:
-        decoder = UrlEncodedDecoder(environ, options, stream)
+        decoder = UrlEncodedDecoder(request, options, stream)
     elif content_type in JSON_CONTENT_TYPES:
-        decoder = JsonDecoder(environ, options, stream)
+        decoder = JsonDecoder(request, options, stream)
     else:
-        decoder = BytesDecoder(environ, options, stream)
+        decoder = BytesDecoder(request, options, stream)
 
     return decoder.parse()
 
 
 class FormDecoder:
-
-    def __init__(self, environ, options, stream):
-        self.environ = environ
+    """Base class for decoding HTTP body data
+    """
+    def __init__(self, request, options: Dict, stream: Callable) -> None:
+        self.request = request
         self.options = options
         self.stream = stream
-        self.limit = environ['pulsar.cfg'].stream_buffer
-        self.result = (MultiValueDict(), MultiValueDict())
+        self.limit = request.cache.cfg.stream_buffer
+        self.result = (MultiDict(), MultiDict())
 
     @property
     def content_length(self):
-        return int(self.environ.get('CONTENT_LENGTH', -1))
+        return int(self.request.get('CONTENT_LENGTH', -1))
 
     @property
     def charset(self):
         return self.options.get('charset', 'utf-8')
 
     def parse(self):
+        """Parse data
+        """
         raise NotImplementedError
 
 
 class MultipartDecoder(FormDecoder):
-    boundary = None
+    buffer = None
+
+    @property
+    def boundary(self):
+        return self.options.get('boundary', '')
 
     def parse(self):
-        boundary = self.options.get('boundary', '')
+        boundary = self.boundary
         if not valid_boundary(boundary):
             raise HttpException("Invalid boundary for multipart/form-data",
                                 status=422)
-        inp = self.environ.get('wsgi.input') or BytesIO()
+        inp = self.request.get('wsgi.input') or BytesIO()
         self.buffer = bytearray()
 
         if isinstance(inp, HttpBodyReader):
-            return ensure_future(self._consume(inp, boundary),
-                                 loop=inp.reader._loop)
+            return self._consume(inp, boundary)
         else:
             producer = BytesProducer(inp)
             return producer(self._consume, boundary)
@@ -194,7 +209,7 @@ class MultipartDecoder(FormDecoder):
             if current:
                 current.done()
 
-        self.environ['wsgi.input'] = BytesIO(self.buffer)
+        self.request.environ['wsgi.input'] = BytesIO(self.buffer)
         return self.result
 
 
@@ -203,7 +218,7 @@ class BytesDecoder(FormDecoder):
     def parse(self, mem_limit=None, **kw):
         if self.content_length > self.limit:
             raise_large_body_error(self.limit)
-        inp = self.environ.get('wsgi.input') or BytesIO()
+        inp = self.request.get('wsgi.input') or BytesIO()
         data = inp.read()
 
         if isawaitable(data):
@@ -216,7 +231,7 @@ class BytesDecoder(FormDecoder):
         return self._ready(chunk)
 
     def _ready(self, data):
-        self.environ['wsgi.input'] = BytesIO(data)
+        self.request.environ['wsgi.input'] = BytesIO(data)
         self.result = (data, None)
         return self.result
 
@@ -224,20 +239,20 @@ class BytesDecoder(FormDecoder):
 class UrlEncodedDecoder(BytesDecoder):
 
     def _ready(self, data):
-        self.environ['wsgi.input'] = BytesIO(data)
+        self.request.environ['wsgi.input'] = BytesIO(data)
         charset = self.charset
         data = parse_qs(data.decode(charset), keep_blank_values=True)
         forms = self.result[0]
         for key, values in mapping_iterator(data):
             for value in values:
-                forms[key] = value
+                forms.add(key, value)
         return self.result
 
 
 class JsonDecoder(BytesDecoder):
 
     def _ready(self, data):
-        self.environ['wsgi.input'] = BytesIO(data)
+        self.request.environ['wsgi.input'] = BytesIO(data)
         try:
             self.result = (json.loads(data.decode(self.charset)), None)
         except Exception as exc:
@@ -254,7 +269,7 @@ class MultipartPart:
         self.headers = headers
         self._bytes = []
         self._done = False
-        length = headers.get('content-length')
+        length = headers.get(CONTENT_LENGTH)
         content = headers.get('content-disposition')
         if length:
             try:
@@ -305,6 +320,7 @@ class MultipartPart:
         return self._done
 
     def feed_data(self, data):
+        """Feed new data into the MultiPart parser or the data stream"""
         if data:
             self._bytes.append(data)
             if self.parser.stream:
@@ -341,9 +357,9 @@ class MultipartPart:
                 self.parser.stream(self)
 
             if self.is_file():
-                self.parser.result[1][self.name] = self
+                self.parser.result[1].add(self.name, self)
             else:
-                self.parser.result[0][self.name] = self.string()
+                self.parser.result[0].add(self.name, self.string())
 
 
 async def parse_headers(fp, _class=HTTPMessage):

@@ -2,7 +2,7 @@
 import os
 import unittest
 
-from pulsar import get_application
+from pulsar.api import get_application
 from pulsar.utils.system import platform
 
 
@@ -80,4 +80,4 @@ class TestTestLoader(unittest.TestCase):
     async def test_load_http(self):
         app = await get_application('test')
         modules = dict(app.loader.test_files(['http']))
-        self.assertEqual(len(modules), 10)
+        self.assertEqual(len(modules), 8)

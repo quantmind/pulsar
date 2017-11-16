@@ -1,4 +1,4 @@
-'''
+"""
 
 .. contents::
     :local:
@@ -82,18 +82,21 @@ RouterParam
    :member-order: bysource
 
 .. _WSGI: http://www.wsgi.org
-'''
+"""
 import os
 import re
 import stat
 import mimetypes
+from collections import OrderedDict
+from functools import partial, lru_cache
+
 from email.utils import parsedate_tz, mktime_tz
 
-from pulsar.utils.httpurl import http_date, CacheControl
-from pulsar.utils.structures import OrderedDict
+from pulsar.utils.httpurl import CacheControl
 from pulsar.utils.slugify import slugify
 from pulsar.utils.security import digest
-from pulsar import Http404, MethodNotAllowed
+from pulsar.utils.lib import http_date
+from pulsar.api import Http404, MethodNotAllowed
 
 from .route import Route
 from .utils import wsgi_request
@@ -129,6 +132,15 @@ def _get_default(parent, name):
 
 class SkipRoute(Exception):
     pass
+
+
+class Handler:
+    __slots__ = ('router', 'handler', 'urlargs')
+
+    def __init__(self, router, handler, urlargs):
+        self.router = router
+        self.handler = handler
+        self.urlargs = urlargs
 
 
 class RouterParam:
@@ -264,6 +276,25 @@ class Router(metaclass=RouterType):
             self.add_child(self.make_router(rule, method=method,
                                             handler=handler, **rparameters))
 
+    def router(self, rule, methods=['get']):
+        '''Map a function to :class:`Router` and add to the :attr:`routes` list.
+
+        Typical usage:
+
+        app = Router('/')
+
+        @app.router('/hello', methods=['post'])
+        def world(request):
+            return wsgi.WsgiResponse(200, 'world')
+        '''
+        def handler(fn):
+            for method in methods:
+                self.add_child(
+                    self.make_router(rule, method.lower(), fn,
+                                     name=fn.__name__))
+            return fn
+        return handler
+
     @property
     def route(self):
         '''The relative :class:`.Route` served by this
@@ -364,17 +395,20 @@ class Router(metaclass=RouterType):
         return self.full_route.__repr__()
 
     def __call__(self, environ, start_response=None):
-        path = environ.get('PATH_INFO') or '/'
-        path = path[1:]
-        router_args = self.resolve(path)
-        if router_args:
-            router, args = router_args
+        hnd = self.resolve(environ['PATH_INFO'] or '/',
+                           environ['REQUEST_METHOD'])
+        if hnd:
             try:
-                return router.response(environ, args)
-            except SkipRoute:
+                request = wsgi_request(environ, hnd.router, hnd.urlargs)
+                return hnd.handler(request)
+            except self.SkipRoute:
                 pass
 
-    def resolve(self, path, urlargs=None):
+    @lru_cache(maxsize=1024)
+    def resolve(self, url, method):
+        return self._resolve(url[1:], method.lower())
+
+    def _resolve(self, path, method, urlargs=None):
         '''Resolve a path and return a ``(handler, urlargs)`` tuple or
         ``None`` if the path could not be resolved.
         '''
@@ -386,33 +420,21 @@ class Router(metaclass=RouterType):
             path = match.pop('__remaining__')
             urlargs = update_args(urlargs, match)
         else:
-            return self, update_args(urlargs, match)
+            handler = getattr(self, method, None)
+            if handler is None:
+                raise MethodNotAllowed
+            response_wrapper = self.response_wrapper
+            if response_wrapper:
+                handler = partial(response_wrapper, handler)
+            return Handler(self, handler, update_args(urlargs, match))
         #
         for handler in self.routes:
-            view_args = handler.resolve(path, urlargs)
+            view_args = handler._resolve(path, method, urlargs)
             if view_args is None:
                 continue
             return view_args
 
-    def response(self, environ, args):
-        '''Once the :meth:`resolve` method has matched the correct
-        :class:`Router` for serving the request, this matched router invokes
-        this method to produce the WSGI response.
-        '''
-        request = wsgi_request(environ, self, args)
-        method = request.method.lower()
-        request.set_response_content_type(self.response_content_types)
-
-        callable = getattr(self, method, None)
-        if callable is None:
-            raise MethodNotAllowed
-
-        response_wrapper = self.response_wrapper
-        if response_wrapper:
-            return response_wrapper(callable, request)
-        return callable(request)
-
-    def add_child(self, router, index=None):
+    def add_route(self, router, index=None):
         '''Add a new :class:`Router` to the :attr:`routes` list.
         '''
         assert isinstance(router, Router), 'Not a valid Router'
@@ -434,6 +456,7 @@ class Router(metaclass=RouterType):
         else:
             self.routes.insert(index, router)
         return router
+    add_child = add_route
 
     def remove_child(self, router):
         '''remove a :class:`Router` from the :attr:`routes` list.'''

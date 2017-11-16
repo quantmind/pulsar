@@ -60,13 +60,15 @@ By default, the list of hooks only contains a callback to start the
 """
 import os
 import sys
-from inspect import getfile
+from inspect import getfile, isawaitable
 from functools import partial
 from collections import namedtuple, OrderedDict
 import asyncio
 
-import pulsar
-from pulsar import get_actor, Config, create_future, ImproperlyConfigured
+from ..async.monitor import arbiter
+from ..async.access import get_actor
+from ..utils.config import Config
+from ..utils.exceptions import ImproperlyConfigured
 
 __all__ = ['Application', 'MultiApp', 'get_application', 'when_monitor_start']
 
@@ -113,14 +115,15 @@ async def monitor_start(self, exc=None):
         return
     app = self.app
     try:
-        self.bind_event('on_params', monitor_params)
-        self.bind_event('on_info', monitor_info)
-        self.bind_event('stopping', monitor_stopping)
+        self.event('on_params').bind(monitor_params)
+        self.event('on_info').bind(monitor_info)
+        self.event('stopping').bind(monitor_stopping)
+
         for callback in when_monitor_start:
             coro = callback(self)
             if coro:
                 await coro
-        self.bind_event('periodic_task', app.monitor_task)
+        self.event('periodic_task').bind(app.monitor_task)
         coro = app.monitor_start(self)
         if coro:
             await coro
@@ -130,38 +133,46 @@ async def monitor_start(self, exc=None):
                 await coro
         result = self.cfg
     except Exception as exc:
-        coro = self.stop(exc)
-        if coro:
-            await coro
-        start_event.set_result(None)
+        start_event.set_exception(exc)
+        try:
+            coro = self.stop(exc)
+            if coro:
+                await coro
+        except Exception:
+            self.logger.exception('Could not stop cleanly')
     else:
         start_event.set_result(result)
 
 
-async def monitor_stopping(self, exc=None):
+def monitor_stopping(self, **kw):
     if not self.cfg.workers:
         coro = self.app.worker_stopping(self)
         if coro:
-            await coro
+            self.stopping_waiters.append(coro)
     coro = self.app.monitor_stopping(self)
     if coro:
-        await coro
-    return self
+        self.stopping_waiters.append(coro)
 
 
-def monitor_info(self, info=None):
+def worker_stopping(self, **kw):
+    coro = self.app.worker_stopping(self)
+    if coro:
+        self.stopping_waiters.append(coro)
+
+
+def monitor_info(self, data=None):
     if not self.cfg.workers:
-        self.app.worker_info(self, info)
+        self.app.worker_info(self, data)
     else:
-        self.app.monitor_info(self, info)
+        self.app.monitor_info(self, data)
 
 
-def monitor_params(self, params=None):
+def monitor_params(self, data=None):
     app = self.app
-    params.update({'cfg': app.cfg.clone(),
-                   'name': '%s.worker' % app.name,
-                   'start': worker_start})
-    app.actorparams(self, params)
+    data.update({'cfg': app.cfg.clone(),
+                 'name': '%s.worker' % app.name,
+                 'on_start': worker_start})
+    app.actorparams(self, data)
 
 
 def worker_start(self, exc=None):
@@ -169,9 +180,11 @@ def worker_start(self, exc=None):
     if app is None:
         cfg = self.cfg
         self.app = app = cfg.application.from_config(cfg, logger=self.logger)
-    self.bind_event('on_info', app.worker_info)
-    self.bind_event('stopping', app.worker_stopping)
-    return app.worker_start(self, exc=exc)
+    self.event('on_info').bind(app.worker_info)
+    self.event('stopping').bind(worker_stopping)
+    coro = app.worker_start(self, exc=exc)
+    if isawaitable(coro):
+        asyncio.ensure_future(coro, loop=self._loop)
 
 
 class Configurator:
@@ -348,11 +361,11 @@ class Configurator:
         called more than once.
         """
         on_start = self()
-        arbiter = pulsar.arbiter()
-        if arbiter and on_start:
-            arbiter.start(exit=exit)
-            if arbiter.exit_code is not None:
-                return arbiter.exit_code
+        actor = arbiter()
+        if actor and on_start:
+            actor.start(exit=exit)
+            if actor.exit_code is not None:
+                return actor.exit_code
         return on_start
 
     @classmethod
@@ -436,7 +449,7 @@ class Application(Configurator):
         """Register this application with the (optional) calling ``actor``.
 
         If an ``actor`` is available (either via the function argument or via
-        the :func:`~pulsar.async.actor.get_actor` function) it must be
+        the :func:`~pulsar.api.get_actor` function) it must be
         ``arbiter``, otherwise this call is no-op.
 
         If no actor is available, it means this application starts
@@ -456,15 +469,19 @@ class Application(Configurator):
             self.cfg.on_start()
             self.logger = self.cfg.configured_logger()
             if not actor:
-                actor = pulsar.arbiter(cfg=self.cfg.clone())
+                actor = arbiter(cfg=self.cfg.clone())
             else:
                 self.update_arbiter_params(actor)
             if not self.cfg.exc_id:
                 self.cfg.set('exc_id', actor.cfg.exc_id)
             if self.on_config(actor) is not False:
-                start = create_future(actor._loop)
-                actor.bind_event('start', partial(self._add_monitor, start))
-                return start
+                start_event = actor._loop.create_future()
+                start = actor.event('start')
+                if start.fired():   # actor already started
+                    self._add_monitor(start_event, actor)
+                else:
+                    start.bind(partial(self._add_monitor, start_event))
+                return start_event
             else:
                 return
         elif monitor:
@@ -489,7 +506,7 @@ class Application(Configurator):
         """Added to the ``start`` :ref:`worker hook <actor-hooks>`."""
         pass
 
-    def worker_info(self, worker, info):
+    def worker_info(self, worker, data=None):
         """Hook to add additional entries to the worker ``info`` dictionary.
         """
         pass
@@ -499,7 +516,7 @@ class Application(Configurator):
         pass
 
     # MONITOR CALLBACKS
-    def actorparams(self, monitor, params=None):
+    def actorparams(self, monitor, data=None):
         """Hook to add additional entries when the monitor spawn new actors.
         """
         pass
@@ -509,7 +526,7 @@ class Application(Configurator):
         """
         pass
 
-    def monitor_info(self, monitor, info):
+    def monitor_info(self, monitor, data):
         """Hook to add additional entries to the monitor ``info`` dictionary.
         """
         pass
@@ -532,12 +549,16 @@ class Application(Configurator):
                     a.set(s.value)
 
     #   INTERNALS
-    def _add_monitor(self, start, arbiter, exc=None):
-        if not exc:
-            monitor = arbiter.add_monitor(
-                self.name, app=self, cfg=self.cfg,
-                start=monitor_start, start_event=start)
-            self.cfg = monitor.cfg
+    def _add_monitor(self, start_event, arbiter):
+        loop = arbiter._loop
+        monitor = arbiter.add_monitor(
+            self.name, app=self, cfg=self.cfg,
+            start_event=start_event,
+            on_start=lambda arg, **kw: loop.create_task(
+                monitor_start(arg, **kw)
+            )
+        )
+        self.cfg = monitor.cfg
 
 
 class MultiApp(Configurator):
@@ -554,9 +575,9 @@ class MultiApp(Configurator):
 
     A minimal example usage::
 
-        import pulsar
+        import pulsar.api import MultiApp
 
-        class Server(pulsar.MultiApp):
+        class Server(MultiApp):
 
             def build(self):
                 yield self.new_app(TaskQueue)

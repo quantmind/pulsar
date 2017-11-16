@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from pulsar import send
+from pulsar.api import send
 from pulsar.apps.test import ActorTestMixin
 from pulsar.utils.tools import Pidfile
 from pulsar.utils.system import platform

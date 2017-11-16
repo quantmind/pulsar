@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 
-from pulsar import Lock
+from pulsar.api import Lock
 
 
 class TestLock(unittest.TestCase):

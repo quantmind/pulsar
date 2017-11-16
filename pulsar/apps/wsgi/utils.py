@@ -1,41 +1,29 @@
-'''
-The :mod:`pulsar.apps.wsgi.utils` module include several utilities used
-by various components in the :ref:`wsgi application <apps-wsgi>`
-'''
-import time
 import re
 import textwrap
 import logging
-from datetime import datetime, timedelta
-from email.utils import formatdate
 from urllib.parse import parse_qsl
 
-from pulsar import format_traceback
+from multidict import MultiDict
+
+from pulsar.utils.lib import has_empty_content
+from pulsar.utils.exceptions import format_traceback
 from pulsar.utils.system import json
-from pulsar.utils.structures import MultiValueDict
 from pulsar.utils.html import escape
-from pulsar.utils.pep import to_string
-from pulsar.utils.httpurl import (has_empty_content, REDIRECT_CODES,
-                                  HTTPError, parse_dict_header,
-                                  JSON_CONTENT_TYPES)
+from pulsar.utils.string import to_string
+from pulsar.utils.structures import as_tuple
+from pulsar.utils.httpurl import (
+    REDIRECT_CODES, HTTPError, parse_dict_header, JSON_CONTENT_TYPES
+)
 
 from .structures import Accept, RequestCacheControl
 from .content import Html, HtmlDocument
 
 
-DEFAULT_RESPONSE_CONTENT_TYPES = ('text/html', 'text/plain'
+DEFAULT_RESPONSE_CONTENT_TYPES = ('text/plain', 'text/html',
                                   ) + JSON_CONTENT_TYPES
-HOP_HEADERS = frozenset(('connection',
-                         'keep-alive',
-                         'proxy-authenticate',
-                         'proxy-authorization',
-                         'te',
-                         'trailers',
-                         'transfer-encoding',
-                         'upgrade')
-                        )
 
-pulsar_cache = 'pulsar.cache'
+
+PULSAR_CACHE = 'pulsar.cache'
 LOGGER = logging.getLogger('pulsar.wsgi')
 error_css = '''
 .pulsar-error {
@@ -57,13 +45,6 @@ def set_wsgi_request_class(RequestClass):
     _RequestClass = RequestClass
 
 
-def get_logger(environ):
-    cache = environ.get(pulsar_cache)
-    if cache:
-        return cache.logger or LOGGER
-    return LOGGER
-
-
 def log_wsgi_info(log, environ, status, exc=None):
     if not environ.get('pulsar.logged'):
         environ['pulsar.logged'] = True
@@ -72,56 +53,8 @@ def log_wsgi_info(log, environ, status, exc=None):
             environ.get('REQUEST_METHOD'),
             environ.get('RAW_URI'),
             environ.get('SERVER_PROTOCOL'),
-            status, msg)
-
-
-def cookie_date(epoch_seconds=None):
-    """Formats the time to ensure compatibility with Netscape's cookie
-    standard.
-
-    Accepts a floating point number expressed in seconds since the epoch in, a
-    datetime object or a timetuple.  All times in UTC.  The :func:`parse_date`
-    function can be used to parse such a date.
-
-    Outputs a string in the format ``Wdy, DD-Mon-YYYY HH:MM:SS GMT``.
-
-    :param expires: If provided that date is used, otherwise the current.
-    """
-    rfcdate = formatdate(epoch_seconds)
-    return '%s-%s-%s GMT' % (rfcdate[:7], rfcdate[8:11], rfcdate[12:25])
-
-
-def set_cookie(cookies, key, value='', max_age=None, expires=None, path='/',
-               domain=None, secure=False, httponly=False):
-    '''Set a cookie key into the cookies dictionary *cookies*.'''
-    cookies[key] = value
-    if expires is not None:
-        if isinstance(expires, datetime):
-            now = (expires.now(expires.tzinfo) if expires.tzinfo else
-                   expires.utcnow())
-            delta = expires - now
-            # Add one second so the date matches exactly (a fraction of
-            # time gets lost between converting to a timedelta and
-            # then the date string).
-            delta = delta + timedelta(seconds=1)
-            # Just set max_age - the max_age logic will set expires.
-            expires = None
-            max_age = max(0, delta.days * 86400 + delta.seconds)
-        else:
-            cookies[key]['expires'] = expires
-    if max_age is not None:
-        cookies[key]['max-age'] = max_age
-        # IE requires expires, so set it if hasn't been already.
-        if not expires:
-            cookies[key]['expires'] = cookie_date(time.time() + max_age)
-    if path is not None:
-        cookies[key]['path'] = path
-    if domain is not None:
-        cookies[key]['domain'] = domain
-    if secure:
-        cookies[key]['secure'] = True
-    if httponly:
-        cookies[key]['httponly'] = True
+            status,
+            msg)
 
 
 _accept_re = re.compile(r'([^\s;,]+)(?:[^,]*?;\s*q=(\d*(?:\.\d+)?))?')
@@ -188,9 +121,9 @@ def _gen_query(query_string, encoding):
 
 def query_dict(query_string, encoding='utf-8'):
     if query_string:
-        return dict(MultiValueDict(_gen_query(query_string, encoding)).items())
+        return MultiDict(_gen_query(query_string, encoding))
     else:
-        return {}
+        return MultiDict()
 
 
 error_messages = {
@@ -233,14 +166,17 @@ def handle_wsgi_error(environ, exc):
         exc_info = True
     request = wsgi_request(environ)
     request.cache.handle_wsgi_error = True
+    old_response = request.cache.pop('response', None)
     response = request.response
-    logger = get_logger(environ)
+    if old_response:
+        response.content_type = old_response.content_type
+    logger = request.logger
     #
     if isinstance(exc, HTTPError):
         response.status_code = exc.code or 500
     else:
         response.status_code = getattr(exc, 'status', 500)
-        response.headers.update(getattr(exc, 'headers', None) or ())
+    response.headers.update(getattr(exc, 'headers', None) or ())
     status = response.status_code
     if status >= 500:
         logger.critical('%s - @ %s.\n%s', exc, request.first_line,
@@ -272,7 +208,8 @@ def render_error(request, exc):
     if not response.content_type:
         content_type = request.get('default.content_type')
         response.content_type = request.content_types.best_match(
-            content_type or DEFAULT_RESPONSE_CONTENT_TYPES)
+            as_tuple(content_type or DEFAULT_RESPONSE_CONTENT_TYPES)
+        )
     content_type = None
     if response.content_type:
         content_type = response.content_type.split(';')[0]
@@ -294,7 +231,7 @@ def render_error(request, exc):
         doc = HtmlDocument(title=response.status)
         doc.head.embedded_css.append(error_css)
         doc.body.append(Html('div', msg, cn='pulsar-error'))
-        return doc.render(request)
+        return doc.to_bytes(request)
     elif content_type in JSON_CONTENT_TYPES:
         return json.dumps({'status': response.status_code,
                            'message': msg})

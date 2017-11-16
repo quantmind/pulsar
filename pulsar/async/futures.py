@@ -1,26 +1,11 @@
-from collections import Mapping
 from inspect import isgeneratorfunction
-from functools import wraps, partial
+from functools import wraps
 
 from asyncio import Future, CancelledError, TimeoutError, sleep, gather
 
 from .consts import MAX_ASYNC_WHILE
-from .access import (get_event_loop, LOGGER, isfuture, isawaitable,
+from .access import (get_event_loop, LOGGER, isawaitable,
                      ensure_future, create_future)
-
-
-__all__ = ['maybe_async',
-           'run_in_loop',
-           'add_errback',
-           'task_callback',
-           'multi_async',
-           'as_coroutine',
-           'as_gather',
-           'task',
-           'async_while',
-           'chain_future',
-           'future_result_exc',
-           'AsyncObject']
 
 
 def return_false():
@@ -115,7 +100,7 @@ def task_callback(callback):
     return _task_callback
 
 
-def maybe_async(value, loop=None):
+def maybe_async(value, *, loop=None):
     '''Handle a possible asynchronous ``value``.
 
     Return an :ref:`asynchronous instance <tutorials-coroutine>`
@@ -133,8 +118,10 @@ def maybe_async(value, loop=None):
 
 
 async def as_coroutine(value):
-    if isawaitable(value):
+    try:
         value = await value
+    except TypeError:
+        pass
     return value
 
 
@@ -251,13 +238,13 @@ class Bench:
 
     def __call__(self, func, *args, **kwargs):
         self.start = self._loop.time()
-        data = (func(*args, **kwargs) for t in range(self.times))
-        self.result = multi_async(data, loop=self._loop)
+        data = [func(*args, **kwargs) for _ in range(self.times)]
+        self.result = gather(*data, loop=self._loop)
         return chain_future(self.result, callback=self._done)
 
     def _done(self, result):
         self.finish = self._loop.time()
-        self.result = tuple(result)
+        self.result = result
         return self
 
 
@@ -306,79 +293,3 @@ class AsyncObject:
         '''
         bench = Bench(times, loop=self._loop)
         return bench(getattr(self, method), *args, **kwargs)
-
-
-# ############################################################## MultiFuture
-class MultiFuture(Future):
-    '''Handle several futures at once. Thread safe.
-    '''
-    def __init__(self, data=None, loop=None, type=None, raise_on_error=True):
-        super().__init__(loop=loop)
-        self._futures = {}
-        self._failures = []
-        self._raise_on_error = raise_on_error
-        if data is not None:
-            type = type or data.__class__
-            if issubclass(type, Mapping):
-                data = data.items()
-            else:
-                type = list
-                data = enumerate(data)
-        else:
-            type = list
-            data = ()
-        self._stream = type()
-        for key, value in data:
-            value = self._get_set_item(key, maybe_async(value, loop))
-            if isfuture(value):
-                self._futures[key] = value
-                value.add_done_callback(partial(self._future_done, key))
-            elif self.done():
-                break
-        self._check()
-
-    @property
-    def failures(self):
-        return self._failures
-
-    #    INTERNALS
-    def _check(self):
-        if not self._futures and not self.done():
-            self.set_result(self._stream)
-
-    def _future_done(self, key, future, inthread=False):
-        # called by future when future is done
-        # thread safe
-        if inthread or future._loop is self._loop:
-            self._futures.pop(key, None)
-            if not self.done():
-                self._get_set_item(key, future)
-                self._check()
-        else:
-            self._loop.call_soon_threadsafe(
-                self._future_done, key, future, True)
-
-    def _get_set_item(self, key, value):
-        if isfuture(value):
-            if value.done():
-                exc = as_exception(value)
-                if exc:
-                    if self._raise_on_error:
-                        self._futures.clear()
-                        self.set_exception(exc)
-                        return
-                    else:
-                        self._failures.append(exc)
-                        value = exc
-                else:
-                    value = value._result
-        stream = self._stream
-        if isinstance(stream, list) and key == len(stream):
-            stream.append(value)
-        else:
-            stream[key] = value
-        return value
-
-
-# Backward compatibility
-multi_async = MultiFuture

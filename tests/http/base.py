@@ -1,25 +1,24 @@
 import os
+import socket
+import asyncio
+import unittest
 from base64 import b64decode
 from functools import wraps
-import socket
-import unittest
-import asyncio
 
 import examples
 
-from pulsar import send, SERVER_SOFTWARE, get_event_loop
+from pulsar import SERVER_SOFTWARE
+from pulsar.api import send, HttpConnectionError
 from pulsar.utils.path import Path
 from pulsar.utils.system import platform
-from pulsar.apps.http import (HttpClient, TooManyRedirects, HttpResponse,
-                              HttpRequestException, HTTPDigestAuth,
-                              FORM_URL_ENCODED)
+from pulsar.apps.http import (
+    HttpClient, TooManyRedirects, HttpResponse,
+    HttpRequestException, HTTPDigestAuth, FORM_URL_ENCODED,
+    HttpWsgiClient
+)
 
 
 linux = platform.name == 'posix' and not platform.isMacOSX
-
-
-def dodgyhook(response, exc=None):
-    raise ValueError('Dodgy header hook')
 
 
 def no_tls(f):
@@ -43,6 +42,8 @@ class TestHttpClientBase:
     proxy_app = None
     # concurrency is set by the config object unless you set it here
     concurrency = None
+    uri = None
+    proxy_uri = None
     timeout = 10
 
     @classmethod
@@ -62,8 +63,7 @@ class TestHttpClientBase:
             s = server(bind='127.0.0.1:0', concurrency=concurrency,
                        name='httpbin-%s' % cls.__name__.lower(),
                        keep_alive=30, key_file=key_file, cert_file=cert_file,
-                       stream_buffer=2**18,
-                       workers=1)
+                       stream_buffer=2**18, workers=1)
             cfg = await send('arbiter', 'run', s)
             cls.app = cfg.app()
             bits = ('https' if cls.with_tls else 'http',) + cfg.addresses[0]
@@ -75,8 +75,14 @@ class TestHttpClientBase:
             cfg = await send('arbiter', 'run', s)
             cls.proxy_app = cfg.app()
             cls.proxy_uri = 'http://{0}:{1}'.format(*cfg.addresses[0])
-            # cls.proxy_uri = 'http://127.0.0.1:8080'
         cls._client = cls.client()
+        #
+        # wait for httpbin server up
+        if cls.uri:
+            await cls.connection(cls.uri)
+        # wait for proxy server up
+        if cls.proxy_uri:
+            await cls.connection(cls.proxy_uri, 404)
 
     @classmethod
     async def tearDownClass(cls):
@@ -84,6 +90,22 @@ class TestHttpClientBase:
             await send('arbiter', 'kill_actor', cls.app.name)
         if cls.proxy_app is not None:
             await send('arbiter', 'kill_actor', cls.proxy_app.name)
+
+    @classmethod
+    async def connection(cls, url, valid_status=200):
+        client = HttpClient(verify=False)
+        times = 0
+        sleepy = 0.1
+        while times < 5:
+            times += sleepy
+            try:
+                resp = await client.get(url)
+            except HttpConnectionError:
+                await asyncio.sleep(sleepy)
+            else:
+                if not resp.status_code == valid_status:
+                    resp.raise_for_status()
+                break
 
     @classmethod
     def proxies(cls):
@@ -107,7 +129,8 @@ class TestHttpClientBase:
 
     @property
     def tunneling(self):
-        '''When tunneling, the client needs to perform an extra request.'''
+        """When tunneling, the client needs to perform an extra request.
+        """
         return int(self.with_proxy and self.with_tls)
 
     def _check_pool(self, http, response, available=1, processed=1,
@@ -143,7 +166,7 @@ class TestHttpClientBase:
         self.assertEqual(pool.in_use, 0)
         self.assertEqual(http.sessions, 1)
         self.assertEqual(http.requests_processed, processed)
-        self.assertEqual(response._connection._processed, processed)
+        self.assertEqual(response.connection.processed, processed)
 
     def _check_server(self, response):
         self.assertEqual(response.headers['server'], SERVER_SOFTWARE)
@@ -159,7 +182,7 @@ class TestHttpClientBase:
         http = self._client
         response = await http.get(self.httpbin('stream/%d/%d' % (siz, rep)))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.parser.is_chunked())
+        self.assertEqual(response.headers.get('transfer-encoding'), 'chunked')
         body = response.content
         self.assertEqual(len(body), siz*rep)
 
@@ -181,7 +204,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.headers['content-type'],
                          'text/html; charset=utf-8')
         self.assertTrue(int(response.headers['content-length']))
-        self.assertFalse(response.text())
+        self.assertFalse(response.text)
         self.assertTrue(repr(response.request))
 
     async def test_home_page(self):
@@ -206,7 +229,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = await http.get(self.httpbin())
         self.assertEqual(str(response), '<Response [200]>')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_status(), '200 OK')
+        self.assertEqual(response.reason, 'OK')
         self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
         self._check_pool(http, response)
@@ -218,13 +241,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         response = await http.get(self.httpbin('get'), params={'bla': 'foo'})
         result = self.json(response, 200)
-        self.assertEqual(result['args'], {'bla': 'foo'})
+        self.assertEqual(result['args'], {'bla': ['foo']})
         self.assertEqual(response.url, '%s?bla=foo' % self.httpbin('get'))
         self._check_pool(http, response)
 
     async def test_200_get_params_list(self):
         http = self.client()
-        params = {'key1': 'value1', 'key2': ['value2', 'value3']}
+        params = {'key1': ['value1'], 'key2': ['value2', 'value3']}
         response = await http.get(self.httpbin('get'), params=params)
         result = response.json()
         self.assertEqual(response.status_code, 200)
@@ -242,8 +265,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.json()
         self.assertTrue(content['gzipped'])
-        if 'content-encoding' in response.headers:
-            self.assertTrue(response.headers['content-encoding'], 'gzip')
+        # if 'content-encoding' in response.headers:
+        self.assertTrue(response.headers['content-encoding'], 'gzip')
 
     async def test_post_json(self):
         http = self._client
@@ -330,11 +353,12 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = await http.put(self.httpbin('upload'), data=data,
                                   files={'test': file_data})
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.content,
-                         b'Request content length too large. Limit is 256.0KB')
+        self.assertEqual(response.text,
+                         'Request content length too large. Limit is 256.0KB')
 
-    def test_HttpResponse(self):
-        r = HttpResponse(loop=get_event_loop())
+    async def test_HttpResponse(self):
+        c = await HttpWsgiClient().create_connection('127.0.0.1')
+        r = HttpResponse(c)
         self.assertEqual(r.request, None)
         self.assertEqual(str(r), '<Response [None]>')
         self.assertEqual(r.headers, None)
@@ -369,7 +393,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http.headers.clear()
         self.assertEqual(http.version, 'HTTP/1.0')
         response = await http.get(self.httpbin())
-        self.assertEqual(response.headers['connection'], 'close')
+        self.assertEqual(response.headers.get('connection', 'close'), 'close')
         self.assertEqual(str(response), '<Response [200]>')
         self._check_pool(http, response, available=0)
 
@@ -388,9 +412,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self.client()
         self.assertEqual(http.version, 'HTTP/1.1')
         response = await http.get(
-            self.httpbin(), headers={'connection': 'close'})
+            self.httpbin(),
+            headers={'connection': 'close'}
+        )
         self.assertEqual(response.headers['connection'], 'close')
         self._check_pool(http, response, available=0)
+        response = await http.get(self.httpbin())
+        self._check_pool(http, response, sessions=2, processed=2)
 
     async def test_post(self):
         data = (('bla', 'foo'), ('unz', 'whatz'),
@@ -407,7 +435,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         response = await http.get(self.httpbin('status', '400'))
         self._check_pool(http, response, available=0)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.get_status(), '400 Bad Request')
+        self.assertEqual(response.reason, 'Bad Request')
         self.assertTrue(response.content)
         self.assertRaises(HttpRequestException, response.raise_for_status)
         # Make sure we only have one connection after a valid request
@@ -420,16 +448,10 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self._client
         response = await http.get(self.httpbin('status', '404'))
         self.assertEqual(response.status_code, 404)
-        self.assertTrue(response.headers.has('connection', 'close'))
+        self.assertEqual(response.headers.get('connection'), 'close')
         self.assertTrue('content-type' in response.headers)
         self.assertTrue(response.content)
         self.assertRaises(HttpRequestException, response.raise_for_status)
-
-    async def test_dodgy_on_header_event(self):
-        client = self._client
-        response = await client.get(self.httpbin(), on_headers=dodgyhook)
-        self.assertTrue(response.headers)
-        self.assertEqual(response.status_code, 200)
 
     async def test_redirect_1(self):
         http = self.client()
@@ -443,7 +465,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def after_test_redirect_1(self, response):
         redirect = response.history[0]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection._processed, 2)
+        self.assertEqual(response.connection.processed, 2)
 
     async def test_redirect_6(self):
         http = self.client()
@@ -457,7 +479,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     def after_test_redirect_6(self, response):
         redirect = response.history[-1]
         self.assertEqual(redirect.connection, response.connection)
-        self.assertEqual(response.connection._processed, 7)
+        self.assertEqual(response.connection.processed, 7)
 
     @no_tls
     async def test_large_response(self):
@@ -467,7 +489,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         data = response.json()
         self.assertEqual(data['size'], 600000)
         self.assertEqual(len(data['data']), 600000)
-        self.assertFalse(response.parser.is_chunked())
+        self.assertEqual(response.headers.get('transfer-encoding'), None)
 
     async def test_too_many_redirects(self):
         http = self._client
@@ -529,8 +551,6 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         result = response.json()
         self.assertEqual(result['Transfer-Encoding'], 'chunked')
-        parser = response.parser
-        self.assertTrue(parser.is_chunked())
 
     def test_stream_response(self):
         return self._test_stream_response()
@@ -608,7 +628,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     async def test_missing_host_400(self):
         http = self._client
 
-        def remove_host(response, exc=None):
+        def remove_host(response, **kw):
             r = response.request
             self.assertTrue(r.has_header('host'))
             response.request.remove_header('host')
@@ -620,7 +640,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     async def test_missing_host_10(self):
         http = self.client(version='HTTP/1.0')
 
-        def remove_host(response, exc=None):
+        def remove_host(response, **kw):
             request = response.request
             if not hasattr(request, '_test_host'):
                 request._test_host = request.remove_header('host')
@@ -676,7 +696,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             self.httpbin('media/httpbin.js'),
             headers={'If-modified-since': modified})
         self.assertEqual(response.status_code, 304)
-        self.assertFalse('Content-length' in response.headers)
+        self.assertFalse('content-length' in response.headers)
 
     async def test_http_get_timeit(self):
         N = 10
@@ -777,7 +797,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     @unittest.skipUnless(linux, 'Test in linux platform only')
     async def test_servername(self):
         http = self.client()
-        http.headers.remove_header('host')
+        http.headers.pop('host', None)
         self.assertNotIn('host', http.headers)
         http.headers['host'] = 'fakehost'
         response = await http.get(self.httpbin('servername'))
@@ -792,14 +812,15 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         http = self._client
         response = await http.get(self.httpbin('plaintext'))
         raw = response.raw
-        self.assertEqual(raw._response, response)
         self.assertEqual(await raw.read(), b'')
 
     async def test_stream_dont_stream(self):
         http = self._client
         response = await http.get(self.httpbin('plaintext'), stream=True)
-        await response.on_finished
-        self.assertEqual(response.text(), 'Hello, World!')
+        await response.event('post_request').waiter()
+        self.assertEqual(response.text, '')
+        self.assertEqual(await response.raw.read(), b'Hello, World!')
+        self.assertEqual(await response.raw.read(), b'')
 
     async def test_raw_stream(self):
         http = self._client
@@ -813,7 +834,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     @no_tls
     async def test_raw_stream_large(self):
         http = self._client
-        url = self.httpbin('stream/100000/3')
+        url = self.httpbin('stream/10000/3')
         response = await http.get(url, stream=True)
         raw = response.raw
         self.assertEqual(raw._response, response)
@@ -830,13 +851,14 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
             yield b'z'*100
 
         result = b'f'*100
-        fut._loop.call_later(0.5, fut.set_result, result)
+        fut._loop.call_later(1, fut.set_result, result)
         response = await http.post(
             self.httpbin('post_chunks'),
             headers={'content-type': 'text/plain'},
             data=gen())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.content), 300)
+        self.assertEqual(response.headers['content-length'], '300')
         self.assertEqual(response.headers['content-type'],
                          response.request.headers['content-type'])
 

@@ -9,7 +9,7 @@ from distutils.errors import (CCompilerError, DistutilsExecError,
                               DistutilsPlatformError)
 
 path = os.path.join('extensions', 'lib')
-ext_file = os.path.join(path, 'lib.c')
+ext_file = os.path.join(path, 'clib.c')
 ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
 
 if sys.platform == 'win32':
@@ -61,9 +61,9 @@ def params(cython=False):
     if cython and os.path.isfile(ext_file):
         os.remove(ext_file)
 
-    file_name = 'lib.pyx' if cython else 'lib.c'
+    file_name = 'clib.pyx' if cython else 'clib.c'
 
-    extension = Extension('pulsar.utils.lib',
+    extension = Extension('pulsar.utils.clib',
                           [os.path.join(path, file_name)],
                           include_dirs=[path])
 

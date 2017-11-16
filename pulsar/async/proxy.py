@@ -1,17 +1,10 @@
-from pulsar import CommandNotFound
-from pulsar.utils.pep import default_timer
-
+from time import monotonic
 import signal
 
+from ..utils.exceptions import CommandNotFound
 from .futures import create_future, chain_future
 from .consts import ACTOR_ACTION_TIMEOUT
 
-
-__all__ = ['ActorProxy',
-           'ActorProxyMonitor',
-           'get_proxy',
-           'command',
-           'get_command']
 
 global_commands_table = {}
 
@@ -202,19 +195,19 @@ class ActorProxyMonitor(ActorProxy):
     def start(self):
         '''Start the remote actor.
         '''
-        self.spawning_start = default_timer()
+        self.spawning_start = monotonic()
         self.impl.start()
 
     def should_be_alive(self):
         if not self.mailbox:
-            return default_timer() - self.spawning_start > ACTOR_ACTION_TIMEOUT
+            return monotonic() - self.spawning_start > ACTOR_ACTION_TIMEOUT
         else:
             return True
 
     def should_terminate(self):
         if self.stopping_start is None:
-            self.stopping_start = default_timer()
+            self.stopping_start = monotonic()
             return False
         else:
-            dt = default_timer() - self.stopping_start
+            dt = monotonic() - self.stopping_start
             return dt if dt >= ACTOR_ACTION_TIMEOUT else False

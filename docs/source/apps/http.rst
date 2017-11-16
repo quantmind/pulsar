@@ -153,7 +153,7 @@ to your requests.
 
 TLS/SSL
 =================
-Supported out of the box::
+Supported for TLS is out of the box::
 
     sessions.get('https://github.com/timeline.json')
 
@@ -177,6 +177,20 @@ You can pass ``verify`` the path to a CA_BUNDLE file or directory with
 certificates of trusted CAs::
 
     sessions.get('https://locahost:8020', verify='/path/to/ca_bundle')
+
+
+Client Side Certificates
+-----------------------------
+
+You can also specify a local cert to use as client side certificate, as a single file
+(containing the private key and the certificate) or as a tuple of both files' paths::
+
+   sessions.get('https://...', cert=('/path/client.cert', '/path/client.key'))
+
+or persistent::
+
+   s = HttpClient(cert='/path/client.cert')
+   s.cert   // '/path/client.cert'
 
 
 .. _http-streaming:
@@ -342,7 +356,7 @@ Adding event handlers can be done at sessions level::
         if not exc:
             print('got headers!')
 
-    sessions.bind_event('on_headers', myheader_handler)
+    sessions.event('on_headers').bind(myheader_handler)
 
 or at request level::
 
