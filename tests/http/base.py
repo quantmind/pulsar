@@ -797,7 +797,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     @unittest.skipUnless(linux, 'Test in linux platform only')
     async def test_servername(self):
         http = self.client()
-        http.headers.remove_header('host')
+        http.headers.pop('host', None)
         self.assertNotIn('host', http.headers)
         http.headers['host'] = 'fakehost'
         response = await http.get(self.httpbin('servername'))

@@ -6,7 +6,7 @@
 |
 
 :Badges: |license|  |pyversions| |status| |pypiversion| |contributors|
-:Master CI: |master-build|_ |coverage-master| |appveyor|
+:Master CI: |master-build|_ |coverage-master| |appveyor| |circleci|
 :Documentation: http://quantmind.github.io/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -39,7 +39,8 @@
     :target: https://ci.appveyor.com/project/lsbardel/pulsar
 .. |contributors| image:: https://img.shields.io/github/contributors/quantmind/pulsar.svg
     :target: https://github.com/quantmind/pulsar/graphs/contributors
-
+.. |circleci| image:: https://circleci.com/gh/quantmind/pulsar.svg?style=svg
+    :target: https://circleci.com/gh/quantmind/pulsar
 
 An example of a web server written with ``pulsar`` which responds with
 "Hello World!" for every request:
@@ -90,7 +91,12 @@ asynchronous ``with`` block.
 Installing
 ============
 
-Pulsar has no hard dependencies, install via pip::
+Pulsar has two hard dependencies:
+
+* [multidict](https://github.com/aio-libs/multidict)
+* [async_timeout](https://github.com/aio-libs/async-timeout)
+
+install via pip::
 
     pip install pulsar
 
