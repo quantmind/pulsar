@@ -3,8 +3,8 @@ jobs:
     build-main:
         working_directory: ~/pulsar-current
         docker:
-          - image: circleci/python:3.6.1
-          - image: circleci/redis
+          - image: circleci/python:3.6.3
+          - image: redis
         steps:
           - checkout
           - run:
@@ -17,7 +17,7 @@ jobs:
         working_directory: ~/pulsar-legacy
         docker:
           - image: circleci/python:3.5.4
-          - image: circleci/redis
+          - image: redis
         steps:
           - checkout
           - run:
@@ -27,7 +27,7 @@ jobs:
         docker:
             working_directory: ~/pulsar-deploy
         docker:
-          - image: circleci/python:3.6.4
+          - image: quay.io/pypa/manylinux1_x86_64
         steps:
           - checkout
 
