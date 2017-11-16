@@ -1,6 +1,6 @@
 version: 2
 jobs:
-    main:
+    build-main:
         working_directory: ~/pulsar-current
         docker:
           - image: circleci/python:3.6.1
@@ -23,3 +23,19 @@ jobs:
           - run:
               command:
                   make clean && make testall
+    deploy:
+        docker:
+
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build-main
+      - deploy:
+          requires:
+            - build-main
+          filters:
+            branches:
+              only: deploy
+              
