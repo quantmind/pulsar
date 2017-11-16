@@ -3,7 +3,7 @@ jobs:
     build-main:
         working_directory: ~/pulsar-current
         docker:
-          - image: circleci/python:3.6.3
+          - image: python:3.6.3
           - image: redis
         steps:
           - checkout
@@ -16,7 +16,7 @@ jobs:
     lagacy:
         working_directory: ~/pulsar-legacy
         docker:
-          - image: circleci/python:3.5.4
+          - image: python:3.5.4
           - image: redis
         steps:
           - checkout
