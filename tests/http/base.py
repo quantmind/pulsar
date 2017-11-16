@@ -834,7 +834,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     @no_tls
     async def test_raw_stream_large(self):
         http = self._client
-        url = self.httpbin('stream/100000/3')
+        url = self.httpbin('stream/10000/3')
         response = await http.get(url, stream=True)
         raw = response.raw
         self.assertEqual(raw._response, response)
