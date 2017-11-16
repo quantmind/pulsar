@@ -9,7 +9,7 @@ jobs:
           - checkout
           - run:
               name: install packages
-              command: ci/install-ci.sh
+              command: ci/install.sh
           - run:
               name: test
               command: make compile && make test
