@@ -73,7 +73,8 @@ meta = dict(
     license="BSD",
     long_description=read('README.rst'),
     include_package_data=True,
-    install_requires=requirements('requirements.txt')[0],
+    install_requires=requirements('requirements/hard.txt')[0],
+    tests_require=requirements('requirements/test.txt')[0],
     setup_requires=['wheel'],
     packages=find_packages(include=['pulsar', 'pulsar.*', 'pulsar_test']),
     entry_points={

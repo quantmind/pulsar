@@ -1,11 +1,9 @@
 flake8
+coverage
 cython
 greenlet
 flask
 oauthlib
 requests
 certifi
-recommonmark
 twine
-uvloop
-httptools

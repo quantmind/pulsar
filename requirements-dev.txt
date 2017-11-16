@@ -1,7 +1,0 @@
--r requirements-ci.txt
-coverage
-setproctitle
-psutil
-unidecode
-sphinxcontrib-spelling
-pyslink

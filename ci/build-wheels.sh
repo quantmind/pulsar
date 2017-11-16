@@ -3,8 +3,8 @@
 set -e -x
 
 
-PACKAGE_VERSION=$(python ".ci/package-version.py")
-PYPI_VERSION=$(python ".ci/pypi-check.py" "${PYMODULE}")
+PACKAGE_VERSION=$(python "ci/package-version.py")
+PYPI_VERSION=$(python "ci/pypi-check.py" "${PYMODULE}")
 
 if [ "${PACKAGE_VERSION}" == "${PYPI_VERSION}" ]; then
     echo "${PYMODULE}-${PACKAGE_VERSION} is already published on PyPI"

@@ -9,7 +9,7 @@ jobs:
           - checkout
           - run:
               name: install packages
-              command: .circleci/install-dev.sh
+              command: ci/install-ci.sh
           - run:
               name: test
               command: make compile && make test

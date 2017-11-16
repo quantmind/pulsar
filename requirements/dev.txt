@@ -1,0 +1,5 @@
+-r ci.txt
+setproctitle
+psutil
+unidecode
+pyslink
