@@ -123,7 +123,8 @@ class RedisStoreConnection(Connection):
         result = await consumer.event('post_request').waiter()
         if isinstance(result, ResponseError):
             raise result.exception
-        return result
+        elif not isinstance(result, type(consumer)):
+            return result
 
     async def execute_pipeline(self, commands, raise_on_error=True):
         consumer = self.current_consumer()
@@ -131,7 +132,8 @@ class RedisStoreConnection(Connection):
         result = await consumer.event('post_request').waiter()
         if isinstance(result, ResponseError):
             raise result.exception
-        return result
+        elif not isinstance(result, type(consumer)):
+            return result
 
 
 class Consumer(ProtocolConsumer):
