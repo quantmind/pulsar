@@ -25,7 +25,11 @@ jobs:
                   make clean && make testall
     deploy:
         docker:
-
+            working_directory: ~/pulsar-deploy
+        docker:
+          - image: circleci/python:3.6.4
+        steps:
+          - checkout
 
 workflows:
   version: 2
@@ -38,4 +42,3 @@ workflows:
           filters:
             branches:
               only: deploy
-              
