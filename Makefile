@@ -32,7 +32,7 @@ testpy:
 
 coverage:
 	PULSARPY=yes
-	$(PYTHON) -W ignore setup.py test --coverage -q
+	$(PYTHON) -W ignore setup.py test --coverage --sequential
 
 
 testall:
