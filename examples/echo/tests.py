@@ -1,14 +1,13 @@
 import unittest
-from asyncio import gather, new_event_loop, get_event_loop
+from asyncio import gather, get_event_loop
 
 from pulsar.api import send, get_application
-from pulsar.apps.test import dont_run_with_thread
 
 from examples.echo.manage import server, Echo, EchoServerProtocol
 
 
-class TestEchoServerThread(unittest.TestCase):
-    concurrency = 'thread'
+class TestEchoServer(unittest.TestCase):
+    concurrency = 'process'
     server_cfg = None
 
     @classmethod
@@ -137,39 +136,3 @@ class TestEchoServerThread(unittest.TestCase):
         conn2 = client.pool._queue.get_nowait()
         client.pool._queue.put_nowait(conn1)
         client.pool._queue.put_nowait(conn2)
-
-
-@dont_run_with_thread
-class TestEchoServerProcess(TestEchoServerThread):
-    concurrency = 'process'
-
-    def sync_client(self):
-        return Echo(self.server_cfg.addresses[0], loop=new_event_loop())
-
-    async def setUp(self):
-        result = await self.client(b'ciao luca')
-        self.assertEqual(result, b'ciao luca')
-
-    #    TEST SYNCHRONOUS CLIENT
-    async def __test_sync_echo(self):
-        loop = get_event_loop()
-        await loop.run_in_executor(None, self._test_sync_echo)
-
-    async def __test_sync_close(self):
-        loop = get_event_loop()
-        await loop.run_in_executor(None, self._test_sync_close)
-
-    def _test_sync_echo(self):
-        echo = self.sync_client()
-        self.assertEqual(echo(b'ciao!'), b'ciao!')
-        self.assertEqual(echo(b'fooooooooooooo!'),  b'fooooooooooooo!')
-
-    def _test_sync_close(self):
-        # TODO: fix this. Issue #251
-        echo = self.sync_client()
-        self.assertEqual(echo(b'ciao!'), b'ciao!')
-        self.assertEqual(echo.sessions, 1)
-        self.assertEqual(echo(b'QUIT'), b'QUIT')
-        self.assertEqual(echo.sessions, 1)
-        # self.assertEqual(echo(b'ciao!'), b'ciao!')
-        # self.assertEqual(echo.sessions, 2)
