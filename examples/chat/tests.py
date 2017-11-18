@@ -29,7 +29,8 @@ class TestWebChat(unittest.TestCase):
     @classmethod
     async def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__.lower(),
-                   concurrency=cls.concurrency)
+                   concurrency=cls.concurrency,
+                   parse_console=False)
         cls.app_cfg = await send('arbiter', 'run', s)
         cls.uri = 'http://%s:%s' % cls.app_cfg.addresses[0]
         cls.ws = 'ws://%s:%s/message' % cls.app_cfg.addresses[0]

@@ -21,7 +21,8 @@ class TestFlaskApp(unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        s = server(name=cls.name(), bind='127.0.0.1:0')
+        s = server(name=cls.name(), bind='127.0.0.1:0',
+                   parse_console=False)
         cls.app_cfg = await send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.client = HttpClient()

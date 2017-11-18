@@ -63,7 +63,8 @@ class TestHttpClientBase:
             s = server(bind='127.0.0.1:0', concurrency=concurrency,
                        name='httpbin-%s' % cls.__name__.lower(),
                        keep_alive=30, key_file=key_file, cert_file=cert_file,
-                       stream_buffer=2**18, workers=1)
+                       stream_buffer=2**18, workers=1,
+                       parse_console=False)
             cfg = await send('arbiter', 'run', s)
             cls.app = cfg.app()
             bits = ('https' if cls.with_tls else 'http',) + cfg.addresses[0]
@@ -71,7 +72,8 @@ class TestHttpClientBase:
             cls.uri = '%s://%s:%s/' % bits
         if cls.with_proxy:
             s = pserver(bind='127.0.0.1:0', concurrency=concurrency,
-                        name='proxyserver-%s' % cls.__name__.lower())
+                        name='proxyserver-%s' % cls.__name__.lower(),
+                        parse_console=False)
             cfg = await send('arbiter', 'run', s)
             cls.proxy_app = cfg.app()
             cls.proxy_uri = 'http://{0}:{1}'.format(*cfg.addresses[0])

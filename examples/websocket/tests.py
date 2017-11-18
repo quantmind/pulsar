@@ -38,7 +38,8 @@ class TestWebSocket(unittest.TestCase):
     @classmethod
     async def setUpClass(cls):
         s = server(bind='127.0.0.1:0', name=cls.__name__,
-                   concurrency=cls.concurrency)
+                   concurrency=cls.concurrency,
+                   parse_console=False)
         cls.app_cfg = await send('arbiter', 'run', s)
         addr = cls.app_cfg.addresses[0]
         cls.uri = 'http://{0}:{1}'.format(*addr)

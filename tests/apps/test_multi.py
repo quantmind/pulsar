@@ -14,8 +14,10 @@ class MultiWsgi(MultiApp):
     cfg = Config(bind=':0', rpc_bind=':0', bla='foo')
 
     def build(self):
-        yield self.new_app(WSGIServer, callable=dummy)
-        yield self.new_app(WSGIServer, 'rpc', callable=dummy)
+        yield self.new_app(WSGIServer, callable=dummy,
+                           parse_console=False)
+        yield self.new_app(WSGIServer, 'rpc', callable=dummy,
+                           parse_console=False)
 
 
 class TestMultiApp(unittest.TestCase):

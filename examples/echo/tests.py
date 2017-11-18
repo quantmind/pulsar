@@ -13,7 +13,8 @@ class TestEchoServer(unittest.TestCase):
     @classmethod
     async def setUpClass(cls):
         s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
-                   backlog=1024, concurrency=cls.concurrency)
+                   backlog=1024, concurrency=cls.concurrency,
+                   parse_console=False)
         cls.server_cfg = await send('arbiter', 'run', s)
         cls.client = Echo(cls.server_cfg.addresses[0])
 

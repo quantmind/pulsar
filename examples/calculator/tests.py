@@ -19,7 +19,9 @@ class TestRpcOnThread(unittest.TestCase):
     @classmethod
     async def setUpClass(cls):
         name = 'calc_' + cls.concurrency
-        s = server(bind='127.0.0.1:0', name=name, concurrency=cls.concurrency)
+        s = server(bind='127.0.0.1:0', name=name,
+                   concurrency=cls.concurrency,
+                   parse_console=False)
         cls.app_cfg = await send('arbiter', 'run', s)
         cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
         cls.p = rpc.JsonProxy(cls.uri, timeout=cls.rpc_timeout)
