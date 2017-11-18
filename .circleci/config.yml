@@ -15,7 +15,7 @@ jobs:
               command: make compile && make test
           - run:
               name: run and publish coverage
-              command: make coverage
+              command: make coverage && codecov
     lagacy:
         working_directory: ~/pulsar-legacy
         docker:
