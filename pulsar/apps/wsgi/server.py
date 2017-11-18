@@ -168,6 +168,8 @@ class HttpServerResponse(ProtocolConsumer):
                 finally:
                     close_object(response)
         finally:
+            # help GC
+            environ.clear()
             self = None
 
     def _write_headers(self):

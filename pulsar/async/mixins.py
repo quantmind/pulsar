@@ -180,11 +180,7 @@ class ResponsePipeline:
         self.logger = connection.producer.logger
         self.debug = connection._loop.get_debug()
         self.worker = self.queue._loop.create_task(self._process())
-
-    def put(self, consumer):
-        """Put a protocol consumer in the response pipeline
-        """
-        self.queue.put_nowait(consumer)
+        self.put = self.queue.put_nowait
 
     async def _process(self):
         while True:
