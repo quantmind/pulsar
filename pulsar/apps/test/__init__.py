@@ -1,3 +1,4 @@
+import os
 import sys
 
 from pulsar.api import Application, Config
@@ -189,6 +190,7 @@ class TestSuite(Application):
 
     def monitor_start(self, monitor, **kw):
         '''When the monitor starts load all test classes into the queue'''
+        os.environ['PULSAR_TEST'] = 'true'
         self.cfg.set('workers', 0)
 
         if self.cfg.callable:
@@ -200,6 +202,7 @@ class TestSuite(Application):
         if self.runner:
             self.runner.close()
             self.runner = None
+        os.environ.pop('PULSAR_TEST', None)
 
     @classmethod
     def create_config(cls, *args, **kwargs):

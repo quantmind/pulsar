@@ -7,6 +7,7 @@ HTTP Protocol Consumer
    :member-order: bysource
 
 """
+import os
 import sys
 from asyncio import CancelledError
 
@@ -20,6 +21,9 @@ from .utils import handle_wsgi_error, log_wsgi_info, LOGGER
 from .formdata import HttpBodyReader
 from .wrappers import FileWrapper, close_object
 from .headers import CONTENT_LENGTH
+
+
+PULSAR_TEST = 'PULSAR_TEST'
 
 
 class AbortWsgi(Exception):
@@ -169,7 +173,8 @@ class HttpServerResponse(ProtocolConsumer):
                     close_object(response)
         finally:
             # help GC
-            environ.clear()
+            if PULSAR_TEST not in os.environ:
+                environ.clear()
             self = None
 
     def _write_headers(self):
