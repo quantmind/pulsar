@@ -6,7 +6,7 @@
 |
 
 :Badges: |license|  |pyversions| |status| |pypiversion| |contributors|
-:CI: |circleci| |coverage-master| |appveyor|
+:CI: |circleci| |coverage| |appveyor|
 :Documentation: http://quantmind.github.io/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
@@ -28,14 +28,14 @@
   :target: https://pypi.python.org/pypi/pulsar
 .. |coverage-master| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master
   :target: https://coveralls.io/github/quantmind/pulsar?branch=master
-.. |coverage-dev| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=dev
-  :target: https://coveralls.io/github/quantmind/pulsar?branch=dev
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/w2ip01j07qm161ei?svg=true
     :target: https://ci.appveyor.com/project/lsbardel/pulsar
 .. |contributors| image:: https://img.shields.io/github/contributors/quantmind/pulsar.svg
     :target: https://github.com/quantmind/pulsar/graphs/contributors
 .. |circleci| image:: https://circleci.com/gh/quantmind/pulsar.svg?style=svg
     :target: https://circleci.com/gh/quantmind/pulsar
+.. |coverage| image:: https://codecov.io/gh/quantmind/pulsar/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/quantmind/pulsar
 
 An example of a web server written with ``pulsar`` which responds with
 "Hello World!" for every request:
