@@ -26,12 +26,12 @@ test:
 	$(PYTHON) -W ignore setup.py test -q --io uv
 
 testpy:
-	PULSARPY=yes
+	export PULSARPY=yes
 	$(PYTHON) -W ignore setup.py test -q
 
 
 coverage:
-	PULSARPY=yes
+	export PULSARPY=yes
 	$(PYTHON) -W ignore setup.py test --coverage -q
 
 
