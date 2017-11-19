@@ -31,8 +31,7 @@ testpy:
 
 
 coverage:
-	export PULSARPY=yes
-	$(PYTHON) -W ignore setup.py test --coverage -q
+	export PULSARPY=yes; $(PYTHON) -W ignore setup.py test --coverage -q
 
 
 testall:
