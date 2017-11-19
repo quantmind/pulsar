@@ -89,7 +89,7 @@ Installing
 Pulsar has two **hard dependencies**:
 
 * multidict_
-* async_timeout_
+* async-timeout_
 
 install via pip::
 

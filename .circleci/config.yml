@@ -13,10 +13,20 @@ jobs:
           - run:
               name: test
               command: make compile && make test
+    build-coverage:
+        working_directory: ~/pulsar-coverage
+        docker:
+          - image: python:3.6.3
+          - image: redis
+        steps:
+          - checkout
+          - run:
+              name: install packages
+              command: ci/install.sh
           - run:
               name: run and publish coverage
               command: make coverage && codecov
-    lagacy:
+    build-lagacy:
         working_directory: ~/pulsar-legacy
         docker:
           - image: python:3.5.4
@@ -24,8 +34,11 @@ jobs:
         steps:
           - checkout
           - run:
-              command:
-                  make clean && make testall
+              name: install packages
+              command: ci/install.sh
+          - run:
+              name: test
+              command: make compile && make test
     deploy:
         docker:
             working_directory: ~/pulsar-deploy
@@ -39,6 +52,8 @@ workflows:
   build-deploy:
     jobs:
       - build-main
+      - build-coverage
+      - build-lagacy
       - deploy:
           requires:
             - build-main
