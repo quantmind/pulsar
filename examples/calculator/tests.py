@@ -4,7 +4,7 @@ import types
 
 from pulsar.api import send
 from pulsar.apps import rpc, http
-from pulsar.apps.test import dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread, run_test_server
 
 from examples.calculator.manage import server, Root, Calculator
 
@@ -18,12 +18,7 @@ class TestRpcOnThread(unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        name = 'calc_' + cls.concurrency
-        s = server(bind='127.0.0.1:0', name=name,
-                   concurrency=cls.concurrency,
-                   parse_console=False)
-        cls.app_cfg = await send('arbiter', 'run', s)
-        cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
+        await run_test_server(cls, server)
         cls.p = rpc.JsonProxy(cls.uri, timeout=cls.rpc_timeout)
 
     @classmethod

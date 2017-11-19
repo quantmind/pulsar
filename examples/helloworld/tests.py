@@ -4,7 +4,7 @@ import unittest
 from pulsar import SERVER_SOFTWARE
 from pulsar.api import send, get_application, get_actor
 from pulsar.apps.http import HttpClient
-from pulsar.apps.test import dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread, run_test_server
 
 from examples.helloworld.manage import server
 
@@ -14,17 +14,8 @@ class TestHelloWorldThread(unittest.TestCase):
     concurrency = 'thread'
 
     @classmethod
-    def name(cls):
-        return 'helloworld_' + cls.concurrency
-
-    @classmethod
     async def setUpClass(cls):
-        s = server(
-            name=cls.name(), concurrency=cls.concurrency,
-            bind='127.0.0.1:0', parse_console=False
-        )
-        cls.app_cfg = await send('arbiter', 'run', s)
-        cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
+        await run_test_server(cls, server)
         cls.client = HttpClient()
 
     @classmethod
@@ -33,8 +24,8 @@ class TestHelloWorldThread(unittest.TestCase):
             return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     async def testMeta(self):
-        app = await get_application(self.name())
-        self.assertEqual(app.name, self.name())
+        app = await get_application(self.app_cfg.name)
+        self.assertEqual(app.name, self.app_cfg.name)
         monitor = get_actor().get_actor(app.name)
         self.assertTrue(monitor.is_running())
         self.assertEqual(app, monitor.app)

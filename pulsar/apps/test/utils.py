@@ -187,3 +187,17 @@ def dont_run_with_thread(obj):
         return d(obj)
     else:
         return obj
+
+
+async def run_test_server(cls, server, name=None, bind=None, **kwargs):
+    """Utility function to sown a socket server and wait for
+    workers to be up
+    """
+    kwargs['parse_console'] = False
+    kwargs['name'] = name or cls.__name__.lower()
+    kwargs['concurrency'] = getattr(cls, 'concurrency', 'process')
+    kwargs['bind'] = bind or '127.0.0.1:0'
+    s = server(**kwargs)
+    cls.app_cfg = await send('arbiter', 'run', s)
+    await asyncio.sleep(0.5)
+    cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])

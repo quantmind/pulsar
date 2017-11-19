@@ -2,37 +2,35 @@ import unittest
 from asyncio import gather, get_event_loop
 
 from pulsar.api import send, get_application
+from pulsar.apps.test import run_test_server
 
 from examples.echo.manage import server, Echo, EchoServerProtocol
 
 
 class TestEchoServer(unittest.TestCase):
     concurrency = 'process'
-    server_cfg = None
+    app_cfg = None
 
     @classmethod
     async def setUpClass(cls):
-        s = server(name=cls.__name__.lower(), bind='127.0.0.1:0',
-                   backlog=1024, concurrency=cls.concurrency,
-                   parse_console=False)
-        cls.server_cfg = await send('arbiter', 'run', s)
-        cls.client = Echo(cls.server_cfg.addresses[0])
+        await run_test_server(cls, server)
+        cls.client = Echo(cls.app_cfg.addresses[0])
 
     @classmethod
     def tearDownClass(cls):
-        if cls.server_cfg:
-            return send('arbiter', 'kill_actor', cls.server_cfg.name)
+        if cls.app_cfg:
+            return send('arbiter', 'kill_actor', cls.app_cfg.name)
 
     #    TEST THE SERVER APPLICATION
     async def test_server_on_arbiter(self):
-        app = await get_application(self.__class__.__name__.lower())
+        app = await get_application(self.app_cfg.name)
         cfg = app.cfg
         self.assertTrue(cfg.addresses)
         self.assertTrue(cfg.address)
         self.assertNotEqual(cfg.addresses[0], cfg.address)
 
     def test_server(self):
-        server = self.server_cfg.app()
+        server = self.app_cfg.app()
         self.assertTrue(server)
         self.assertEqual(server.cfg.callable, EchoServerProtocol)
         self.assertTrue(server.cfg.addresses)
@@ -64,12 +62,12 @@ class TestEchoServer(unittest.TestCase):
         self.assertTrue(c.pool.available)
 
     async def test_info(self):
-        info = await send(self.server_cfg.name, 'info')
+        info = await send(self.app_cfg.name, 'info')
         self.assertIsInstance(info, dict)
-        self.assertEqual(info['server']['name'], self.server_cfg.name)
+        self.assertEqual(info['server']['name'], self.app_cfg.name)
 
     async def test_connection(self):
-        client = Echo(self.server_cfg.addresses[0], full_response=True)
+        client = Echo(self.app_cfg.addresses[0], full_response=True)
         response = await client(b'test connection')
         self.assertEqual(response.buffer, b'test connection')
         connection = response.connection
@@ -77,7 +75,7 @@ class TestEchoServer(unittest.TestCase):
 
     async def test_connection_pool(self):
         '''Test the connection pool. A very important test!'''
-        client = Echo(self.server_cfg.addresses[0], pool_size=2)
+        client = Echo(self.app_cfg.addresses[0], pool_size=2)
         self.assertEqual(client._loop, get_event_loop())
         #
         self.assertEqual(client.pool.pool_size, 2)

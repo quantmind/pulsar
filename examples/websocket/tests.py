@@ -5,6 +5,7 @@ import asyncio
 from pulsar.api import send
 from pulsar.apps.ws import WebSocket, WS
 from pulsar.apps.http import HttpClient
+from pulsar.apps.test import run_test_server
 
 from examples.websocket.manage import server
 
@@ -37,12 +38,8 @@ class TestWebSocket(unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        s = server(bind='127.0.0.1:0', name=cls.__name__,
-                   concurrency=cls.concurrency,
-                   parse_console=False)
-        cls.app_cfg = await send('arbiter', 'run', s)
+        await run_test_server(cls, server)
         addr = cls.app_cfg.addresses[0]
-        cls.uri = 'http://{0}:{1}'.format(*addr)
         cls.ws_uri = 'ws://{0}:{1}/data'.format(*addr)
         cls.ws_echo = 'ws://{0}:{1}/echo'.format(*addr)
 

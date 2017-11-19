@@ -4,7 +4,7 @@ import asyncio
 
 from pulsar.api import send
 from pulsar.apps import rpc, http, ws
-from pulsar.apps.test import dont_run_with_thread
+from pulsar.apps.test import dont_run_with_thread, run_test_server
 from pulsar.utils.system import json
 
 from examples.chat.manage import server
@@ -28,11 +28,7 @@ class TestWebChat(unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        s = server(bind='127.0.0.1:0', name=cls.__name__.lower(),
-                   concurrency=cls.concurrency,
-                   parse_console=False)
-        cls.app_cfg = await send('arbiter', 'run', s)
-        cls.uri = 'http://%s:%s' % cls.app_cfg.addresses[0]
+        await run_test_server(cls, server)
         cls.ws = 'ws://%s:%s/message' % cls.app_cfg.addresses[0]
         cls.rpc = rpc.JsonProxy('%s/rpc' % cls.uri)
         cls.http = http.HttpClient()

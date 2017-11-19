@@ -4,6 +4,7 @@ import unittest
 from pulsar import SERVER_SOFTWARE
 from pulsar.api import send
 from pulsar.apps.http import HttpClient
+from pulsar.apps.test import run_test_server
 
 try:
     from examples.flaskapp.manage import server
@@ -16,15 +17,8 @@ class TestFlaskApp(unittest.TestCase):
     app_cfg = None
 
     @classmethod
-    def name(cls):
-        return 'flaskapptest'
-
-    @classmethod
     async def setUpClass(cls):
-        s = server(name=cls.name(), bind='127.0.0.1:0',
-                   parse_console=False)
-        cls.app_cfg = await send('arbiter', 'run', s)
-        cls.uri = 'http://{0}:{1}'.format(*cls.app_cfg.addresses[0])
+        await run_test_server(cls, server)
         cls.client = HttpClient()
 
     @classmethod
