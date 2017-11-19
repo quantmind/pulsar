@@ -64,7 +64,7 @@ class HttpServerResponse(ProtocolConsumer):
     #    INTERNALS
     def feed_data(self, data):
         try:
-            self.request.parser.feed_data(data)
+            return self.request.parser.feed_data(data)
         except http.HttpParserUpgrade:
             pass
         except Exception as exc:

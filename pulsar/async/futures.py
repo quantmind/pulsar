@@ -1,11 +1,9 @@
-from inspect import isgeneratorfunction
-from functools import wraps
-
 from asyncio import Future, CancelledError, TimeoutError, sleep, gather
 
 from .consts import MAX_ASYNC_WHILE
-from .access import (get_event_loop, LOGGER, isawaitable,
-                     ensure_future, create_future)
+from .access import (
+    get_event_loop, LOGGER, ensure_future, create_future
+)
 
 
 def return_false():
@@ -57,13 +55,6 @@ def chain_future(future, callback=None, errback=None, next=None):
     return next
 
 
-def as_exception(future):
-    if future._exception:
-        return future.exception()
-    elif future.cancelled():
-        return CancelledError()
-
-
 def add_errback(future, callback, loop=None):
     '''Add a ``callback`` to a ``future`` executed only if an exception
     or cancellation has occurred.'''
@@ -76,28 +67,6 @@ def add_errback(future, callback, loop=None):
     future = ensure_future(future, loop=None)
     future.add_done_callback(_error_back)
     return future
-
-
-def future_result_exc(future):
-    '''Return a two elements tuple containing the future result and exception.
-
-    The :class:`.Future` must be ``done``
-    '''
-    if future.cancelled():
-        return None, CancelledError()
-    elif future._exception:
-        return None, future.exception()
-    else:
-        return future.result(), None
-
-
-def task_callback(callback):
-
-    @wraps(callback)
-    def _task_callback(fut):
-        return ensure_future(callback(fut.result()), fut._loop)
-
-    return _task_callback
 
 
 def maybe_async(value, *, loop=None):
@@ -129,58 +98,6 @@ def as_gather(*args):
     """Same as :func:`~.asyncio.gather` but allows sync values
     """
     return gather(*[as_coroutine(arg) for arg in args])
-
-
-def task(function):
-    '''Thread-safe decorator to run a ``function`` in an event loop.
-
-    :param function: a callable which can return coroutines,
-        :class:`.asyncio.Future` or synchronous data. Can be a method of
-        an :ref:`async object <async-object>`, in which case the loop
-        is given by the object ``_loop`` attribute.
-    :return: a :class:`~asyncio.Future`
-    '''
-    if isgeneratorfunction(function):
-        wrapper = function
-    else:
-        async def wrapper(*args, **kw):
-            res = function(*args, **kw)
-            if isawaitable(res):
-                res = await res
-            return res
-
-    @wraps(function)
-    def _(*args, **kwargs):
-        loop = getattr(args[0], '_loop', None) if args else None
-        coro = wrapper(*args, **kwargs)
-        return ensure_future(coro, loop=loop)
-
-    return _
-
-
-def run_in_loop(loop, callable, *args, **kwargs):
-    '''Run ``callable`` in the event ``loop`` thread, thread safe.
-
-    :param loop: The event loop where ``callable`` is run
-    :return: a :class:`~asyncio.Future`
-    '''
-    waiter = create_future(loop)
-
-    def _():
-        try:
-            result = callable(*args, **kwargs)
-        except Exception as exc:
-            waiter.set_exception(exc)
-        else:
-            try:
-                future = ensure_future(result, loop=loop)
-            except TypeError:
-                waiter.set_result(result)
-            else:
-                chain_future(future, next=waiter)
-
-    loop.call_soon_threadsafe(_)
-    return waiter
 
 
 async def async_while(timeout, while_clause, *args):
