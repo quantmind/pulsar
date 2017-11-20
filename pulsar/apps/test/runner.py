@@ -2,7 +2,7 @@ import asyncio
 from inspect import isgenerator, isawaitable
 from unittest import SkipTest, TestCase
 
-from async_timeout import timeout
+from pulsar.async.timeout import timeout
 
 from .utils import (TestFailure, skip_test, skip_reason,
                     expecting_failure, get_test_timeout)
@@ -151,7 +151,7 @@ class Runner:
         # a coroutine
         if isawaitable(coro):
             test_timeout = get_test_timeout(method, test_timeout)
-            with timeout(test_timeout, loop=self._loop):
+            with timeout(self._loop, test_timeout):
                 await coro
         elif isgenerator(coro):
             raise InvalidTestFunction('test function returns a generator')
@@ -191,7 +191,7 @@ class Runner:
             # a coroutine
             if isawaitable(coro):
                 test_timeout = get_test_timeout(method, test_timeout)
-                with timeout(test_timeout, loop=self._loop):
+                with timeout(self._loop, test_timeout):
                     exc = await store_trace(coro)
             elif isgenerator(coro):
                 raise InvalidTestFunction('test function returns a generator')

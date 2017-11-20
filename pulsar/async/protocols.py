@@ -1,12 +1,11 @@
 import asyncio
 from collections import deque
 
-from async_timeout import timeout
-
 import pulsar
 
 from .access import LOGGER
 from .mixins import FlowControl, Timeout, Pipeline, DEFAULT_LIMIT
+from .timeout import timeout
 from ..utils.lib import Protocol, Producer
 from ..utils.internet import nice_address, format_address
 
@@ -84,7 +83,7 @@ class PulsarProtocol(Protocol, FlowControl, Timeout, Pipeline):
 
     async def _close(self, waiter, pipeline_worker):
         try:
-            with timeout(CLOSE_TIMEOUT, loop=self._loop):
+            with timeout(self._loop, CLOSE_TIMEOUT):
                 if pipeline_worker:
                     await pipeline_worker
                 await waiter

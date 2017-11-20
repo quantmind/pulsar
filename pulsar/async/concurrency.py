@@ -6,14 +6,13 @@ import pickle
 from multiprocessing import Process, current_process
 from multiprocessing.reduction import ForkingPickler
 
-from async_timeout import timeout
-
 from ..utils.exceptions import ActorStarted
 from ..utils import system
 
 from .proxy import ActorProxyMonitor, get_proxy, actor_proxy_future
 from .access import set_actor, logger
 from .threads import Thread
+from .timeout import timeout
 from .mailbox import MailboxClient, mailbox_protocol, ProxyMailbox, create_aid
 from .protocols import TcpServer
 from .actor import Actor
@@ -232,7 +231,7 @@ class Concurrency:
             loop = actor._loop
             try:
                 start = loop.time()
-                with timeout(self.cfg.exit_timeout, loop=loop):
+                with timeout(loop, self.cfg.exit_timeout):
                     await asyncio.gather(*waiters, return_exceptions=True,
                                          loop=loop)
             except asyncio.TimeoutError:

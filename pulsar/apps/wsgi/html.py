@@ -53,31 +53,3 @@ class Textarea(HtmlVisitor):
     def set_form_value(self, html, value):
         html.remove_all()
         html.append(value)
-
-
-class Select(HtmlVisitor):
-
-    def get_form_value(self, html):
-        values = []
-        for child in html.children:
-            if child.attr('selected') == 'selected':
-                values.append(child.attr('value'))
-        if html.attr('multiple') == 'multiple':
-            return values
-        elif values:
-            return values[0]
-
-        return html.children[0] if html.children else ''
-
-    def set_form_value(self, html, value):
-        if html.attr('multiple') == 'multiple':
-            for child in html.children:
-                if child.attr('value') == value:
-                    child.attr('selected', 'selected')
-                    break
-        else:
-            for child in html.children:
-                if child.attr('value') == value:
-                    child.attr('selected', 'selected')
-                else:
-                    child._attr.pop('selected', None)

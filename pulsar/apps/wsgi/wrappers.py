@@ -80,14 +80,6 @@ def redirect(path, code=None, permanent=False):
     return WsgiResponse(code, response_headers=[(LOCATION, path)])
 
 
-def wsgi_encoder(gen, encoding):
-    for data in gen:
-        if isinstance(data, str):
-            yield data.encode(encoding)
-        else:
-            yield data
-
-
 class WsgiRequest:
     """A wsgi request
     """

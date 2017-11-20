@@ -9,13 +9,12 @@ HTTP Protocol Consumer
 """
 import os
 import sys
-from asyncio import CancelledError
-
-from async_timeout import timeout
+from inspect import isawaitable
 
 from pulsar.api import BadRequest, ProtocolConsumer
 from pulsar.utils.lib import WsgiProtocol
 from pulsar.utils import http
+from pulsar.async.timeout import timeout
 
 from .utils import handle_wsgi_error, log_wsgi_info, LOGGER
 from .formdata import HttpBodyReader
@@ -102,18 +101,14 @@ class HttpServerResponse(ProtocolConsumer):
                             raise BadRequest
                         response = wsgi_callable(environ,
                                                  wsgi.start_response)
-                        with timeout(keep_alive, loop=loop):
-                            try:
+                        if isawaitable(response):
+                            with timeout(loop, keep_alive):
                                 response = await response
-                            except TypeError:
-                                pass
                     else:
                         response = handle_wsgi_error(environ, exc_info)
-                        with timeout(keep_alive, loop=loop):
-                            try:
+                        if isawaitable(response):
+                            with timeout(loop, keep_alive):
                                 response = await response
-                            except TypeError:
-                                pass
                     #
                     if exc_info:
                         response.start(
@@ -124,21 +119,13 @@ class HttpServerResponse(ProtocolConsumer):
                     #
                     # Do the actual writing
                     for chunk in response:
-                        with timeout(keep_alive, loop=loop):
-                            try:
+                        if isawaitable(chunk):
+                            with timeout(loop, keep_alive):
                                 chunk = await chunk
-                            except TypeError:
-                                pass
-                        with timeout(keep_alive, loop=loop):
-                            try:
-                                await wsgi.write(chunk)
-                            except TypeError:
-                                pass
-                            except CancelledError:
-                                # the writing was cancelled
-                                # If the connection is closed simply leave
-                                if self.connection.closed:
-                                    return
+                        waiter = wsgi.write(chunk)
+                        if waiter:
+                            with timeout(loop, keep_alive):
+                                await waiter
                     #
                     # make sure we write headers and last chunk if needed
                     wsgi.write(b'', True)
@@ -176,6 +163,9 @@ class HttpServerResponse(ProtocolConsumer):
             if PULSAR_TEST not in os.environ:
                 environ.clear()
             self = None
+
+    def _cancel_task(self, task):
+        task.cancel()
 
     def _write_headers(self):
         wsgi = self.request

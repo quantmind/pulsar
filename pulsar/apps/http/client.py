@@ -24,8 +24,6 @@ except ImportError:     # pragma    nocover
 
 from multidict import CIMultiDict
 
-from async_timeout import timeout as async_timeout
-
 import pulsar
 from pulsar.api import (
     AbortEvent, AbstractClient, Pool, Connection,
@@ -37,6 +35,7 @@ from pulsar.utils.system import json as _json
 from pulsar.utils.string import to_bytes
 from pulsar.utils import http
 from pulsar.utils.structures import mapping_iterator
+from pulsar.async.timeout import timeout as async_timeout
 from pulsar.utils.httpurl import (
     encode_multipart_formdata, CHARSET, get_environ_proxies, is_succesful,
     get_hostport, cookiejar_from_dict, http_chunks, JSON_CONTENT_TYPES,
@@ -920,7 +919,7 @@ class HttpClient(AbstractClient):
         if timeout is None:
             timeout = self.timeout
 
-        with async_timeout(timeout, loop=self._loop):
+        with async_timeout(self._loop, timeout):
             nparams = params.copy()
             nparams.update(((name, getattr(self, name)) for name in
                             self.request_parameters if name not in params))

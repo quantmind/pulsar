@@ -86,10 +86,9 @@ asynchronous ``with`` block.
 Installing
 ============
 
-Pulsar has two **hard dependencies**:
+Pulsar has one **hard dependency**:
 
 * multidict_
-* async-timeout_
 
 install via pip::
 
@@ -255,6 +254,5 @@ file in the top distribution directory for the full license text.
 .. _uvloop: https://github.com/MagicStack/uvloop
 .. _httptools: https://github.com/MagicStack/httptools
 .. _multidict: https://github.com/aio-libs/multidict
-.. _async-timeout: https://github.com/aio-libs/async-timeout
 .. _`Asynchronous WSGI server`: http://quantmind.github.io/pulsar/apps/wsgi/index.html
 .. _`Asynchronous Test suite`: http://quantmind.github.io/pulsar/apps/test.html
