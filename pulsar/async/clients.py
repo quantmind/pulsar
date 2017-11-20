@@ -2,9 +2,7 @@ import logging
 from functools import reduce
 import asyncio
 
-from async_timeout import timeout
-
-from pulsar.utils.internet import is_socket_closed
+from .timeout import timeout
 
 from .futures import AsyncObject, Bench
 from .protocols import Producer
@@ -123,7 +121,7 @@ class Pool(AsyncObject):
             connection = queue.get_nowait()
         # wait for one to be available
         elif self.in_use + self._connecting >= queue._maxsize:
-            with timeout(self._timeout, loop=self._loop):
+            with timeout(self._loop, self._timeout):
                 connection = await queue.get()
         else:   # must create a new connection
             self._connecting += 1
@@ -136,7 +134,7 @@ class Pool(AsyncObject):
         if connection is None:
             connection = await self._get()
         else:
-            if self.is_connection_closed(connection):
+            if connection.closed:
                 connection = await self._get()
             else:
                 self._in_use_connections.add(connection)
@@ -152,21 +150,6 @@ class Pool(AsyncObject):
                 if conn:
                     conn.close()
         self._in_use_connections.discard(conn)
-
-    def is_connection_closed(self, connection):
-        is_closing = getattr(connection.transport, 'is_closing', None)
-        if is_closing:
-            return is_closing()
-        else:
-            try:
-                sock = connection.sock
-            except AttributeError:
-                return True
-            if is_socket_closed(sock):
-                connection.close()
-                return True
-            return False
-        return True
 
     def status(self, message=None, level=None):
         return ('Pool size: %d  Connections in pool: %d '
