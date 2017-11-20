@@ -6,5 +6,6 @@ greenlet
 flask
 oauthlib
 requests
+unidecode
 certifi
 twine

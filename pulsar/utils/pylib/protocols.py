@@ -81,19 +81,6 @@ class Producer(EventHandler):
         protocol.copy_many_times_events(self)
         return protocol
 
-    def build_consumer(self, consumer_factory):
-        """Build a consumer for a protocol.
-
-        This method can be used by protocols which handle several requests,
-        for example the :class:`Connection` class.
-
-        :param consumer_factory: consumer factory to use.
-        """
-        consumer = consumer_factory(loop=self._loop)
-        consumer.logger = self.logger
-        consumer.copy_many_times_events(self)
-        return consumer
-
 
 class Protocol(EventHandler):
     """A mixin class for both :class:`.Protocol` and
@@ -152,41 +139,6 @@ class Protocol(EventHandler):
             self._current_consumer.event('post_request').bind(
                 self._build_consumer
             )
-
-    def close(self):
-        """Close by closing the :attr:`transport`
-
-        Return the ``connection_lost`` event which can be used to wait
-        for complete transport closure.
-        """
-        if not self._closed:
-            closed = False
-            event = self.event('connection_lost')
-            if self.transport:
-                if self._loop.get_debug():
-                    self.logger.debug('Closing connection %s', self)
-                if self.transport.can_write_eof():
-                    try:
-                        self.transport.write_eof()
-                    except Exception:
-                        pass
-                try:
-                    self.transport.close()
-                    closed = self._loop.create_task(
-                        self._close(event.waiter())
-                    )
-                except Exception:
-                    pass
-            if not closed:
-                self.event('connection_lost').fire()
-            self._closed = closed or True
-
-    def abort(self):
-        """Abort by aborting the :attr:`transport`
-        """
-        if self.transport:
-            self.transport.abort()
-        self.event('connection_lost').fire()
 
     def connection_made(self, transport):
         """Sets the :attr:`transport`, fire the ``connection_made`` event

@@ -98,7 +98,7 @@ def get_connection_string(scheme, address, params):
     return scheme + '://' + address
 
 
-def is_socket_closed(sock):
+def is_socket_closed(sock):     # pragma    nocover
     """Check if socket ``sock`` is closed."""
     if not sock:
         return True
@@ -150,13 +150,3 @@ def format_address(address):
             raise ValueError('Could not format address %s' % str(address))
     else:
         return str(address)
-
-
-def is_tls(sock):
-    '''Check if ``sock`` is a socket over transport layer security
-    '''
-    try:
-        import ssl
-        return isinstance(sock, ssl.SSLSocket)
-    except ImportError:
-        return False

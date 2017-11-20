@@ -1,6 +1,6 @@
 try:
     import signal
-except ImportError:
+except ImportError:     # pragma    nocover
     signal = None
 
 
