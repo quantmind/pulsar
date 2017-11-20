@@ -1,7 +1,6 @@
 flake8
 coverage
 codecov
-cython
 greenlet
 flask
 oauthlib
