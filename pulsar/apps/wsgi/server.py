@@ -9,9 +9,8 @@ HTTP Protocol Consumer
 """
 import os
 import sys
-from inspect import isawaitable
 
-from pulsar.api import BadRequest, ProtocolConsumer
+from pulsar.api import BadRequest, ProtocolConsumer, isawaitable
 from pulsar.utils.lib import WsgiProtocol
 from pulsar.utils import http
 from pulsar.async.timeout import timeout

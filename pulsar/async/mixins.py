@@ -174,10 +174,11 @@ class Pipeline:
 class ResponsePipeline:
     """Maintains a queue of responses to send back to the client
     """
+    __slots__ = ('connection', 'queue', 'debug', 'worker', 'put')
+
     def __init__(self, connection):
         self.connection = connection
         self.queue = Queue(loop=connection._loop)
-        self.logger = connection.producer.logger
         self.debug = connection._loop.get_debug()
         self.worker = self.queue._loop.create_task(self._process())
         self.put = self.queue.put_nowait
@@ -187,20 +188,24 @@ class ResponsePipeline:
             try:
                 consumer = await self.queue.get()
                 if self.debug:
-                    self.logger.debug('Connection pipeline process %s',
-                                      consumer)
+                    self.connection.producer.logger.debug(
+                        'Connection pipeline process %s', consumer
+                    )
                 await consumer.write_response()
             except (CancelledError, GeneratorExit, RuntimeError):
                 break
             except Exception:
-                self.logger.exception('Critical exception in %s '
-                                      'response pipeline', self.connection)
+                self.connection.producer.logger.exception(
+                    'Critical exception in %s response pipeline',
+                    self.connection
+                )
                 self.connection.close()
                 break
         # help gc
         self.connection = None
         self.queue = None
         self.worker = None
+        self.put = None
 
     def close(self):
         self.worker.cancel()

@@ -43,7 +43,7 @@ cdef class WsgiProtocol:
         object keep_alive
     cdef object header_wsgi, protocol, parsed_url
 
-    def __init__(self, object protocol, object cfg, object FileWrapper):
+    def __cinit__(self, object protocol, object cfg, object FileWrapper):
         cdef object connection = protocol.connection
         cdef object server_address = connection.transport.get_extra_info('sockname')
         self.environ = {

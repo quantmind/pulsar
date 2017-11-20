@@ -8,7 +8,7 @@ from .utils.exceptions import (
 from .utils.config import Config, Setting
 from .utils.lib import (
     HAS_C_EXTENSIONS, EventHandler, ProtocolConsumer, Protocol,
-    Producer, AbortEvent
+    Producer, AbortEvent, isawaitable
 )
 
 from .async.access import get_actor, create_future, cfg_value, ensure_future
@@ -49,6 +49,7 @@ __all__ = [
     'as_coroutine',
     'chain_future',
     'async_while',
+    'isawaitable',
     #
     # Actor Layer
     'get_actor',

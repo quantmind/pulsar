@@ -39,16 +39,23 @@ class HttpBodyReader:
     An instance of this class is injected into the wsgi.input key
     of the WSGI environment
     """
+    __slots__ = ('limit', 'transport', 'environ',
+                 '_reader', '_expect_sent', '_waiting')
+
     def __init__(self, transport, limit, environ):
         self.limit = limit
         self.transport = transport
-        self.reader = asyncio.StreamReader()
-        self.reader.set_transport(transport)
-        self.feed_data = self.reader.feed_data
-        self.feed_eof = self.reader.feed_eof
         self.environ = environ
+        self._reader = asyncio.StreamReader()
         self._expect_sent = None
         self._waiting = None
+        self._reader.set_transport(self.transport)
+
+    def feed_data(self, data):
+        self._reader.feed_data(data)
+
+    def feed_eof(self):
+        self._reader.feed_eof()
 
     def fail(self):
         if self._waiting_expect():
@@ -56,12 +63,12 @@ class HttpBodyReader:
 
     def read(self, n=-1):
         self._can_continue()
-        return self.reader.read(n=n)
+        return self._reader.read(n=n)
 
     async def readline(self):
         self._can_continue()
         try:
-            line = await self.reader.readuntil(b'\n')
+            line = await self._reader.readuntil(b'\n')
         except asyncio.streams.LimitOverrunError as exc:
             line = await self.read(exc.consumed) + await self.readline()
             if len(line) > self.limit:
@@ -70,7 +77,7 @@ class HttpBodyReader:
 
     def readexactly(self, n):
         self._can_continue()
-        return self.reader.readexactly(n)
+        return self._reader.readexactly(n)
 
     def _waiting_expect(self):
         '''``True`` when the client is waiting for 100 Continue.
