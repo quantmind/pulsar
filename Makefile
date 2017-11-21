@@ -25,6 +25,9 @@ test:
 	flake8
 	$(PYTHON) -W ignore setup.py test -q --io uv
 
+testinstalled:
+	$(PYTHON) runtests.py
+
 testpy:
 	export PULSARPY=yes
 	$(PYTHON) -W ignore setup.py test -q
@@ -40,6 +43,9 @@ testall:
 	$(PYTHON) -W ignore setup.py test -q --io uv
 	$(PYTHON) setup.py bench
 
+wheels:
+	rm -rf wheelhouse
+	$(PYTHON) -m ci.build_wheels --pyversions 3.5 3.6
 
 release: clean compile test
 	$(PYTHON) setup.py sdist bdist_wheel upload

@@ -53,15 +53,23 @@ jobs:
               name: test
               command: make compile && make test
     deploy:
-        docker:
-            working_directory: ~/io
-        docker:
-          - image: quay.io/pypa/manylinux1_x86_64
+        machine: true
+        environment:
+          - PYTHON_VERSIONS: 3.5 3.6
+          - PYMODULE: pulsar
         steps:
           - checkout
           - run:
+              name: install ci packages
+              command: pip install -r ci/requirements.txt
+          - run:
               name: build wheels
-              command: ci/build-manylinux-wheels.sh
+              command: make wheels
+    deploy-mac:
+        macos: true
+        steps:
+          - checkout
+
 
 workflows:
   version: 2
@@ -71,6 +79,13 @@ workflows:
       - build-coverage
       - build-lagacy
       - deploy:
+          requires:
+            - build-main
+            - build-lagacy
+          filters:
+            branches:
+              only: deploy
+      - deploy-mac:
           requires:
             - build-main
             - build-lagacy

@@ -1,22 +1,27 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import argparse
 import sys
-import xmlrpc.client
+try:
+    from xmlrpc.client import ServerProxy
+except ImportError:
+    from xmlrpclib import ServerProxy
+
+
+from setup import meta
 
 
 def main():
     parser = argparse.ArgumentParser(description='PyPI package checker')
-    parser.add_argument('package_name', metavar='PACKAGE-NAME')
-
     parser.add_argument(
         '--pypi-index-url',
-        help=('PyPI index URL.'),
-        default='https://pypi.python.org/pypi')
+        help='PyPI index URL.',
+        default='https://pypi.python.org/pypi'
+    )
 
     args = parser.parse_args()
 
-    pypi = xmlrpc.client.ServerProxy(args.pypi_index_url)
-    releases = pypi.package_releases(args.package_name)
+    pypi = ServerProxy(args.pypi_index_url)
+    releases = pypi.package_releases(meta['name'])
 
     if releases:
         print(next(iter(sorted(releases, reverse=True))))

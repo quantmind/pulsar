@@ -9,6 +9,7 @@ __pycache__
 build
 docs/build
 dist
+wheelhouse
 htmlcov
 htmlprof
 venv

@@ -14,12 +14,22 @@ ${PIP} wheel /io/ -w /io/dist/
 # Bundle external shared libraries into the wheels.
 for whl in /io/dist/*.whl; do
     auditwheel repair $whl -w /io/dist/
-    rm /io/dist/*-linux_*.whl
 done
 
-PYTHON="/opt/python/${PYTHON_VERSION}/bin/python"
-PIP="/opt/python/${PYTHON_VERSION}/bin/pip"
+echo "Cleanup OS specific wheels"
+rm -fv /io/dist/*-linux_*.whl
+echo "Cleanup non-$PYMODULE wheels"
+find /io/dist -maxdepth 1 -type f ! -name "$PYMODULE"'-*-manylinux1_*.whl' -print0 | xargs -0 rm -rf
+ls /io/dist
+
+
+# clear python cache
+find /io -type d -name __pycache__ -print0 | xargs -0 rm -rf
+
+echo
+echo -n "Test $PYTHON_VERSION: "
 ${PIP} install ${PYMODULE} --no-index -f file:///io/dist
-rm -rf /io/tests/__pycache__
 make -C /io/ PYTHON="${PYTHON}" testinstalled
-rm -rf /io/tests/__pycache__
+
+mkdir -p /io/wheelhouse
+mv /io/dist/*-manylinux*.whl /io/wheelhouse/

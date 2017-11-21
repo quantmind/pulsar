@@ -35,22 +35,22 @@ class tolerant_build_ext(build_ext):
                 try:
                     from Cython.Build import cythonize
                 except ImportError:
-                    raise BuildFailed('Cython not installed') from None
+                    raise BuildFailed('Cython not installed')
                 self.extensions = cythonize(self.extensions,
                                             include_path=[path])
             super().run()
         except DistutilsPlatformError:
-            raise BuildFailed from None
+            raise BuildFailed
 
     def build_extension(self, ext):
         try:
             super().build_extension(ext)
         except ext_errors:
-            raise BuildFailed from None
+            raise BuildFailed
         except ValueError:
             # this can happen on Windows 64 bit, see Python issue 7511
             if "'path'" in str(sys.exc_info()[1]):  # works with both py 2/3
-                raise BuildFailed from None
+                raise BuildFailed
             raise
 
 
