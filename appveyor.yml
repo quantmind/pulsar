@@ -20,7 +20,7 @@ install:
 build: false
 
 test_script:
-  - "ci/build.cmd %PYTHON%\\python.exe setup.py test"
+  - "ci/build.cmd %PYTHON%\\python.exe setup.py test -q --sequential"
 
 after_test:
   - "ci/build.cmd %PYTHON%\\python.exe setup.py sdist bdist_wheel"

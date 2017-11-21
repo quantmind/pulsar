@@ -10,6 +10,7 @@
 :Documentation: http://quantmind.github.io/pulsar/
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
+:Benchmarks: https://quantmind.github.io/pulsar-bench/
 :Stack overflow: questions tagged python-pulsar_
 :Mailing list: `google user group`_
 :Design by: `Quantmind`_ and `Luca Sbardella`_
@@ -26,8 +27,6 @@
   :target: https://pypi.python.org/pypi/pulsar
 .. |downloads| image:: https://img.shields.io/pypi/dd/pulsar.svg
   :target: https://pypi.python.org/pypi/pulsar
-.. |coverage-master| image:: https://coveralls.io/repos/github/quantmind/pulsar/badge.svg?branch=master
-  :target: https://coveralls.io/github/quantmind/pulsar?branch=master
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/w2ip01j07qm161ei?svg=true
     :target: https://ci.appveyor.com/project/lsbardel/pulsar
 .. |contributors| image:: https://img.shields.io/github/contributors/quantmind/pulsar.svg
@@ -148,7 +147,7 @@ The Arbiter runs the main eventloop and it controls the life of all actors.
 Monitors manage group of actors performing similar functions, You can think
 of them as a pool of actors.
 
-.. image:: https://pulsar.fluidily.com/assets/images/actors.png
+.. image:: https://fluidily-public.s3.amazonaws.com/pulsar/images/actors.png
    :alt: Pulsar Actors
 
 More information about design and philosophy in the documentation.
