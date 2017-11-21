@@ -70,7 +70,6 @@ workflows:
       - build-main
       - build-coverage
       - build-lagacy
-      - build-dev
       - deploy:
           requires:
             - build-main
