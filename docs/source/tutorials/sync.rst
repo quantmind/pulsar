@@ -18,7 +18,7 @@ However, sometimes it can be useful to have
 Pulsar achieves this by using a new event loop for that object.
 For example, this statement creates a synchronous :class:`.HttpClient`::
 
-    >>> from pulsar import new_event_loop
+    >>> asyncio import new_event_loop
     >>> from pulsar.apps import http
     >>> client = http.HttpClient(loop=new_event_loop())
     >>> client._loop.is_running()

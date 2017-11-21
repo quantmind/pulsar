@@ -9,7 +9,7 @@ execution of your code.
 
 The obtain the arbiter::
 
-    >>> from pulsar import arbiter
+    >>> from pulsar.api import arbiter
     >>> a = arbiter()
     >>> a.is_running()
     False

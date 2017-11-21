@@ -1,0 +1,21 @@
+language: generic
+
+matrix:
+    fast_finish: true
+
+    include:
+        - os: osx
+          env: PYTHON_VERSION=3.5.4
+          branches:
+              only:
+                  - deploy
+
+        - os: osx
+          env: PYTHON_VERSION=3.6.3
+          branches:
+              only:
+                  - deploy
+
+install:
+    - ci/mac-install.sh
+    - ci/install.sh

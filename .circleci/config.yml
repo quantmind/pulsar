@@ -86,10 +86,3 @@ workflows:
           filters:
             branches:
               only: deploy
-      - deploy-mac:
-          requires:
-            - build-main
-            - build-lagacy
-          filters:
-            branches:
-              only: deploy
