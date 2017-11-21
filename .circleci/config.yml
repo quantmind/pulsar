@@ -39,13 +39,29 @@ jobs:
           - run:
               name: test
               command: make compile && make test
+    build-dev:
+        working_directory: ~/pulsar-legacy
+        docker:
+          - image: python:3.7-rc
+          - image: redis
+        steps:
+          - checkout
+          - run:
+              name: install packages
+              command: ci/install.sh
+          - run:
+              name: test
+              command: make compile && make test
     deploy:
         docker:
-            working_directory: ~/pulsar-deploy
+            working_directory: ~/io
         docker:
           - image: quay.io/pypa/manylinux1_x86_64
         steps:
           - checkout
+          - run:
+              name: build wheels
+              command: ci/build-manylinux-wheels.sh
 
 workflows:
   version: 2
@@ -54,6 +70,7 @@ workflows:
       - build-main
       - build-coverage
       - build-lagacy
+      - build-dev
       - deploy:
           requires:
             - build-main

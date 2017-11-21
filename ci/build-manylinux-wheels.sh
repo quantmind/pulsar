@@ -6,8 +6,8 @@ PYTHON="/opt/python/${PYTHON_VERSION}/bin/python"
 PIP="/opt/python/${PYTHON_VERSION}/bin/pip"
 ${PIP} install --upgrade pip wheel
 ${PIP} install --upgrade setuptools
-${PIP} install -r /io/requirements-dev.txt
-${PIP} install -r /io/requirements.txt
+${PIP} install -r /io/requirements/ci.txt
+${PIP} install -r /io/requirements/hard.txt
 make -C /io/ PYTHON="${PYTHON}" compile
 ${PIP} wheel /io/ -w /io/dist/
 
