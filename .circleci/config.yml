@@ -66,7 +66,8 @@ jobs:
               name: build wheels
               command: make wheels
     deploy-mac:
-        macos: true
+        macos:
+          xcode: "9.0"
         steps:
           - checkout
 
