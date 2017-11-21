@@ -1,4 +1,5 @@
 import os
+import sys
 import socket
 import asyncio
 import unittest
@@ -835,6 +836,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(await raw.read(), b'')
 
     @no_tls
+    @unittest.skipIf(sys.version_info < (3, 6), "skip on py 3.5")
     async def test_raw_stream_large(self):
         http = self._client
         url = self.httpbin('stream/10000/3')

@@ -26,7 +26,7 @@ test:
 	$(PYTHON) -W ignore setup.py test -q --io uv
 
 testinstalled:
-	$(PYTHON) runtests.py
+	$(PYTHON) -W ignore runtests.py
 
 testpy:
 	export PULSARPY=yes

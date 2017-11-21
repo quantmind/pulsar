@@ -9,7 +9,7 @@ except ImportError:
     from xmlrpclib import ServerProxy
 
 import docker
-import tinys3
+# import tinys3
 
 from setup import meta
 
@@ -44,7 +44,19 @@ def parser():
             'Check if version is a valid release (alpha, beta, rc not allowed)'
         )
     )
+    parser.add_argument(
+        '--pypi-index-url',
+        help='PyPI index URL.',
+        default='https://pypi.python.org/pypi'
+    )
     return parser
+
+
+def pypi_release(pypi_index_url):
+    pypi = ServerProxy(pypi_index_url)
+    releases = pypi.package_releases(meta['name'])
+    if releases:
+        return next(iter(sorted(releases, reverse=True)))
 
 
 def check_release(version):
@@ -90,7 +102,8 @@ def main(args=None):
                 volumes={MODULE_PATH: '/io'},
                 environment=dict(
                     PYTHON_VERSION=ml_version(pyver),
-                    PYMODULE=meta['name']
+                    PYMODULE=meta['name'],
+                    CI='true'
                 ),
                 auto_remove=True,
                 detach=True

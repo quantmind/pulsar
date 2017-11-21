@@ -203,6 +203,8 @@ class TestSuite(Application):
         if self.runner:
             self.runner.close()
             self.runner = None
+        else:
+            monitor.monitor.stop(exit_code=1)
         os.environ.pop('PULSAR_TEST', None)
 
     @classmethod
