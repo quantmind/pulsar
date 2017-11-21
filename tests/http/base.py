@@ -18,7 +18,7 @@ from pulsar.apps.http import (
 )
 
 
-linux = platform.name == 'posix' and not platform.isMacOSX
+linux = platform.name == 'posix' and not platform.is_macosx
 
 
 def no_tls(f):
@@ -700,12 +700,13 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertEqual(response.status_code, 304)
         self.assertFalse('content-length' in response.headers)
 
+    @unittest.skipIf(platform.is_windows, 'windows test #291')
     async def test_http_get_timeit(self):
         N = 10
         client = self._client
         bench = await client.timeit('get', N, self.httpbin('get'),
                                     data={'bla': 'foo'})
-        self.assertTrue(bench.taken)
+        self.assertTrue(bench.taken >= 0)
         self.assertEqual(len(bench.result), N)
         for r in bench.result:
             self.assertEqual(r.status_code, 200)

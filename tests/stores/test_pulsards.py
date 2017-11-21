@@ -7,6 +7,8 @@ import datetime
 
 from pulsar.api import send
 from pulsar.utils.string import random_string
+from pulsar.apps.test import run_test_server
+from pulsar.utils.system import platform
 from pulsar.utils.structures import Zset
 from pulsar.apps.ds import PulsarDS, redis_parser, ResponseError
 from pulsar.apps.data import create_store
@@ -1160,6 +1162,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(client.store._loop, pubsub._loop)
         self.assertEqual(pubsub.push_connection, None)
 
+    @unittest.skipIf(platform.is_windows, 'windows test #291')
     async def test_subscribe_one(self):
         key = self.randomkey()
         pubsub1 = self.client.pubsub()
@@ -1176,6 +1179,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(len(count), 1)
         self.assertEqual(count[key.encode('utf-8')], 2)
 
+    @unittest.skipIf(platform.is_windows, 'windows test #291')
     async def test_subscribe_many(self):
         base = self.randomkey()
         key1 = base + '_a'
@@ -1192,6 +1196,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(count[key2.encode('utf-8')], 1)
         self.assertEqual(count[key3.encode('utf-8')], 1)
 
+    @unittest.skipIf(platform.is_windows, 'windows test #291')
     async def test_publish(self):
         pubsub = self.client.pubsub()
         listener = Listener()
@@ -1203,6 +1208,7 @@ class RedisCommands(StoreMixin):
         self.assertEqual(channel, 'chat')
         self.assertEqual(message, b'Hello')
 
+    @unittest.skipIf(platform.is_windows, 'windows test #291')
     async def test_publish_event(self):
         pubsub = self.client.pubsub(protocol=JsonProtocol())
         listener = Listener()
@@ -1216,19 +1222,18 @@ class RedisCommands(StoreMixin):
         self.assertEqual(message['event'], 'room1')
         self.assertEqual(message['data'], 'Hello')
 
+    @unittest.skipIf(platform.is_windows, 'windows test #291')
     async def test_pattern_subscribe(self):
-        # switched off for redis. Issue #95
-        if self.store.name == 'pulsar':
-            eq = self.assertEqual
-            pubsub = self.client.pubsub(protocol=StringProtocol())
-            listener = Listener()
-            pubsub.add_client(listener)
-            eq(await pubsub.psubscribe('f*'), None)
-            eq(await pubsub.publish('foo', 'hello foo'), 1)
-            channel, message = await listener.get()
-            self.assertEqual(channel, 'foo')
-            self.assertEqual(message, 'hello foo')
-            pubsub.punsubscribe()
+        eq = self.assertEqual
+        pubsub = self.client.pubsub(protocol=StringProtocol())
+        listener = Listener()
+        pubsub.add_client(listener)
+        eq(await pubsub.psubscribe('f*'), None)
+        eq(await pubsub.publish('foo', 'hello foo'), 1)
+        channel, message = await listener.get()
+        self.assertEqual(channel, 'foo')
+        self.assertEqual(message, 'hello foo')
+        pubsub.punsubscribe()
 
     ###########################################################################
     #    TRANSACTION
@@ -1244,10 +1249,8 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
 
     @classmethod
     async def setUpClass(cls):
-        server = PulsarDS(name=cls.__name__.lower(),
-                          bind='127.0.0.1:0',
-                          redis_py_parser=cls.redis_py_parser)
-        cls.app_cfg = await send('arbiter', 'run', server)
+        await run_test_server(cls, PulsarDS,
+                              redis_py_parser=cls.redis_py_parser)
         cls.pulsards_uri = 'pulsar://%s:%s' % cls.app_cfg.addresses[0]
         cls.store = cls.create_store('%s/9' % cls.pulsards_uri)
         cls.client = cls.store.client()

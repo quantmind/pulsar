@@ -10,8 +10,7 @@ from multiprocessing import current_process
 
 from .base import *     # noqa
 
-__all__ = ['close_on_exec',
-           'daemonize',
+__all__ = ['daemonize',
            'EXIT_SIGNALS',
            'SIGNALS',
            'kill',
@@ -50,12 +49,6 @@ def chown(path, uid, gid):
         os.chown(path, uid, gid)
     except OverflowError:
         os.chown(path, uid, -ctypes.c_int(-gid).value)
-
-
-def close_on_exec(fd):
-    if fd:
-        flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-        fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
 
 
 def _set_non_blocking(fd):

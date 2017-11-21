@@ -3,6 +3,7 @@ import unittest
 import types
 
 from pulsar.api import send
+from pulsar.utils.system import platform
 from pulsar.apps import rpc, http
 from pulsar.apps.test import dont_run_with_thread, run_test_server
 
@@ -63,6 +64,7 @@ class TestRpcOnThread(unittest.TestCase):
         self.assertTrue('calc.add' in d)
         self.assertTrue('calc.divide' in d)
 
+    @unittest.skipIf(platform.is_windows, 'windows test #291')
     async def test_time_it(self):
         '''Ping server 5 times'''
         bench = await self.p.timeit('ping', 5)

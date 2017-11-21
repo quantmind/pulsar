@@ -134,7 +134,6 @@ class MessageConsumer(ProtocolConsumer):
         self.tasks = {}
         self.logger = actor.logger
         self.debug = actor.cfg.debug
-        self.event('post_request').bind(self._cancel_tasks)
 
     def feed_data(self, data):
         msg = self.parser.decode(data)
@@ -234,7 +233,6 @@ class MessageConsumer(ProtocolConsumer):
                                                       message['args'],
                                                       message['kwargs'],
                                                       self)
-
             except CommandError as exc:
                 self.logger.warning('Command error: %s' % exc)
                 result = None
@@ -246,12 +244,6 @@ class MessageConsumer(ProtocolConsumer):
                 self.write(data)
         finally:
             self.tasks.pop(message['id'], None)
-
-    def _cancel_tasks(self, _, **kw):
-        if self.tasks:
-            for task in self.tasks.values():
-                task.cancel()
-            self.tasks = {}
 
 
 mailbox_protocol = partial(Connection, MessageConsumer)

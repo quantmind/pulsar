@@ -7,8 +7,7 @@ from multiprocessing import current_process
 
 from .base import *     # noqa
 
-__all__ = ['close_on_exec',
-           'daemonize',
+__all__ = ['daemonize',
            'EXIT_SIGNALS',
            'SIGNALS',
            'kill',
@@ -47,13 +46,6 @@ def get_parent_id():
 
 def chown(path, uid, gid):
     pass
-
-
-def close_on_exec(fd):
-    if fd:
-        success = SetHandleInformation(fd, HANDLE_FLAG_INHERIT, 0)
-        if not success:
-            raise ctypes.GetLastError()
 
 
 def _set_non_blocking(fd):

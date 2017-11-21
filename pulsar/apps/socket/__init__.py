@@ -260,7 +260,7 @@ class SocketServer(Application):
         number of workers to 0.
         '''
         cfg = self.cfg
-        if (not platform.has_multiProcessSocket or
+        if (not platform.has_multiprocessing_socket or
                 cfg.concurrency == 'thread'):
             cfg.set('workers', 0)
         servers = await self.binds(monitor)
