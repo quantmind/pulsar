@@ -47,5 +47,8 @@ wheels:
 	rm -rf wheelhouse
 	$(PYTHON) -m ci.build_wheels --pyversions 3.5 3.6
 
+macwheels:
+	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./ci/build-wheels.sh
+
 release: clean compile test
 	$(PYTHON) setup.py sdist bdist_wheel upload

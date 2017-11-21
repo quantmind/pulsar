@@ -20,6 +20,8 @@ ML_IMAGE = "quay.io/pypa/manylinux1_%s"
 
 LOGGER = logging.getLogger('wheels')
 MODULE_PATH = os.path.abspath(os.path.curdir)
+MODULE_PATH_DOCKER = '/io'
+DOCKER_COMMAND = '%s/ci/build-wheels.sh' % MODULE_PATH_DOCKER
 
 
 class InvalidVersion(Exception):
@@ -95,15 +97,22 @@ def main(args=None):
                         pyver, arch, image)
             LOGGER.info(80 * '=')
 
+            whl = ml_version(pyver)
+
             container = cli.containers.run(
                 image,
                 name="build_wheels_%s_%s" % (pyver, arch),
-                command='/io/ci/build-manylinux-wheels.sh',
-                volumes={MODULE_PATH: '/io'},
+                command=DOCKER_COMMAND,
+                volumes={MODULE_PATH: MODULE_PATH_DOCKER},
                 environment=dict(
-                    PYTHON_VERSION=ml_version(pyver),
+                    PYTHON_VERSION=whl,
                     PYMODULE=meta['name'],
-                    CI='true'
+                    WHEEL='manylinux1',
+                    BUNDLE_WHEEL='auditwheel',
+                    IOPATH=MODULE_PATH_DOCKER,
+                    PYTHON="/opt/python/%s/bin/python" % whl,
+                    PIP="/opt/python/%s/bin/pip" % whl,
+                    CI="true"
                 ),
                 auto_remove=True,
                 detach=True
