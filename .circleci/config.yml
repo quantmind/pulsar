@@ -13,7 +13,7 @@ jobs:
           - run:
               name: test
               command: make compile && make test
-          - run
+          - run:
               name: docs
               command: make docs
     build-coverage:
