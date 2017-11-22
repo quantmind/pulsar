@@ -83,6 +83,9 @@ jobs:
           - run:
               name: build linux wheels
               command: make linuxwheels
+          - run:
+              name: upload linux wheels
+              command: make uploadwheels
 
 
 workflows:
