@@ -21,7 +21,7 @@ jobs:
           - checkout
           - run:
               name: install enchant
-              command: apt-get install enchant
+              command: apt-get update && apt-get install enchant -y
           - run:
               name: install packages
               command: python setup.py install

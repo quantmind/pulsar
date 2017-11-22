@@ -17,7 +17,7 @@ from .async.actor import is_actor, send, spawn, get_stream
 from .async.proxy import command, get_proxy
 from .async.lock import Lock, LockBase
 from .async.protocols import (
-    Connection, DatagramProtocol, TcpServer, DatagramServer
+    Connection, PulsarProtocol, DatagramProtocol, TcpServer, DatagramServer
 )
 from .async.clients import Pool, PoolConnection, AbstractClient
 from .async.futures import chain_future, AsyncObject
@@ -37,6 +37,7 @@ __all__ = [
     'Protocol',
     'Connection',
     'Producer',
+    'PulsarProtocol',
     'DatagramProtocol',
     'TcpServer',
     'DatagramServer',
