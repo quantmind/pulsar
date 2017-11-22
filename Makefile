@@ -2,13 +2,13 @@
 
 
 PYTHON ?= python
-
+PIP ?= pip
 
 _default: compile
 
 
 clean:
-	rm -fr dist/ *.egg-info *.eggs build/ pulsar/utils/*.so extensions/lib/clib.c
+	rm -fr dist/ *.egg-info *.eggs .eggs build/ pulsar/utils/*.so extensions/lib/clib.c
 	find . -name '__pycache__' | xargs rm -rf
 
 
@@ -17,6 +17,7 @@ compile: clean
 
 
 docs:
+	$(PIP) install -r requirements/docs.txt
 	mkdir -p build/docs/html
 	$(PYTHON) -m sphinx -a -b html docs/source build/docs/html
 
@@ -43,11 +44,11 @@ testall:
 	$(PYTHON) -W ignore setup.py test -q --io uv
 	$(PYTHON) setup.py bench
 
-wheels:
+linuxwheels:
 	rm -rf wheelhouse
-	$(PYTHON) -m ci.build_wheels --pyversions 3.5 3.6
+	$(PYTHON) setup.py linux_wheels --pyversions 3.5,3.6
 
-macwheels:
+wheels:
 	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./ci/build-wheels.sh
 
 release: clean compile test

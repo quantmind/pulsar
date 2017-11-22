@@ -13,6 +13,9 @@ jobs:
           - run:
               name: test
               command: make compile && make test
+          - run
+              name: docs
+              command: make docs
     build-coverage:
         working_directory: ~/pulsar-coverage
         docker:
@@ -63,13 +66,11 @@ jobs:
               name: install ci packages
               command: pip install -r ci/requirements.txt
           - run:
-              name: build wheels
-              command: make wheels
-    deploy-mac:
-        macos:
-          xcode: "9.0"
-        steps:
-          - checkout
+              name: check PyPI version
+              command: python setup.py pypi --final
+          - run:
+              name: build linux wheels
+              command: make linuxwheels
 
 
 workflows:

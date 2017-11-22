@@ -5,3 +5,4 @@ pip install --upgrade setuptools
 pip install -r requirements/dev.txt
 pip install -r requirements/hard.txt
 pyslink pulsar
+pyslink pulsar_test

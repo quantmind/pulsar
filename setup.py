@@ -5,11 +5,11 @@ from setuptools import setup, find_packages
 
 from extensions import ext
 
-import pulsar_test
+from pulsar import cmds
 import pulsar
 
 
-class PulsarTest(pulsar_test.Test):
+class PulsarTest(cmds.Test):
     start_coverage = True
 
 
@@ -51,11 +51,13 @@ meta = dict(
     install_requires=requirements('requirements/hard.txt')[0],
     tests_require=requirements('requirements/test.txt')[0],
     setup_requires=['wheel'],
-    packages=find_packages(include=['pulsar', 'pulsar.*', 'pulsar_test']),
+    packages=find_packages(include=['pulsar', 'pulsar.*']),
     entry_points={
         "distutils.commands": [
-            "pulsar_test = pulsar_test:Test",
-            "bench = pulsar_test:Bench"
+            "pulsar_test = pulsar.cmds:Test",
+            "bench = pulsar.cmds:Bench",
+            "linux_wheels = pulsar.cmds:ManyLinux",
+            "s3_upload = pulsar.cmds:S3Upload"
         ]
     },
     classifiers=[
@@ -84,7 +86,10 @@ def run_setup(with_cext):
     params.update(meta)
     cmdclass = params.get('cmdclass', {})
     cmdclass['test'] = PulsarTest
-    cmdclass['bench'] = pulsar_test.Bench
+    cmdclass['bench'] = cmds.Bench
+    cmdclass['linux_wheels'] = cmds.ManyLinux
+    cmdclass['s3data'] = cmds.S3Data
+    cmdclass['pypi'] = cmds.PyPi
     params['cmdclass'] = cmdclass
     setup(**params)
 

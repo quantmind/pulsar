@@ -4,7 +4,7 @@ include README.rst
 include docs/make.bat
 include docs/Makefile
 recursive-include requirements *.txt
-recursive-include examples *.py *.js *.css *.html
+recursive-include pulsar_test *.sh
 recursive-include tests *.py *.txt
 recursive-include pulsar/apps/test/plugins/htmlfiles *.js *.css *.html
 recursive-include docs/source *
