@@ -86,7 +86,12 @@ jobs:
           - run:
               name: upload linux wheels
               command: make uploadwheels
-
+    release:
+        working_directory: ~/docs
+        docker:
+          - image: python:3.6.3
+        steps:
+          - checkout
 
 workflows:
   version: 2
