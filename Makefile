@@ -46,13 +46,13 @@ testall:
 
 linuxwheels:
 	rm -rf wheelhouse
-	$(PYTHON) setup.py linux_wheels --pyversions 3.5,3.6
+	$(PYTHON) setup.py linux_wheels --py 3.5,3.6
 
 uploadwheels:
 	$(PYTHON) setup.py s3data --bucket fluidily --key wheelhouse --files "wheelhouse/*.whl"
 
 wheels:
-	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./ci/build-wheels.sh
+	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./pulsar/cmds/build-wheels.sh
 
 release: clean compile test
 	$(PYTHON) setup.py sdist bdist_wheel upload

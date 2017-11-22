@@ -30,4 +30,5 @@ install:
     - ci/mac-install.sh
 
 script:
-    - ci/build-wheels.sh
+    - make wheels
+    - make uploadwheels
