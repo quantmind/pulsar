@@ -92,6 +92,9 @@ jobs:
           - image: python:3.6.3
         steps:
           - checkout
+          - run:
+              name: download wheels
+              command: make download-wheels
 
 workflows:
   version: 2
