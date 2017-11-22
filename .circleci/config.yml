@@ -1,6 +1,6 @@
 version: 2
 jobs:
-    build-main:
+    main:
         working_directory: ~/pulsar-current
         docker:
           - image: python:3.6.3
@@ -13,10 +13,22 @@ jobs:
           - run:
               name: test
               command: make compile && make test
+    docs:
+        working_directory: ~/docs
+        docker:
+          - image: python:3.6.3
+        steps:
+          - checkout
+          - run:
+              name: install enchant
+              command: apt-get install enchant
+          - run:
+              name: install packages
+              command: python setup.py install
           - run:
               name: docs
               command: make docs
-    build-coverage:
+    coverage:
         working_directory: ~/pulsar-coverage
         docker:
           - image: python:3.6.3
@@ -29,7 +41,7 @@ jobs:
           - run:
               name: run and publish coverage
               command: make coverage && codecov
-    build-lagacy:
+    legacy:
         working_directory: ~/pulsar-legacy
         docker:
           - image: python:3.5.4
@@ -77,13 +89,14 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-      - build-main
-      - build-coverage
-      - build-lagacy
+      - main
+      - coverage
+      - legacy
+      - docs
       - deploy:
           requires:
-            - build-main
-            - build-lagacy
+            - main
+            - legacy
           filters:
             branches:
               only: deploy

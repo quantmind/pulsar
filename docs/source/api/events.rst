@@ -1,4 +1,4 @@
-.. module:: pulsar.async.events
+.. module:: pulsar.api
 
 ============
 Event API
@@ -10,8 +10,16 @@ or can occur several times. Check the
 :ref:`event dispatching tutorial <event-handling>` for an overview.
 
 
+Events
+==================
+
+.. autoclass:: Event
+   :members:
+   :member-order: bysource
+
+
 Events Handler
-~~~~~~~~~~~~~~~~~~~~
+==================
 
 .. autoclass:: EventHandler
    :members:

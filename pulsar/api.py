@@ -7,7 +7,7 @@ from .utils.exceptions import (
 )
 from .utils.config import Config, Setting
 from .utils.lib import (
-    HAS_C_EXTENSIONS, EventHandler, ProtocolConsumer, Protocol,
+    HAS_C_EXTENSIONS, EventHandler, Event, ProtocolConsumer, Protocol,
     Producer, AbortEvent, isawaitable
 )
 
@@ -32,6 +32,7 @@ __all__ = [
     # Protocols and Config
     'HAS_C_EXTENSIONS',
     'EventHandler',
+    'Event',
     'ProtocolConsumer',
     'Protocol',
     'Connection',
@@ -50,6 +51,7 @@ __all__ = [
     'chain_future',
     'async_while',
     'isawaitable',
+    'AsyncObject',
     #
     # Actor Layer
     'get_actor',
@@ -61,7 +63,6 @@ __all__ = [
     'get_stream',
     'command',
     'get_proxy',
-    'AsyncObject',
     #
     # Async Clients
     'Pool',
