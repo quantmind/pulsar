@@ -68,7 +68,9 @@ jobs:
               name: test
               command: make compile && make test
     deploy:
-        machine: true
+        machine:
+            python:
+                version: 3.6.0
         environment:
           - PYTHON_VERSIONS: 3.5 3.6
           - PYMODULE: pulsar

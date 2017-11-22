@@ -12,5 +12,4 @@ API
    events
    protocols
    application
-   utilities
    exceptions

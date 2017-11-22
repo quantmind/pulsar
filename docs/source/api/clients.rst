@@ -1,10 +1,11 @@
 
 
 
-.. module:: pulsar.async.clients
+.. module:: pulsar.api
 
 .. _clients-api:
 
+=====================
 Clients
 =================
 
@@ -14,22 +15,15 @@ for clients with several connections to a remote :class:`.TcpServer`.
 
 
 Abstract Client
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 .. autoclass:: AbstractClient
    :members:
    :member-order: bysource
 
 
-Abstract UDP Client
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: AbstractUdpClient
-   :members:
-   :member-order: bysource
-
 Pool
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 .. autoclass:: Pool
    :members:
@@ -37,7 +31,7 @@ Pool
 
 
 Pool Connection
-~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 .. autoclass:: PoolConnection
    :members:
