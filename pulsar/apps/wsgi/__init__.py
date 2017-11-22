@@ -60,8 +60,9 @@ from functools import partial
 from pulsar.apps.socket import SocketServer, Connection
 
 from .html import HtmlVisitor
-from .content import (String, Html, HtmlDocument, Links, Scripts, Media,
-                      html_factory)
+from .content import (
+    String, Html, HtmlDocument, Head, Links, Scripts, Media, html_factory
+)
 from .middleware import (clean_path_middleware, authorization_middleware,
                          wait_for_body_middleware, middleware_in_executor)
 from .response import AccessControl, GZipMiddleware
@@ -87,6 +88,7 @@ __all__ = [
     'String',
     'Html',
     'HtmlDocument',
+    'Head',
     'Links',
     'Scripts',
     'Media',

@@ -38,7 +38,7 @@ For the curious this is how the internal protocol is implemented
 Protocol
 ~~~~~~~~~~~~
 
-.. autoclass:: MailboxProtocol
+.. autoclass:: MessageConsumer
   :members:
   :member-order: bysource
 
@@ -120,6 +120,8 @@ class ProxyMailbox:
 
 
 class MessageConsumer(ProtocolConsumer):
+    """Protocol Consumer for Actor messages
+    """
     tasks = None
     parser = None
     worker = None

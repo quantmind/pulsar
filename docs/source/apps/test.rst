@@ -215,16 +215,81 @@ Test timeout is only meaningful for asynchronous test function.
 Http TestClient
 ==================
 
-The :class:`.HttpTestClient` can be used to test ``wsgi`` middleware without going
+The :func:`.test_wsgi_request` can be used to test ``wsgi`` middleware without going
 through socket connections.
 
 To use the client in a test function::
 
    async def test_my_wsgi_test(self):
-      http = HttpTestClient(self, wsgi)
+      request = await test_wsgi_request('/')
       response = await http.get('http://bla.com/...')
 
 The host part of the url is irrelevant, it can be anything you like.
+
+
+=========
+API
+=========
+
+Test Suite
+==================
+
+.. autoclass:: pulsar.apps.test.TestSuite
+   :members:
+   :member-order: bysource
+
+
+Test Loader
+==================
+
+.. automodule::
+
+
+Plugin
+==================
+
+.. autoclass:: Plugin
+   :members:
+   :member-order: bysource
+
+
+Test Runner
+==================
+
+.. autoclass:: TestRunner
+   :members:
+   :member-order: bysource
+
+
+Test Result
+==================
+
+.. autoclass:: TestResult
+   :members:
+   :member-order: bysource
+
+
+Test Plugin
+==================
+
+.. autoclass:: TestPlugin
+   :members:
+   :member-order: bysource
+
+
+Populate
+==================
+
+A useful function for populating random data::
+
+    from pulsar.apps.test import populate
+
+    data = populate('string', 100)
+
+gives you a list of 100 random strings
+
+
+.. autofunction:: pulsar.apps.test.populate.populate
 
 ==================
 Test Plugins
@@ -255,76 +320,6 @@ Profile
 
 .. automodule:: pulsar.apps.test.plugins.profile
 
-=========
-API
-=========
-
-Test Suite
-==================
-
-.. autoclass:: pulsar.apps.test.TestSuite
-   :members:
-   :member-order: bysource
-
-
-Test Loader
-==================
-
-.. automodule:: pulsar.apps.test.loader
-
-
-Plugin
-==================
-
-.. autoclass:: pulsar.apps.test.result.Plugin
-   :members:
-   :member-order: bysource
-
-
-Test Runner
-==================
-
-.. autoclass:: pulsar.apps.test.result.TestRunner
-   :members:
-   :member-order: bysource
-
-
-Test Result
-==================
-
-.. autoclass:: pulsar.apps.test.result.TestResult
-   :members:
-   :member-order: bysource
-
-
-Test Plugin
-==================
-
-.. autoclass:: pulsar.apps.test.plugins.base.TestPlugin
-   :members:
-   :member-order: bysource
-
-
-Http Test Client
-==================
-
-.. autoclass:: pulsar.apps.test.wsgi.HttpTestClient
-   :members:
-   :member-order: bysource
-
-Populate
-==================
-
-A useful function for populating random data::
-
-    from pulsar.apps.test import populate
-
-    data = populate('string', 100)
-
-gives you a list of 100 random strings
-
-
-.. autofunction:: pulsar.apps.test.populate.populate
 
 ================
 Utilities

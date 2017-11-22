@@ -2,7 +2,11 @@
 """
 from distutils.cmd import Command
 from distutils.errors import DistutilsError
-from xmlrpc.client import ServerProxy
+
+try:
+    from xmlrpc.client import ServerProxy
+except ImportError:
+    from xmlrpclib import ServerProxy
 
 
 class InvalidVersion(DistutilsError):

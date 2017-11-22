@@ -6,6 +6,13 @@ from pulsar.apps.http import HttpWsgiClient
 
 
 async def test_wsgi_request(url=None, method=None, headers=None, **kwargs):
+    """Create a valid WSGI request
+
+    :param url: optional path
+    :param method: optional HTTP method, defaults to GET
+    :param headers: optional list-alike collection of headers
+    :return: :class:`~.WsgiRequest`
+    """
     cli = HttpWsgiClient(ok, headers=headers)
     url = url or '/'
     if not urlparse(url).scheme:

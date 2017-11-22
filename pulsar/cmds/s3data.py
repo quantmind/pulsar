@@ -91,5 +91,5 @@ class S3Data(Command):
         try:
             from botocore.session import get_session
         except ImportError:
-            raise DistutilsModuleError('botocore is required') from None
+            raise DistutilsModuleError('botocore is required')
         return get_session().create_client('s3')

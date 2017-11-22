@@ -1,4 +1,6 @@
 """Useful distutils commands for continuous integration and deployment
+
+These commands works in python 2 too
 """
 from .test import Bench, Test
 from .linux_wheels import ManyLinux

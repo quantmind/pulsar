@@ -24,7 +24,7 @@ Most of the material presented in the these tutorials is based on the
    proxy
    calculator
    chat
-   flaskgreen
+   flask
    philosophers
    pulsards
    udp
@@ -41,7 +41,6 @@ These sections cover **pulsar internals** for the curious reader.
 
    actors
    command
-   coroutine
    messages
    events
    signal
