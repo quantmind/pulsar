@@ -98,7 +98,7 @@ Serving More than one application
 You can serve as many applications, on different addresses, as you like.
 For example, our ``manage.py`` script could be::
 
-    from pulsar import arbiter
+    from pulsar.api import arbiter
     from pulsar.apps import wsgi
 
     def callable1(environ, start_response):

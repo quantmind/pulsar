@@ -16,6 +16,7 @@ Concurrent framework for Python.
    api/index
    changelog
    settings
+   internals/index
    acknowledgement
    pics
 

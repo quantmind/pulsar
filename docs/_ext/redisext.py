@@ -2,7 +2,7 @@
 """
 from collections import OrderedDict
 
-from sphinx.util.compat import Directive
+from docutils.parsers.rst import Directive
 from docutils import nodes, statemachine
 
 from pulsar.apps.ds import COMMANDS_INFO

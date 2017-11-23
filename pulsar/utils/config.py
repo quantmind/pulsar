@@ -26,7 +26,6 @@ import textwrap
 import logging
 import pickle
 import types
-from typing import Any
 
 from pulsar import __version__, SERVER_NAME
 from . import system

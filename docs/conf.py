@@ -43,16 +43,18 @@ html_sidebars = {
 
 # -- General configuration -----------------------------------------------------
 
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.coverage',
-              'sphinx.ext.extlinks',
-              'sphinx.ext.intersphinx',
-              'sphinx.ext.viewcode',
-              #'pulsar.utils.docs.html',
-              'alabaster',
-              'pulsarext',
-              'redisext',
-              'sphinxtogithub']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
+    'sphinx.ext.extlinks',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.viewcode',
+    #'pulsar.utils.docs.html',
+    'alabaster',
+    'pulsarext',
+    'redisext',
+    # 'sphinxtogithub'
+]
 
 try:
     import sphinxcontrib.spelling  # noqa
@@ -83,7 +85,9 @@ exclude_trees = []
 html_additional_pages = {
 }
 
-suppress_warnings = ['image.nonlocal_uri']
+suppress_warnings = [
+    'image.nonlocal_uri'
+]
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
