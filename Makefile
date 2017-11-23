@@ -47,6 +47,9 @@ testall:
 	$(PYTHON) -W ignore setup.py test -q --io uv
 	$(PYTHON) setup.py bench
 
+pypi-check:
+	$(PYTHON) setup.py pypi --final
+
 wheels:
 	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./pulsar/cmds/build-wheels.sh
 

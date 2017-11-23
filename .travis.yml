@@ -4,15 +4,12 @@ osx_image: xcode9.1
 
 branches:
   only:
-  - deploy
+  - release
 
 env:
     global:
         - PYMODULE=pulsar
-        - PYTHON=python
-        - PIP=pip
         - WHEEL=macosx
-        - IOPATH=/
 
 matrix:
     fast_finish: true
@@ -25,8 +22,10 @@ matrix:
           env: PYTHON_VERSION=3.6.3
 
 install:
-    - ci/mac-install.sh
+    - ci/mac-pre-install.sh
+    - ci/install.sh
 
 script:
+    - make pypi-check
     - make wheels
     - make uploadwheels

@@ -17,4 +17,6 @@ fi
 pyenv global ${PYTHON_VERSION}
 pyenv rehash
 
+pyenv exec virtualenv venv
+source venv/bin/activate
 make clean

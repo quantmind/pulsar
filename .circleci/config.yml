@@ -79,10 +79,10 @@ jobs:
           - checkout
           - run:
               name: install ci packages
-              command: pip install -r ci/requirements.txt
+              command: pip install -r requirements/ci.txt
           - run:
               name: check PyPI version
-              command: python setup.py pypi --final
+              command: make pypi-check
           - run:
               name: build linux wheels
               command: make wheels-linux

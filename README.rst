@@ -7,7 +7,7 @@
 
 :Badges: |license|  |pyversions| |status| |pypiversion| |contributors|
 :CI: |circleci| |coverage| |appveyor| |travis| |docs|
-:Documentation: http://quantmind.github.io/pulsar/
+:Documentation: https://docs.pulsarweb.org
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Benchmarks: https://quantmind.github.io/pulsar-bench/
