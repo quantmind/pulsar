@@ -29,8 +29,8 @@ jobs:
               name: build docs
               command: make docs
           - run:
-              name: build docs
-              command: make docs
+              name: docs spelling
+              command: make docs-spelling
     coverage:
         working_directory: ~/pulsar-coverage
         docker:

@@ -38,7 +38,7 @@
 .. |travis| image:: https://api.travis-ci.org/quantmind/pulsar.svg?branch=deploy
   :target: https://travis-ci.org/quantmind/pulsar
 .. |docs| image:: https://media.readthedocs.org/static/projects/badges/passing.svg
-  :target: https://docs.pulsarweb.org/
+  :target: https://docs.pulsarweb.org
 
 An example of a web server written with ``pulsar`` which responds with
 "Hello World!" for every request:
