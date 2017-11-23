@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e -x
 
-PIP="${PIP:-pip}"
-PYTHON="${PYTHON:-python}"
-IOPATH="${IOPATH:-$PWD}"
+PIP=${PIP:-pip}
+PYTHON=${PYTHON:-python}
+IOPATH=${IOPATH:-$PWD}
 DIST=${IOPATH}/dist/
 WHEELRE=${PYMODULE}-*-${WHEEL}_*.whl
 
 # Compile wheels
 ${PIP} install --upgrade pip wheel
-${PIP} install --upgrade setuptools
+${PIP} install --upgrade setuptools cython
 ${PIP} install -r ${IOPATH}/requirements/ci.txt
 ${PIP} install -r ${IOPATH}/requirements/hard.txt
 make -C ${IOPATH} PYTHON=${PYTHON} compile
@@ -18,8 +18,8 @@ ${PIP} wheel ${IOPATH} -w ${DIST}
 if [ $BUNDLE_WHEEL ]
 then
     echo "Bundle external shared libraries into the wheels"
-    for whl in ${IOPATH}/dist/*.whl; do
-        ${BUNDLE_WHEEL} repair $whl -w ${IOPATH}/dist/
+    for whl in ${DIST}*.whl; do
+        ${BUNDLE_WHEEL} repair $whl -w ${DIST}
     done
 fi
 
