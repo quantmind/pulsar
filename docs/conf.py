@@ -22,7 +22,13 @@ html_theme_options = {
     'logo': 'pulsar-logo.png',
     'github_user': 'quantmind',
     'github_repo': 'pulsar',
-    'description': 'Concurrent framework for python 3.5 and above.'
+    'github_type': 'star',
+    'github_banner': True,
+    'description': pulsar.__doc__.strip(),
+    'analytics_id': 'UA-3900561-7',
+    'extra_nav_links': {
+        'mailing list @ google': 'https://groups.google.com/forum/?fromgroups=#!forum/python-pulsar'
+    }
 }
 html_sidebars = {
     '**': [
@@ -54,7 +60,6 @@ try:
 except ImportError:
     pass
 
-html_theme_options['analytics_id'] = 'UA-3900561-7'
 html_context = {'release_version': pulsar.VERSION[3] == 'final'}
 
 # The encoding of source files.
