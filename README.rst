@@ -10,7 +10,7 @@
 :Documentation: https://docs.pulsarweb.org
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
-:Benchmarks: https://quantmind.github.io/pulsar-bench/
+:Benchmarks: https://bench.pulsarweb.org/
 :Stack overflow: questions tagged python-pulsar_
 :Mailing list: `google user group`_
 :Design by: `Quantmind`_ and `Luca Sbardella`_
