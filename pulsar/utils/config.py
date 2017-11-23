@@ -57,7 +57,7 @@ KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
 
-def pass_through(arg: Any) -> None:
+def pass_through(arg) -> None:
     """A dummy function accepting one parameter only.
 
     It does nothing and it is used as default by

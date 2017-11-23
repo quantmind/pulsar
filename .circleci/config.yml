@@ -67,7 +67,7 @@ jobs:
           - run:
               name: test
               command: make compile && make test
-    deploy:
+    binaries:
         machine: true
         environment:
           - PYTHON_VERSIONS: 3.5 3.6
@@ -100,14 +100,36 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-      - main
-      - coverage
-      - legacy
-      - docs
-      - deploy:
+      - main:
+          filters:
+            branches:
+              ignore: deploy
+            tags:
+              ignore: /.*/
+      - coverage:
+          filters:
+            branches:
+              ignore: deploy
+            tags:
+              ignore: /.*/
+      - legacy:
+          filters:
+            branches:
+              ignore: deploy
+            tags:
+              ignore: /.*/
+      - docs:
+          filters:
+            branches:
+              ignore: deploy
+            tags:
+              ignore: /.*/
+      - binaries:
           requires:
             - main
             - legacy
           filters:
             branches:
-              only: deploy
+              only: release
+            tags:
+              ignore: /.*/
