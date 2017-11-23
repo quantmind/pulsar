@@ -3,7 +3,7 @@
 
 PYTHON ?= python
 PIP ?= pip
-DOCS_SOURCE ?= docs/source
+DOCS_SOURCE ?= docs
 DOCS_BUILDDIR ?= build/docs
 
 _default: compile
@@ -25,7 +25,6 @@ docs:
 docs-spelling:
 	$(PYTHON) -m sphinx -a -b spelling $(DOCS_SOURCE) $(DOCS_BUILDDIR)/spelling
 
-	
 test:
 	flake8
 	$(PYTHON) -W ignore setup.py test -q --io uv

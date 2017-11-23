@@ -1,23 +1,15 @@
 # -*- coding: utf-8 -*-
 #
-# make spelling SPHINXBUILD="pyenv exec sphinx-build"
 import sys
 import os
-
-os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
-p = lambda x : os.path.split(x)[0]
-source_dir = p(os.path.abspath(__file__))
-ext_dir = os.path.join(source_dir, '_ext')
-docs_dir = p(source_dir)
-base_dir = p(docs_dir)
-sys.path.insert(0, base_dir)
-sys.path.insert(0, ext_dir)
-import pulsar
-from setup import meta
-
-##################
 from recommonmark.parser import CommonMarkParser
 from datetime import date
+import pulsar
+
+
+os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
+ext_dir = os.path.join(os.path.dirname(__file__), '_ext')
+sys.path.append(ext_dir)
 
 source_suffix = ['.rst', '.md']
 source_parsers = {
@@ -73,7 +65,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pulsar'
-copyright = '2011-%s, %s' % (year, meta['author'])
+copyright = '2011-%s, %s' % (year, pulsar.__author__)
 
 html_theme = 'alabaster'
 pygments_style = 'sphinx'
