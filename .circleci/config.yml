@@ -82,10 +82,10 @@ jobs:
               command: python setup.py pypi --final
           - run:
               name: build linux wheels
-              command: make linuxwheels
+              command: make wheels-linux
           - run:
               name: upload linux wheels
-              command: make uploadwheels
+              command: make wheels-upload
     release:
         working_directory: ~/docs
         docker:
@@ -94,7 +94,7 @@ jobs:
           - checkout
           - run:
               name: download wheels
-              command: make download-wheels
+              command: make wheels-download
 
 workflows:
   version: 2

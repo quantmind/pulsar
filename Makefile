@@ -3,6 +3,8 @@
 
 PYTHON ?= python
 PIP ?= pip
+DOCS_SOURCE ?= docs/source
+DOCS_BUILDDIR ?= build/docs
 
 _default: compile
 
@@ -17,11 +19,13 @@ compile: clean
 
 
 docs:
-	$(PIP) install -r requirements/docs.txt
 	mkdir -p build/docs/html
-	$(PYTHON) -m sphinx -a -b html docs/source build/docs/html
+	$(PYTHON) -m sphinx -a -b html $(DOCS_SOURCE) $(DOCS_BUILDDIR)/html
 
+docs-spelling:
+	$(PYTHON) -m sphinx -a -b spelling $(DOCS_SOURCE) $(DOCS_BUILDDIR)/spelling
 
+	
 test:
 	flake8
 	$(PYTHON) -W ignore setup.py test -q --io uv
@@ -44,15 +48,18 @@ testall:
 	$(PYTHON) -W ignore setup.py test -q --io uv
 	$(PYTHON) setup.py bench
 
-linuxwheels:
+wheels:
+	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./pulsar/cmds/build-wheels.sh
+
+wheels-linux:
 	rm -rf wheelhouse
 	$(PYTHON) setup.py linux_wheels --py 3.5,3.6
 
-uploadwheels:
+wheels-upload:
 	$(PYTHON) setup.py s3data --bucket fluidily --key wheelhouse --files "wheelhouse/*.whl"
 
-wheels:
-	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./pulsar/cmds/build-wheels.sh
+wheels-download:
+	$(PYTHON) setup.py s3data --bucket fluidily --key wheelhouse --download
 
 release: clean compile test
 	$(PYTHON) setup.py sdist bdist_wheel upload

@@ -57,7 +57,7 @@ KNOWN_SETTINGS = {}
 KNOWN_SETTINGS_ORDER = []
 
 
-def pass_through(arg) -> None:
+def pass_through(arg):
     """A dummy function accepting one parameter only.
 
     It does nothing and it is used as default by
@@ -66,7 +66,7 @@ def pass_through(arg) -> None:
     pass
 
 
-def set_if_avail(container, key, value, *skip_values) -> None:
+def set_if_avail(container, key, value, *skip_values):
     if value is not None and value not in skip_values:
         container[key] = value
 
@@ -137,7 +137,7 @@ class Config:
     def __init__(self, description=None, epilog=None,
                  version=None, apps=None, include=None,
                  exclude=None, settings=None, prefix=None,
-                 name=None, log_name=None, **params) -> None:
+                 name=None, log_name=None, **params):
         self.settings = {} if settings is None else settings
         self.params = {}
         self.name = name
@@ -539,7 +539,7 @@ class Setting(metaclass=SettingMeta):
     def __init__(self, name=None, flags=None, action=None, type=None,
                  default=None, nargs=None, desc=None, validator=None,
                  app=None, meta=None, choices=None, const=None,
-                 required=None) -> None:
+                 required=None):
         self.extra = e = {}
         self.app = app or self.app
         set_if_avail(e, 'choices', choices or self.choices)
