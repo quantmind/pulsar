@@ -38,3 +38,4 @@ make -C ${IOPATH} PYTHON=${PYTHON} testinstalled
 
 mkdir -p ${IOPATH}/wheelhouse
 mv ${IOPATH}/dist/*.whl ${IOPATH}/wheelhouse/
+make -C ${IOPATH} clean
