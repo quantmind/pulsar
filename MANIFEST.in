@@ -1,11 +1,13 @@
-include MANIFEST.in
 include LICENSE
 include README.rst
-include docs/make.bat
-include docs/Makefile
-recursive-include requirements *.txt
-recursive-include pulsar_test *.sh
-recursive-include tests *.py *.txt
-recursive-include pulsar/apps/test/plugins/htmlfiles *.js *.css *.html
-recursive-include docs/source *
-recursive-include extensions *.py *.pxd *.pyx *.h *.c
+include Makefile
+graft pulsar
+graft docs
+graft requirements
+graft examples
+graft extensions
+graft tests
+global-exclude *.pyc
+global-exclude *.pyd
+global-exclude *.so
+global-exclude *.mp4
