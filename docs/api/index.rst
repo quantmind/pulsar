@@ -11,5 +11,6 @@ API
    actor
    events
    protocols
+   clients
    application
    exceptions

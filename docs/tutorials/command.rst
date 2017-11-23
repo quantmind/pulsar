@@ -9,7 +9,7 @@ The first method for achieving this is to write an
 
     from asyncio import ensure_future
 
-    from pulsar import arbiter, command, spawn, send
+    from pulsar.api import arbiter, command, spawn, send
 
 
     names = ['john', 'luca', 'carl', 'jo', 'alex']

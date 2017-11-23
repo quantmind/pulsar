@@ -24,10 +24,13 @@ jobs:
               command: apt-get update && apt-get install enchant -y
           - run:
               name: install packages
-              command: python setup.py install
+              command: python setup.py install && pip install -r requirements/docs.txt
           - run:
-              name: docs
+              name: build docs
               command: make docs
+          - run:
+              name: docs spelling
+              command: make docs-spelling
     coverage:
         working_directory: ~/pulsar-coverage
         docker:
@@ -67,7 +70,7 @@ jobs:
           - run:
               name: test
               command: make compile && make test
-    deploy:
+    binaries:
         machine: true
         environment:
           - PYTHON_VERSIONS: 3.5 3.6
@@ -76,30 +79,81 @@ jobs:
           - checkout
           - run:
               name: install ci packages
-              command: pip install -r ci/requirements.txt
+              command: pip install -r requirements/ci.txt
           - run:
               name: check PyPI version
-              command: python setup.py pypi --final
+              command: make pypi-check
           - run:
               name: build linux wheels
-              command: make linuxwheels
+              command: make wheels-linux
           - run:
               name: upload linux wheels
-              command: make uploadwheels
-
+              command: make wheels-upload
+    deploy-release:
+        working_directory: ~/deploy
+        docker:
+          - image: python:3.6.3
+        steps:
+          - checkout
+          - run:
+              name: install packages
+              command: ci/install.sh && make compile
+          - run:
+              name: download wheels
+              command: make wheels-download
+          - run:
+              name: create source distribution
+              command: python setup.py sdist
+          - run:
+              name: release source distribution
+              command: twine upload dist/* --username lsbardel --password $PYPI_PASSWORD
+          - run:
+              name: release wheels
+              command: twine upload wheelhouse/* --username lsbardel --password $PYPI_PASSWORD
+          - run:
+              name: tag
+              command: ci/tag.sh
 
 workflows:
   version: 2
   build-deploy:
     jobs:
-      - main
-      - coverage
-      - legacy
-      - docs
-      - deploy:
+      - main:
+          filters:
+            branches:
+              ignore: deploy
+            tags:
+              ignore: /.*/
+      - coverage:
+          filters:
+            branches:
+              ignore: deploy
+            tags:
+              ignore: /.*/
+      - legacy:
+          filters:
+            branches:
+              ignore: deploy
+            tags:
+              ignore: /.*/
+      - docs:
+          filters:
+            branches:
+              ignore: deploy
+            tags:
+              ignore: /.*/
+      - binaries:
           requires:
             - main
             - legacy
           filters:
             branches:
+              only: release
+            tags:
+              ignore: /.*/
+      - deploy-release:
+          filters:
+            branches:
               only: deploy
+            tags:
+              ignore: /.*/

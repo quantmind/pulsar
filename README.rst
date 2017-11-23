@@ -6,8 +6,8 @@
 |
 
 :Badges: |license|  |pyversions| |status| |pypiversion| |contributors|
-:CI: |circleci| |coverage| |appveyor|
-:Documentation: http://quantmind.github.io/pulsar/
+:CI: |circleci| |coverage| |appveyor| |travis| |docs|
+:Documentation: https://docs.pulsarweb.org
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Benchmarks: https://quantmind.github.io/pulsar-bench/
@@ -35,6 +35,10 @@
     :target: https://circleci.com/gh/quantmind/pulsar
 .. |coverage| image:: https://codecov.io/gh/quantmind/pulsar/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/quantmind/pulsar
+.. |travis| image:: https://api.travis-ci.org/quantmind/pulsar.svg?branch=release
+  :target: https://travis-ci.org/quantmind/pulsar
+.. |docs| image:: https://media.readthedocs.org/static/projects/badges/passing.svg
+  :target: https://docs.pulsarweb.org
 
 An example of a web server written with ``pulsar`` which responds with
 "Hello World!" for every request:

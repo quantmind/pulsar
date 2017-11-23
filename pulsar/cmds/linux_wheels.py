@@ -60,7 +60,6 @@ class ManyLinux(Command):
 
         pkg_dir = os.path.abspath(self.distribution.package_dir or os.curdir)
         target = os.path.join(self.build_base, 'build-wheels.sh')
-        self.copy_file(WHEELS_SH, os.path.join(pkg_dir, target))
         command = '%s/%s' % (MODULE_PATH_DOCKER, target)
 
         for arch in ARCHITECTURES:
@@ -75,6 +74,11 @@ class ManyLinux(Command):
                 )
                 self.announce(80 * '=', 2)
 
+                target_file = os.path.join(pkg_dir, target)
+                target_dir = os.path.dirname(target_file)
+                if not os.path.isdir(target_dir):
+                    os.makedirs(target_dir)
+                self.copy_file(WHEELS_SH, os.path.join(pkg_dir, target))
                 whl = ml_version(pyver)
 
                 container = cli.containers.run(

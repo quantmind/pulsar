@@ -2,12 +2,12 @@
 """
 from inspect import isfunction
 
-from sphinx.util.compat import Directive
 from docutils import nodes, statemachine
+from docutils.parsers.rst import Directive
 
 from pulsar.utils.config import ordered_settings, section_docs
-import pulsar.apps.wsgi
-import pulsar.apps.test
+import pulsar.apps.wsgi     # noqa
+import pulsar.apps.test     # noqa
 
 targetid = "pulsar_settings"
 

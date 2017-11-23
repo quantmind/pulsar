@@ -17,5 +17,5 @@ fi
 pyenv global ${PYTHON_VERSION}
 pyenv rehash
 
-make clean
-pip wheel . -w ./dist
+pyenv exec pip install virtualenv
+pyenv exec virtualenv venv

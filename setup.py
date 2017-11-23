@@ -41,7 +41,7 @@ meta = dict(
     name='pulsar',
     version=pulsar.__version__,
     description=pulsar.__doc__,
-    author="Luca Sbardella",
+    author=pulsar.__author__,
     author_email="luca@quantmind.com",
     maintainer_email="luca@quantmind.com",
     url="https://github.com/quantmind/pulsar",
@@ -49,7 +49,6 @@ meta = dict(
     long_description=read('README.rst'),
     include_package_data=True,
     install_requires=requirements('requirements/hard.txt')[0],
-    tests_require=requirements('requirements/test.txt')[0],
     setup_requires=['wheel'],
     packages=find_packages(include=['pulsar', 'pulsar.*']),
     entry_points={

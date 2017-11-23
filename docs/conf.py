@@ -1,23 +1,15 @@
 # -*- coding: utf-8 -*-
 #
-# make spelling SPHINXBUILD="pyenv exec sphinx-build"
 import sys
 import os
-
-os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
-p = lambda x : os.path.split(x)[0]
-source_dir = p(os.path.abspath(__file__))
-ext_dir = os.path.join(source_dir, '_ext')
-docs_dir = p(source_dir)
-base_dir = p(docs_dir)
-sys.path.insert(0, base_dir)
-sys.path.insert(0, ext_dir)
-import pulsar
-from setup import meta
-
-##################
 from recommonmark.parser import CommonMarkParser
 from datetime import date
+import pulsar
+
+
+os.environ['BUILDING-PULSAR-DOCS'] = 'yes'
+ext_dir = os.path.join(os.path.dirname(__file__), '_ext')
+sys.path.append(ext_dir)
 
 source_suffix = ['.rst', '.md']
 source_parsers = {
@@ -30,8 +22,15 @@ html_theme_options = {
     'logo': 'pulsar-logo.png',
     'github_user': 'quantmind',
     'github_repo': 'pulsar',
-    'description': 'Concurrent framework for python 3.5 and above.'
+    'github_type': 'star',
+    'github_banner': True,
+    'description': pulsar.__doc__.strip(),
+    'analytics_id': 'UA-110136266-1',
+    'extra_nav_links': {
+        'mailing list @ google': 'https://groups.google.com/forum/?fromgroups=#!forum/python-pulsar'
+    }
 }
+
 html_sidebars = {
     '**': [
         'about.html', 'navigation.html', 'searchbox.html'
@@ -45,16 +44,18 @@ html_sidebars = {
 
 # -- General configuration -----------------------------------------------------
 
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.coverage',
-              'sphinx.ext.extlinks',
-              'sphinx.ext.intersphinx',
-              'sphinx.ext.viewcode',
-              #'pulsar.utils.docs.html',
-              'alabaster',
-              'pulsarext',
-              'redisext',
-              'sphinxtogithub']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
+    'sphinx.ext.extlinks',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.viewcode',
+    #'pulsar.utils.docs.html',
+    'alabaster',
+    'pulsarext',
+    'redisext',
+    # 'sphinxtogithub'
+]
 
 try:
     import sphinxcontrib.spelling  # noqa
@@ -62,7 +63,6 @@ try:
 except ImportError:
     pass
 
-html_theme_options['analytics_id'] = 'UA-3900561-7'
 html_context = {'release_version': pulsar.VERSION[3] == 'final'}
 
 # The encoding of source files.
@@ -73,7 +73,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pulsar'
-copyright = '2011-%s, %s' % (year, meta['author'])
+copyright = '2011-%s, %s' % (year, pulsar.__author__)
 
 html_theme = 'alabaster'
 pygments_style = 'sphinx'
@@ -86,7 +86,9 @@ exclude_trees = []
 html_additional_pages = {
 }
 
-suppress_warnings = ['image.nonlocal_uri']
+suppress_warnings = [
+    'image.nonlocal_uri'
+]
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
