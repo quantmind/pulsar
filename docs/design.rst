@@ -198,7 +198,7 @@ Spawning
 
 Spawning a new actor is achieved via the :func:`.spawn` function::
 
-    from pulsar import spawn
+    from pulsar.api import spawn
 
     def task(actor, exc=None):
         # do something useful here
@@ -264,7 +264,7 @@ This snippet spawns a new actor which starts an
 
     from functools import partial
 
-    from pulsar import spawn, TcpServer
+    from pulsar.api import spawn, TcpServer
 
     def create_echo_server(address, actor, _):
         '''Starts an echo server on a newly spawn actor'''
@@ -408,7 +408,7 @@ the instance performs its asynchronous operations, whatever they may be.
 
 For example this is a class for valid async objects::
 
-    from pulsar import get_event_loop, new_event_loop
+    from asyncio import get_event_loop, new_event_loop
 
 
     class SimpleAsyncObject:

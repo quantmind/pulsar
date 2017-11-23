@@ -234,7 +234,7 @@ API
 Test Suite
 ==================
 
-.. autoclass:: pulsar.apps.test.TestSuite
+.. autoclass:: TestSuite
    :members:
    :member-order: bysource
 
@@ -242,7 +242,9 @@ Test Suite
 Test Loader
 ==================
 
-.. automodule::
+.. autoclass:: TestLoader
+   :members:
+   :member-order: bysource
 
 
 Plugin
@@ -289,7 +291,7 @@ A useful function for populating random data::
 gives you a list of 100 random strings
 
 
-.. autofunction:: pulsar.apps.test.populate.populate
+.. autofunction:: populate
 
 ==================
 Test Plugins

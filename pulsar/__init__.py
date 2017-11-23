@@ -7,6 +7,7 @@ VERSION = (2, 0, 0, 'final', 0)
 
 
 __version__ = version = get_version(VERSION)
+__author__ = "Luca Sbardella"
 
 
 DEFAULT_PORT = 8060

@@ -53,6 +53,7 @@ WSGI Server
 
 
 .. _`WSGI 1.0.1`: http://www.python.org/dev/peps/pep-3333/
+.. _pep3333: http://www.python.org/dev/peps/pep-3333/
 .. _`c10k problem`: http://en.wikipedia.org/wiki/C10k_problem
 """
 from functools import partial

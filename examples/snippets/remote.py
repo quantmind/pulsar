@@ -1,4 +1,4 @@
-from pulsar import arbiter, spawn, send, ensure_future, Config, command
+from pulsar.api import arbiter, spawn, send, ensure_future, Config, command
 
 
 PREFIX = 'remote_'

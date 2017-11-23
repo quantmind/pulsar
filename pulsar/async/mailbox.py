@@ -12,7 +12,7 @@ The implementation details are outlined below:
   the actor :meth:`~.Actor.send` method.
   Here is how you ping actor ``abc`` in a coroutine::
 
-      from pulsar import send
+      from pulsar.api import send
 
       async def example():
           result = await send('abc', 'ping')

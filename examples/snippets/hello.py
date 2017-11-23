@@ -1,6 +1,6 @@
 '''Write Hello there! every second
 '''
-from pulsar import arbiter
+from pulsar.api import arbiter
 
 
 def hello(actor, **kw):

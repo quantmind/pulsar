@@ -9,7 +9,7 @@ the primitive of pulsar concurrent framework. Actor's instances communicate
 with each other via messages in a *share-nothing architecture*.
 
 
-.. autoclass:: Actor
+.. autoclass:: pulsar.async.actor.Actor
    :members:
    :member-order: bysource
 

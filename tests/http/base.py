@@ -300,7 +300,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
     async def test_upload_images(self):
         http = self._client
         path = Path(examples.__file__).parent.parent
-        path = path.join('docs', 'source', '_static')
+        path = path.join('docs', '_static')
         files = []
         sent = []
         for name in ('pulsar.png', 'favicon.ico'):
@@ -728,7 +728,7 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
 
     async def test_send_images(self):
         path = Path(examples.__file__).parent.parent
-        path = path.join('docs', 'source', '_static')
+        path = path.join('docs', '_static')
         files = []
         sent = []
         for name in ('pulsar.png', 'favicon.ico'):

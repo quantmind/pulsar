@@ -1,5 +1,5 @@
 """Simple actor message passing"""
-from pulsar import arbiter, spawn, send, ensure_future, Config
+from pulsar.api import arbiter, spawn, send, ensure_future, Config
 
 
 def start(arbiter, **kw):

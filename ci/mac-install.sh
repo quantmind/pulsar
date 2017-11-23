@@ -18,4 +18,3 @@ pyenv global ${PYTHON_VERSION}
 pyenv rehash
 
 make clean
-pip wheel . -w ./dist

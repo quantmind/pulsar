@@ -1,6 +1,6 @@
 from asyncio import ensure_future
 
-from pulsar import arbiter, command, spawn, send
+from pulsar.api import arbiter, command, spawn, send
 
 
 names = ['john', 'luca', 'carl', 'jo', 'alex']

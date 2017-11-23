@@ -78,7 +78,7 @@ class ActorProxy:
 
     For example, lets say we have a proxy ``a``, to send a message to it::
 
-        from pulsar import send
+        from pulsar.api import send
 
         send(a, 'echo', 'hello there!')
 
