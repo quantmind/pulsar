@@ -73,6 +73,11 @@ class ManyLinux(Command):
                     3
                 )
                 self.announce(80 * '=', 2)
+
+                target_file = os.path.join(pkg_dir, target)
+                target_dir = os.path.dirname(target_file)
+                if not os.path.isdir(target_dir):
+                    os.makedirs(target_dir)
                 self.copy_file(WHEELS_SH, os.path.join(pkg_dir, target))
                 whl = ml_version(pyver)
 
