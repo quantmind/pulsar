@@ -106,10 +106,10 @@ jobs:
               command: python setup.py sdist
           - run:
               name: release source distribution
-              command: twine upload dist/*
+              command: twine upload dist/* --username lsbardel --password $PYPI_PASSWORD
           - run:
               name: release wheels
-              command: twine upload wheelhouse/*
+              command: twine upload wheelhouse/* --username lsbardel --password $PYPI_PASSWORD
           - run:
               name: tag
               command: ci/tag.sh
