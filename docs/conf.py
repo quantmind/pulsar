@@ -25,11 +25,12 @@ html_theme_options = {
     'github_type': 'star',
     'github_banner': True,
     'description': pulsar.__doc__.strip(),
-    'analytics_id': 'UA-3900561-7',
+    'analytics_id': 'UA-110136266-1',
     'extra_nav_links': {
         'mailing list @ google': 'https://groups.google.com/forum/?fromgroups=#!forum/python-pulsar'
     }
 }
+
 html_sidebars = {
     '**': [
         'about.html', 'navigation.html', 'searchbox.html'
