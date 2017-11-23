@@ -7,12 +7,17 @@ environment:
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python36-x64"
 
+branches:
+  only:
+    - release
+    - deploy
+
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
 install:
   - "ci/build.cmd %PYTHON%\\python.exe -m pip install -U wheel setuptools"
-  - "ci/build.cmd %PYTHON%\\python.exe -m pip install -r requirements/test.txt"
+  - "ci/build.cmd %PYTHON%\\python.exe -m pip install -r requirements/test-win.txt"
   - cmd: nuget install redis-64 -excludeversion
   - cmd: redis-64\tools\redis-server.exe --service-install
   - cmd: redis-64\tools\redis-server.exe --service-start
@@ -20,7 +25,10 @@ install:
 build: false
 
 test_script:
-  - "ci/build.cmd %PYTHON%\\python.exe setup.py test -q --sequential"
+  - ps: >-
+      if($env:appveyor_repo_branch -eq 'release') {
+          Invoke-Expression "ci/build.cmd $env:PYTHON\\python.exe setup.py test -q --sequential"
+      }
 
 after_test:
   - "ci/build.cmd %PYTHON%\\python.exe setup.py sdist bdist_wheel"
@@ -30,11 +38,6 @@ artifacts:
 
 deploy_script:
   - ps: >-
-      if($env:appveyor_repo_tag -eq 'True') {
+      if($env:appveyor_repo_branch -eq 'deploy') {
           Invoke-Expression "$env:PYTHON\\python.exe -m twine upload dist/* --username lsbardel --password $env:PYPI_PASSWD"
       }
-
-notifications:
-  - provider: Email
-    on_build_success: false
-    on_build_failure: false

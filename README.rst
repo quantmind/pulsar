@@ -35,7 +35,7 @@
     :target: https://circleci.com/gh/quantmind/pulsar
 .. |coverage| image:: https://codecov.io/gh/quantmind/pulsar/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/quantmind/pulsar
-.. |travis| image:: https://api.travis-ci.org/quantmind/pulsar.svg?branch=deploy
+.. |travis| image:: https://api.travis-ci.org/quantmind/pulsar.svg?branch=release
   :target: https://travis-ci.org/quantmind/pulsar
 .. |docs| image:: https://media.readthedocs.org/static/projects/badges/passing.svg
   :target: https://docs.pulsarweb.org

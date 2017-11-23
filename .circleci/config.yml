@@ -89,15 +89,30 @@ jobs:
           - run:
               name: upload linux wheels
               command: make wheels-upload
-    release:
-        working_directory: ~/docs
+    deploy-release:
+        working_directory: ~/deploy
         docker:
           - image: python:3.6.3
         steps:
           - checkout
           - run:
+              name: install packages
+              command: ci/install.sh && make compile
+          - run:
               name: download wheels
               command: make wheels-download
+          - run:
+              name: create source distribution
+              command: python setup.py sdist
+          - run:
+              name: release source distribution
+              command: twine upload dist/*
+          - run:
+              name: release wheels
+              command: twine upload wheelhouse/*
+          - run:
+              name: tag
+              command: ci/tag.sh
 
 workflows:
   version: 2
@@ -134,5 +149,11 @@ workflows:
           filters:
             branches:
               only: release
+            tags:
+              ignore: /.*/
+      - deploy-release:
+          filters:
+            branches:
+              only: deploy
             tags:
               ignore: /.*/
