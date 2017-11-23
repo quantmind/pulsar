@@ -19,5 +19,3 @@ pyenv rehash
 
 pyenv exec pip install virtualenv
 pyenv exec virtualenv venv
-source venv/bin/activate
-make clean

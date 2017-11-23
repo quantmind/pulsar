@@ -23,9 +23,9 @@ matrix:
 
 install:
     - ci/mac-pre-install.sh
-    - ci/install.sh
+    - source venv/bin/activate && ci/install.sh
 
 script:
-    - make pypi-check
-    - make wheels
-    - make uploadwheels
+    - source venv/bin/activate && make pypi-check
+    - source venv/bin/activate && make wheels
+    - source venv/bin/activate && make uploadwheels
