@@ -12,6 +12,8 @@ _default: compile
 clean:
 	rm -fr dist/ *.eggs .eggs build/ pulsar/utils/*.so extensions/lib/clib.c
 	find . -name '__pycache__' | xargs rm -rf
+	find . -name '*.pyc' | xargs rm -rf
+	find . -name '.DS_Store' | xargs rm -rf
 
 
 compile: clean
