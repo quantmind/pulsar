@@ -32,6 +32,10 @@ class Event:
         return bool(self._onetime)
 
     def fired(self):
+        """Returns true or false depending if this event was fired
+
+        One-time events only can be fired
+        """
         return self._self is None
 
     def bind(self, callback):
@@ -62,6 +66,11 @@ class Event:
         return 0
 
     def fire(self, exc=None, data=None):
+        """Fire the event
+
+        :param exc: fire the event with an exception
+        :param data: fire an event with data
+        """
         o = self._self
 
         if o is not None:
@@ -89,6 +98,13 @@ class Event:
                 self._waiter = None
 
     def waiter(self):
+        """Return a :class:`~asyncio.Future` called back once the event
+        has been fired.
+        If the event has been fired already return a resolved future.
+
+        This method is available only for one-time events
+        """
+        assert self._onetime, 'One time events only can invoke waiter'
         if not self._waiter:
             self._waiter = get_event_loop().create_future()
             if self.fired():

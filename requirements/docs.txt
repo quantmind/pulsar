@@ -1,2 +1,4 @@
 recommonmark
 sphinxcontrib-spelling
+flask
+greenlet
