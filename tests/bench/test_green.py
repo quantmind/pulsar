@@ -26,7 +26,7 @@ class EchoGreen(Echo):
 @unittest.skipUnless(greenio, "Requires the greenlet module")
 class TestGreenIo(unittest.TestCase):
     __benchmark__ = True
-    __number__ = 1000
+    __number__ = 2000
 
     @classmethod
     async def setUpClass(cls):
