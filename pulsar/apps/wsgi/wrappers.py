@@ -99,8 +99,8 @@ class WsgiRequest:
 
     @property
     def cache(self):
-        """An :ref:`attribute dictionary <attribute-dictionary>` of
-        pulsar-specific data stored in the :attr:`environ` at
+        """The protocol consumer used as a cache for
+        pulsar-specific data. Stored in the :attr:`environ` at
         the wsgi-extension key ``pulsar.cache``
         """
         return self.environ[PULSAR_CACHE]
