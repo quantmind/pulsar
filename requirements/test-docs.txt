@@ -1,0 +1,2 @@
+-r docs.txt
+sphinxcontrib-spelling
