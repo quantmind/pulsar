@@ -646,12 +646,6 @@ class HttpResponse(ProtocolConsumer):
         else:
             self.content += body
 
-    def recv_body(self):
-        content = self.content
-        if content:
-            self.content = b''
-        return content or b''
-
     def on_message_complete(self):
         self.producer.maybe_decompress(self)
         self.fire_event('post_request')
