@@ -1,5 +1,7 @@
+import sys
 import unittest
 import asyncio
+import traceback
 from unittest import mock
 
 from pulsar.api import send, create_future
@@ -167,6 +169,25 @@ class TestGreenIO(unittest.TestCase):
         response = http.get('http://quantmind.com')
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.text)
+
+    async def test_run_in_greenlet_error(self):
+
+        def error():
+            return 'foo' + 1
+
+        @run_in_greenlet
+        def green_test():
+            return error()
+
+        try:
+            await green_test()
+        except TypeError:
+            exc = sys.exc_info()
+        else:
+            raise RuntimeError
+        info = traceback.format_tb(exc[2])
+        self.assertEqual(len(info), 4)
+        self.assertTrue(info[3].endswith("return 'foo' + 1\n"))
 
 
 async def async_function(test):

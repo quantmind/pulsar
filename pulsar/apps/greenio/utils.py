@@ -1,3 +1,4 @@
+import sys
 from functools import wraps
 from inspect import isawaitable
 
@@ -38,8 +39,9 @@ def run_in_greenlet(callable):
             # keep on switching back to the greenlet if we get a Future
             try:
                 result = green.switch((await result))
-            except Exception as exc:
-                result = green.throw(exc)
+            except Exception:
+                exc_info = sys.exc_info()
+                result = green.throw(*exc_info)
 
         return green.switch(result)
 
