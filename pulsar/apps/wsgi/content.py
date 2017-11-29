@@ -11,18 +11,6 @@ from .html import html_visitor, newline
 DATARE = re.compile('data[-_]')
 
 
-def stream_to_string(stream):
-    for value in stream:
-        if value is None:
-            continue
-        elif isinstance(value, bytes):
-            yield value.decode('utf-8')
-        elif isinstance(value, str):
-            yield value
-        else:
-            yield str(value)
-
-
 def attr_iter(attrs):
     for k in sorted(attrs):
         v = attrs[k]
@@ -841,10 +829,9 @@ class Body(Html):
         self.embedded_js = Embedded('script', type='text/javascript')
         self.scripts = Scripts(**kwargs)
 
-    def stream(self, request, counter=0):
-        yield from super().stream(request, counter)
-        yield from self.embedded_js.stream(request, counter)
-        yield from self.scripts.stream(request, counter)
+    def add_media(self, request):
+        self.append(self.embedded_js)
+        self.append(self.scripts)
 
 
 class HtmlDocument(Html):
