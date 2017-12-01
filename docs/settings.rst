@@ -6,7 +6,7 @@
 Settings
 ====================
 
-This is the auto-generated full list of :ref:`pulsar settings <api-config>`
+This is the auto-generated full list of pulsar settings
 available for configuring your pulsar servers or applications. Pulsar can
 run several :class:`.Application` in one server, via the
 :class:`.MultiApp` class.
