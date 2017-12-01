@@ -6,6 +6,15 @@ import asyncio
 from pulsar.api import context
 
 
+class TestContextEmpty(unittest.TestCase):
+
+    def test_get(self):
+        self.assertEqual(context.get('foo'), None)
+
+    def test_stack_get(self):
+        self.assertEqual(context.stack_get('foo'), None)
+
+
 class TestContext(unittest.TestCase):
 
     @classmethod

@@ -2,10 +2,6 @@ from asyncio import Task, get_event_loop
 from contextlib import contextmanager
 
 
-class ContextStack(list):
-    pass
-
-
 class TaskContext:
     _previous_task_factory = None
 
@@ -61,13 +57,7 @@ class TaskContext:
 
     def pop(self, key):
         context = Task.current_task()._context
-        value = context.pop(key)
-        if isinstance(value, ContextStack):
-            stack_value = value.pop()
-            if value:
-                context[key] = value
-            return stack_value
-        return value
+        return context.pop(key)
 
     def stack_push(self, key, value):
         """Set a value in a task context stack
@@ -88,7 +78,7 @@ class TaskContext:
         try:
             context = task._context_stack
         except AttributeError:
-            task._context_stack = context = {}
+            return
         if key in context:
             return context[key][-1]
 
@@ -99,7 +89,7 @@ class TaskContext:
         try:
             context = task._context_stack
         except AttributeError:
-            task._context_stack = context = {}
+            raise KeyError('pop from empty stack') from None
         value = context[key]
         stack_value = value.pop()
         if not value:
