@@ -327,6 +327,10 @@ class WsgiRequest:
         # We try three options, in order of decreasing preference.
         if use_x_forwarded and ('HTTP_X_FORWARDED_HOST' in self.environ):
             host = self.environ['HTTP_X_FORWARDED_HOST']
+            port = self.environ.get('HTTP_X_FORWARDED_PORT')
+            if port and port != ('443' if self.is_secure else '80'):
+                host = '%s:%s' % (host, port)
+            return host
         elif 'HTTP_HOST' in self.environ:
             host = self.environ['HTTP_HOST']
         else:
