@@ -1,6 +1,7 @@
 import unittest
 from urllib.parse import parse_qsl, urlparse
 
+from pulsar.apps.test import allowFailure
 from pulsar.apps.http import (
     HttpClient, HttpRequest, OAuth1, OAuth2
 )
@@ -64,3 +65,11 @@ class TestClientCornerCases(unittest.TestCase):
                 'https://api.github.com/gists/public',
                 pre_request=oauth
             )
+
+    @allowFailure
+    async def test_redirect_session(self):
+        http = HttpClient()
+        resp = await http.get(
+            'https://selftrade.co.uk/transactional/anonymous/login'
+        )
+        self.assertEqual(resp.status_code, 200)

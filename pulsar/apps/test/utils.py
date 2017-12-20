@@ -47,6 +47,11 @@ def skipUnless(condition, reason):
         return unittest.skipUnless(condition, reason)
 
 
+def allowFailure(test):
+    test.__unittest_allow_failure__ = True
+    return test
+
+
 async def skip_test(o):
     if hasattr(o, '__unittest_async_skip_unless__'):
         skip = not await o.__unittest_async_skip_unless__()
@@ -61,6 +66,10 @@ def skip_reason(o):
 
 def expecting_failure(o):
     return getattr(o, '__unittest_expecting_failure__', False)
+
+
+def allow_failure(o):
+    return getattr(o, '__unittest_allow_failure__', False)
 
 
 class TestFailure:

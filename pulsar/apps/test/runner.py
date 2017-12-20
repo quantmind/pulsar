@@ -4,8 +4,10 @@ from unittest import SkipTest, TestCase
 
 from pulsar.async.timeout import timeout
 
-from .utils import (TestFailure, skip_test, skip_reason,
-                    expecting_failure, get_test_timeout)
+from .utils import (
+    TestFailure, skip_test, skip_reason, allow_failure,
+    expecting_failure, get_test_timeout
+)
 
 
 class AbortTests(Exception):
@@ -204,7 +206,8 @@ class Runner:
 
         if exc and not error:
             error = exc
-            self.add_failure(test, error, expecting_failure(method))
+            can_fail = allow_failure(method) or expecting_failure(method)
+            self.add_failure(test, error, can_fail)
 
         return error
 

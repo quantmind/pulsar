@@ -36,7 +36,7 @@ def run_in_greenlet(callable):
         result = green.switch(*args, **kwargs)
         # back to the parent
         while isawaitable(result):
-            # keep on switching back to the greenlet if we get a Future
+            # keep on switching back to the greenlet if we get an awaitable
             try:
                 result = green.switch((await result))
             except Exception:

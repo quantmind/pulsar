@@ -106,7 +106,6 @@ class RequestBase:
     release_connection = True
     history = None
     url = None
-    scheme = None
 
     @property
     def unverifiable(self):
@@ -127,7 +126,7 @@ class RequestBase:
 
     @property
     def type(self):
-        return self.scheme
+        return self.key.scheme
 
     @property
     def full_url(self):
