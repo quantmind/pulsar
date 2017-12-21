@@ -69,7 +69,8 @@ class TestClientCornerCases(unittest.TestCase):
     @allowFailure
     async def test_redirect_session(self):
         http = HttpClient()
-        resp = await http.get(
+        resp = await http.request(
+            'GET',
             'https://selftrade.co.uk/transactional/anonymous/login'
         )
         self.assertEqual(resp.status_code, 200)

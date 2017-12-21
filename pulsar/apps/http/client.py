@@ -808,7 +808,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('GET', url, **kwargs)
 
     def options(self, url, **kwargs):
@@ -817,7 +816,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('OPTIONS', url, **kwargs)
 
     def head(self, url, **kwargs):
@@ -834,7 +832,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
@@ -843,7 +840,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('PUT', url, **kwargs)
 
     def patch(self, url, **kwargs):
@@ -852,7 +848,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('PATCH', url, **kwargs)
 
     def delete(self, url, **kwargs):
@@ -861,7 +856,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('DELETE', url, **kwargs)
 
     def request(self, method, url, **params):
@@ -911,6 +905,9 @@ class HttpClient(AbstractClient):
     async def _request(self, method, url, timeout=None, **params):
         if timeout is None:
             timeout = self.timeout
+
+        if method != 'HEAD':
+            params.setdefault('allow_redirects', True)
 
         with async_timeout(self._loop, timeout):
             nparams = params.copy()
