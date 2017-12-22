@@ -351,6 +351,7 @@ class HttpRequest(RequestBase):
     # INTERNAL ENCODING METHODS
     def _encode_body(self, data, files, json):
         body = None
+        ct = None
         if isinstance(data, (str, bytes)):
             if files:
                 raise ValueError('data cannot be a string or bytes when '
@@ -365,13 +366,15 @@ class HttpRequest(RequestBase):
             return data
         elif data or files:
             if files:
-                body, content_type = self._encode_files(data, files)
+                body, ct = self._encode_files(data, files)
             else:
-                body, content_type = self._encode_params(data)
-            self.headers['Content-Type'] = content_type
+                body, ct = self._encode_params(data)
         elif json:
             body = _json.dumps(json).encode(self.charset)
-            self.headers['Content-Type'] = 'application/json'
+            ct = 'application/json'
+
+        if not self.headers.get('content-type') and ct:
+            self.headers['Content-Type'] = ct
 
         if body:
             self.headers['content-length'] = str(len(body))
