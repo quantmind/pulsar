@@ -11,8 +11,9 @@
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Benchmarks: https://bench.pulsarweb.org/
-:Stack overflow: questions tagged python-pulsar_
+:Chat channel: `Riot.im room`_
 :Mailing list: `google user group`_
+:Stack overflow: questions tagged python-pulsar_
 :Design by: `Quantmind`_ and `Luca Sbardella`_
 :Platforms: Linux, OSX, Windows. Python 3.5 and above
 :Keywords: python, asyncio, multiprocessing, client/server, asynchronous, concurrency, actor, thread, process, socket, wsgi, websocket, redis, json-rpc
@@ -259,3 +260,4 @@ file in the top distribution directory for the full license text.
 .. _multidict: https://github.com/aio-libs/multidict
 .. _`Asynchronous WSGI server`: http://quantmind.github.io/pulsar/apps/wsgi/index.html
 .. _`Asynchronous Test suite`: http://quantmind.github.io/pulsar/apps/test.html
+.. _`Riot.im room`: https://riot.im/app/#/room/#pulsar:matrix.org
