@@ -17,11 +17,11 @@ clean:		## clean build directory and cache files
 
 
 compile:	## clean and build extension
-	clean
+	make clean
 	$(PYTHON) setup.py build_ext
 
 compile-dev:	## clean and build extension in place (for development)
-	clean
+	make clean
 	$(PYTHON) setup.py build_ext -i
 
 
