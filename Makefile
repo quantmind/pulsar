@@ -16,7 +16,8 @@ clean:		## clean build directory and cache files
 	find . -name '.DS_Store' | xargs rm -rf
 
 
-compile:	## build extension
+compile:	## clean and build extension
+	clean
 	$(PYTHON) setup.py build_ext
 
 compile-dev:	## clean and build extension in place (for development)
