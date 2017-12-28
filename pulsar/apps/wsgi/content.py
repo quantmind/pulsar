@@ -11,18 +11,6 @@ from .html import html_visitor, newline
 DATARE = re.compile('data[-_]')
 
 
-def stream_to_string(stream):
-    for value in stream:
-        if value is None:
-            continue
-        elif isinstance(value, bytes):
-            yield value.decode('utf-8')
-        elif isinstance(value, str):
-            yield value
-        else:
-            yield str(value)
-
-
 def attr_iter(attrs):
     for k in sorted(attrs):
         v = attrs[k]
@@ -168,13 +156,7 @@ class String:
         return self
 
     def stream(self, request, counter=0):
-        '''Returns an iterable over strings or asynchronous components.
-
-        If :ref:`asynchronous elements <tutorials-coroutine>` are included
-        in the iterable, when called, they must result in strings.
-        This method can be re-implemented by subclasses and should not be
-        invoked directly.
-        Use the :meth:`stream` method instead.
+        '''Returns an iterable over strings.
         '''
         if self._children:
             for child in self._children:
@@ -576,7 +558,7 @@ class Links(Media):
     '''A :class:`.Media` container for ``link`` tags.
 
     The ``<link>`` tag defines the relationship between a
-    :class:`.HtmlDocument` and an external resource.
+    :class:`~.HtmlDocument` and an external resource.
     It is most used to link to style sheets.
     '''
     mediatype = 'css'
@@ -847,10 +829,9 @@ class Body(Html):
         self.embedded_js = Embedded('script', type='text/javascript')
         self.scripts = Scripts(**kwargs)
 
-    def stream(self, request, counter=0):
-        yield from super().stream(request, counter)
-        yield from self.embedded_js.stream(request, counter)
-        yield from self.scripts.stream(request, counter)
+    def add_media(self, request):
+        self.append(self.embedded_js)
+        self.append(self.scripts)
 
 
 class HtmlDocument(Html):

@@ -24,7 +24,7 @@ jobs:
               command: apt-get update && apt-get install enchant -y
           - run:
               name: install packages
-              command: python setup.py install && pip install -r requirements/docs.txt
+              command: python setup.py install && pip install -r requirements/test-docs.txt
           - run:
               name: build docs
               command: make docs

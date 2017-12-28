@@ -13,7 +13,7 @@ from .plugins.base import WrapTest, TestPlugin, validate_plugin_list
 from .loader import TestLoader
 from .utils import (sequential, ActorTestMixin, check_server,
                     test_timeout, dont_run_with_thread, TestFailure,
-                    skipUnless, run_test_server)
+                    skipUnless, allowFailure, run_test_server)
 from .runner import Runner
 from .wsgi import test_wsgi_request
 
@@ -35,6 +35,7 @@ __all__ = ['populate',
            'dont_run_with_thread',
            'test_wsgi_request',
            'run_test_server',
+           'allowFailure',
            'skipUnless']
 
 

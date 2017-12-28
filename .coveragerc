@@ -2,6 +2,7 @@
 source = pulsar,examples
 concurrency = greenlet,multiprocessing
 omit =
+    pulsar/__init__.py
     pulsar/utils/system/winservice.py
     pulsar/utils/system/windowssystem.py
     pulsar/utils/system/winprocess.py
@@ -12,6 +13,7 @@ omit =
     pulsar/apps/test/plugins/bench.py
     pulsar/apps/test/cov.py
     pulsar/apps/test/plugins/profile.py
+    pulsar/cmds/*
     examples/httpbin/config.py
     examples/httpbin/throttle.py
     examples/philosophers/config.py

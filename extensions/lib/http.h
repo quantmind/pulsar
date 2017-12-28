@@ -10,7 +10,7 @@ static char  *week[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 static char  *months[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-inline PyObject* _http_date(time_t timestamp) {
+static PyObject* _http_date(time_t timestamp) {
     char buf[50];
     struct tm gmt = *gmtime(&timestamp);
     //strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S GMT", &gmt);

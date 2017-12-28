@@ -57,7 +57,7 @@ class StoreMixin:
                             pool_size=pool_size, **kw)
 
     @classmethod
-    def randomkey(cls, length=None):
+    def randomkey(cls, length=20):
         return random_string(min_length=length, max_length=length)
 
     async def wait(self, Error, callable, *args, **kwargs):

@@ -4,7 +4,7 @@ set -e -x
 
 brew update
 
-brew install pyenv
+brew upgrade pyenv
 brew install gnu-sed --with-default-names
 brew outdated libtool || brew upgrade libtool
 brew outdated autoconf || brew upgrade autoconf --with-default-names

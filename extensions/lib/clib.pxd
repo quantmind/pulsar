@@ -41,4 +41,3 @@ cdef class EventHandler:
     cpdef copy_many_times_events(self, EventHandler other)
     cpdef bind_events(self, dict events)
     cpdef fire_event(self, str name, exc=?, data=?)
-    cpdef reset_event(self, str name)

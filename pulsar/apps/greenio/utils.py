@@ -1,3 +1,4 @@
+import sys
 from functools import wraps
 from inspect import isawaitable
 
@@ -35,11 +36,12 @@ def run_in_greenlet(callable):
         result = green.switch(*args, **kwargs)
         # back to the parent
         while isawaitable(result):
-            # keep on switching back to the greenlet if we get a Future
+            # keep on switching back to the greenlet if we get an awaitable
             try:
                 result = green.switch((await result))
-            except Exception as exc:
-                result = green.throw(exc)
+            except Exception:
+                exc_info = sys.exc_info()
+                result = green.throw(*exc_info)
 
         return green.switch(result)
 

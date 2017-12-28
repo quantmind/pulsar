@@ -72,9 +72,6 @@ def add_errback(future, callback, loop=None):
 def maybe_async(value, *, loop=None):
     '''Handle a possible asynchronous ``value``.
 
-    Return an :ref:`asynchronous instance <tutorials-coroutine>`
-    only if ``value`` is a generator, a :class:`.Future`.
-
     :parameter value: the value to convert to an asynchronous instance
         if it needs to.
     :parameter loop: optional :class:`.EventLoop`.

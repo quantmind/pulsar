@@ -5,6 +5,7 @@ if os.environ.get('PULSARPY', 'no') == 'yes':
 else:
     HAS_C_EXTENSIONS = True
     try:
+        import httptools    # noqa
         from .clib import (
             EventHandler, ProtocolConsumer, Protocol, Producer, WsgiProtocol,
             AbortEvent, RedisParser, WsgiResponse, wsgi_cached, http_date,

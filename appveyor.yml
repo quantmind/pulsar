@@ -27,7 +27,7 @@ build: false
 test_script:
   - ps: >-
       if($env:appveyor_repo_branch -eq 'release') {
-          Invoke-Expression "ci/build.cmd $env:PYTHON\\python.exe setup.py test -q --sequential"
+          Invoke-Expression "ci/build.cmd $env:PYTHON\\python.exe setup.py test --sequential"
       }
 
 after_test:

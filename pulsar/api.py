@@ -6,6 +6,7 @@ from .utils.exceptions import (
     Unsupported, UnprocessableEntity
 )
 from .utils.config import Config, Setting
+from .utils.context import TaskContext
 from .utils.lib import (
     HAS_C_EXTENSIONS, EventHandler, Event, ProtocolConsumer, Protocol,
     Producer, AbortEvent, isawaitable
@@ -25,6 +26,9 @@ from .async.commands import async_while
 from .async.monitor import arbiter
 from .apps import Application, MultiApp, get_application
 from .apps.data import data_stores
+
+
+context = TaskContext()
 
 
 __all__ = [
@@ -53,6 +57,7 @@ __all__ = [
     'async_while',
     'isawaitable',
     'AsyncObject',
+    'context',
     #
     # Actor Layer
     'get_actor',

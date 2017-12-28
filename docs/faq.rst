@@ -27,10 +27,6 @@ What is an actor?
 ~~~~~~~~~~~~~~~~~~~~~~
 Check the :ref:`actor design documentation <design-actor>`.
 
-How pulsar handle asynchronous data?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Check the :ref:`asynchronous components documentation <tutorials-coroutine>`.
-
 How is pulsar different from Twisted?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Pulsar is written for python 3.4 or above, Twisted is python 2. Pulsar is written

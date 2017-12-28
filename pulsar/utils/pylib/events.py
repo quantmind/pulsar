@@ -32,6 +32,10 @@ class Event:
         return bool(self._onetime)
 
     def fired(self):
+        """Returns true or false depending if this event was fired
+
+        One-time events only can be fired
+        """
         return self._self is None
 
     def bind(self, callback):
@@ -62,6 +66,11 @@ class Event:
         return 0
 
     def fire(self, exc=None, data=None):
+        """Fire the event
+
+        :param exc: fire the event with an exception
+        :param data: fire an event with data
+        """
         o = self._self
 
         if o is not None:
@@ -89,6 +98,13 @@ class Event:
                 self._waiter = None
 
     def waiter(self):
+        """Return a :class:`~asyncio.Future` called back once the event
+        has been fired.
+        If the event has been fired already return a resolved future.
+
+        This method is available only for one-time events
+        """
+        assert self._onetime, 'One time events only can invoke waiter'
         if not self._waiter:
             self._waiter = get_event_loop().create_future()
             if self.fired():
@@ -112,16 +128,19 @@ class EventHandler:
         return self._events
 
     def event(self, name):
-        '''Returns the :class:`Event` at ``name``.
+        """Returns the :class:`Event` at ``name``.
 
-        If no event is registered for ``name`` returns nothing.
-        '''
+        If no event is registered for ``name`` creates a new :class:`Event`
+        object and returns it.
+        """
         events = self.events()
         if name not in events:
             events[name] = Event(name, self, 0)
         return events[name]
 
     def fire_event(self, name, exc=None, data=None):
+        """Fire event at ``name`` if it is registered
+        """
         if self._events and name in self._events:
             self._events[name].fire(exc=exc, data=data)
 
@@ -133,12 +152,6 @@ class EventHandler:
             for event in evs.values():
                 if event.name in events:
                     event.bind(events[event.name])
-
-    def reset_event(self, name):
-        events = self.events()
-        if name in events:
-            event = events[name]
-            events[name] = Event(name, self, 1 if event.onetime() else 0)
 
     def copy_many_times_events(self, other):
         '''Copy :ref:`many times events <many-times-event>` from  ``other``.

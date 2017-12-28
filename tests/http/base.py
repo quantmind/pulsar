@@ -236,6 +236,8 @@ class TestHttpClient(TestHttpClientBase, unittest.TestCase):
         self.assertTrue(response.content)
         self.assertEqual(response.url, self.httpbin())
         self._check_pool(http, response)
+        self.assertEqual(response.request.type,
+                         'https' if self.with_tls else 'http')
         response = await http.get(self.httpbin('get'))
         self.assertEqual(response.status_code, 200)
         self._check_pool(http, response, processed=2)

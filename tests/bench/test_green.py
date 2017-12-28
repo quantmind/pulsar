@@ -20,18 +20,13 @@ class EchoGreen(Echo):
     asynchronous code'''
 
     def __call__(self, message):
-        connection = greenio.wait(self.pool.connect())
-        with connection:
-            consumer = connection.current_consumer()
-            consumer.start(message)
-            greenio.wait(consumer.event('post_request').waiter())
-            return consumer if self.full_response else consumer.buffer
+        return greenio.wait(super().__call__(message))
 
 
 @unittest.skipUnless(greenio, "Requires the greenlet module")
 class TestGreenIo(unittest.TestCase):
     __benchmark__ = True
-    __number__ = 1000
+    __number__ = 2000
 
     @classmethod
     async def setUpClass(cls):
