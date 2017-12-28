@@ -15,6 +15,9 @@ from .cov import Coverage
 from .consts import ACTOR_STATES
 
 
+ACTOR_EVENTS = ('start', 'stopping', 'periodic_task')
+
+
 def is_actor(obj):
     return isinstance(obj, Actor)
 
@@ -173,7 +176,7 @@ class Actor(EventHandler, Coverage):
         A ``stream`` handler to write information messages without using
         the :attr:`~.AsyncObject.logger`.
     '''
-    ONE_TIME_EVENTS = ('start', 'stopping')
+    ONE_TIME_EVENTS = ACTOR_EVENTS[:2]
     exit_code = None
     mailbox = None
     monitor = None
@@ -188,8 +191,8 @@ class Actor(EventHandler, Coverage):
         self.tid = current_thread().ident
         self.pid = os.getpid()
         for name, value in concurrency.params.items():
-            if name.startswith('on_'):
-                self.event(name[3:]).bind(value)
+            if name in ACTOR_EVENTS:
+                self.event(name).bind(value)
             else:
                 setattr(self, name, value)
         del concurrency.params

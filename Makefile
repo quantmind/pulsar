@@ -20,7 +20,7 @@ compile:	## clean and build extension
 	make clean
 	$(PYTHON) setup.py build_ext
 
-compile-dev:	## clean and build extension in place (for development)
+compile-inplace:## clean and build extension in place (for development)
 	make clean
 	$(PYTHON) setup.py build_ext -i
 
@@ -57,7 +57,7 @@ testall:
 pypi-check:	## check if current version is valid for a new pypi release
 	$(PYTHON) setup.py pypi --final
 
-wheels:
+wheels-mac:	## create wheels for Mac OSX
 	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./pulsar/cmds/build-wheels.sh
 
 wheels-linux:	## create linux wheels for python 3.5 & 3.6

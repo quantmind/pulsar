@@ -12,7 +12,6 @@ ${PIP} install --upgrade pip wheel
 ${PIP} install --upgrade setuptools cython
 ${PIP} install -r ${IOPATH}/requirements/ci.txt
 ${PIP} install -r ${IOPATH}/requirements/hard.txt
-make -C ${IOPATH} PYTHON=${PYTHON} compile
 ${PIP} wheel ${IOPATH} -w ${DIST}
 
 if [ $BUNDLE_WHEEL ]

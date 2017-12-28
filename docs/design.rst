@@ -206,10 +206,9 @@ Spawning a new actor is achieved via the :func:`.spawn` function::
 
     ap = spawn(periodic_task=task)
 
-The value returned by :func:`.spawn` is an :class:`~asyncio.Future`,
-called back once the remote actor has started.
-The callback will be an :class:`.ActorProxy`, a lightweight proxy
-for the remote actor.
+The value returned by :func:`.spawn` is a :class:`~asyncio.Future`,
+which resolves in an :class:`.ActorProxy`, a lightweight proxy
+for the remote actor, once the remote actor has started.
 
 When spawning from an actor other than the :ref:`arbiter <design-arbiter>`,
 the workflow of the :func:`.spawn` function is as follow:

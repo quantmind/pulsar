@@ -171,7 +171,7 @@ def monitor_params(self, data=None):
     app = self.app
     data.update({'cfg': app.cfg.clone(),
                  'name': '%s.worker' % app.name,
-                 'on_start': worker_start})
+                 'start': worker_start})
     app.actorparams(self, data)
 
 
@@ -554,7 +554,7 @@ class Application(Configurator):
         monitor = arbiter.add_monitor(
             self.name, app=self, cfg=self.cfg,
             start_event=start_event,
-            on_start=lambda arg, **kw: loop.create_task(
+            start=lambda arg, **kw: loop.create_task(
                 monitor_start(arg, **kw)
             )
         )
