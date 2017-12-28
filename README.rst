@@ -11,8 +11,9 @@
 :Downloads: http://pypi.python.org/pypi/pulsar
 :Source: https://github.com/quantmind/pulsar
 :Benchmarks: https://bench.pulsarweb.org/
-:Stack overflow: questions tagged python-pulsar_
+:Riot.im room: https://riot.im/app/#/room/#pulsar:matrix.org
 :Mailing list: `google user group`_
+:Stack overflow: questions tagged python-pulsar_
 :Design by: `Quantmind`_ and `Luca Sbardella`_
 :Platforms: Linux, OSX, Windows. Python 3.5 and above
 :Keywords: python, asyncio, multiprocessing, client/server, asynchronous, concurrency, actor, thread, process, socket, wsgi, websocket, redis, json-rpc
