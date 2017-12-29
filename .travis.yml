@@ -27,5 +27,5 @@ install:
 
 script:
     - source venv/bin/activate && make pypi-check
-    - source venv/bin/activate && make wheels
+    - source venv/bin/activate && make wheels-mac
     - source venv/bin/activate && make wheels-upload

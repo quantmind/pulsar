@@ -2,11 +2,11 @@
 from pulsar.api import arbiter, spawn, send, ensure_future, Config
 
 
-def start(arbiter, **kw):
-    ensure_future(app(arbiter))
+def start(arb):
+    ensure_future(app())
 
 
-async def app(arbiter):
+async def app():
     # Spawn a new actor
     proxy = await spawn(name='actor1')
     print(proxy.name)
@@ -19,7 +19,7 @@ async def app(arbiter):
     print(value)
 
     # Stop the application
-    arbiter.stop()
+    arbiter().stop()
 
 
 def inner_method(actor):

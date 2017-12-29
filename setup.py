@@ -56,7 +56,7 @@ meta = dict(
             "pulsar_test = pulsar.cmds:Test",
             "bench = pulsar.cmds:Bench",
             "linux_wheels = pulsar.cmds:ManyLinux",
-            "s3_upload = pulsar.cmds:S3Upload"
+            "s3_upload = pulsar.cmds:S3Data"
         ]
     },
     classifiers=[
