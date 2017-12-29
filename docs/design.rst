@@ -81,7 +81,9 @@ An actor can be **processed based** (default) or **thread based** and controls
 one running :ref:`event loop <asyncio-event-loop>`.
 To obtain the actor controlling the current thread::
 
-    actor = pulsar.get_actor()
+    from pulsar.api import get_actor
+
+    actor = get_actor()
 
 When a new processed-based actor is created, a new process is started and the
 actor takes control of the main thread of that new process. On the other hand,
@@ -131,10 +133,13 @@ or whatever you need them to do.
 Periodic task
 ------------------
 
-Each :class:`.Actor`, including the :class:`.Arbiter` and :class:`.Monitor`,
-perform one crucial periodic task at given intervals.
+Each :class:`.Actor`, including the Arbiter and Monitors,
+performs one crucial periodic task at given intervals. The periodic task
+interval in controlled by the :ref:`timeout <setting-timeout>` setting parameter
+(which by default is 30 seconds). The periodic timeout is maintained
+between 3 and 60 seconds.
 
-Periodic task are implemented by the :meth:`Concurrency.periodic_task` method.
+Periodic task are implemented by the :meth:`~.Concurrency.periodic_task` method.
 
 .. _design-arbiter:
 
@@ -151,9 +156,9 @@ which control the life of all :class:`.Actor` and
 To access the arbiter, from the main process, one can use the
 :func:`.arbiter` high level function::
 
-    >>> arbiter = pulsar.arbiter()
-    >>> arbiter.is_running()
-    False
+    from pulsar.api import arbiter
+    arb = arbiter()
+    arb.is_running()  //  True/False
 
 
 .. _design-application:
@@ -200,11 +205,15 @@ Spawning a new actor is achieved via the :func:`.spawn` function::
 
     from pulsar.api import spawn
 
+    def start(actor, exc=None):
+        # called once the actor is running
+        ...
+
     def task(actor, exc=None):
         # do something useful here
         ...
 
-    ap = spawn(periodic_task=task)
+    ap = spawn(start=start, periodic_task=task)
 
 The value returned by :func:`.spawn` is a :class:`~asyncio.Future`,
 which resolves in an :class:`.ActorProxy`, a lightweight proxy
@@ -261,19 +270,26 @@ its file descriptor with the :attr:`.Actor._loop`.
 This snippet spawns a new actor which starts an
 :ref:`Echo server <tutorials-writing-clients>`::
 
-    from functools import partial
-
     from pulsar.api import spawn, TcpServer
 
-    def create_echo_server(address, actor, _):
-        '''Starts an echo server on a newly spawn actor'''
-        server = TcpServer(actor.event_loop, address[0], address[1],
-                           EchoServerProtocol)
-        yield server.start_serving()
-        actor.servers['echo'] = server
-        actor.extra['echo-address'] = server.address
+    class Echo:
 
-    proxy = spawn(start=partial(create_echo_server, 'localhost:9898'))
+        def __init__(self, address):
+            self.address = address
+
+        def __call__(self, actor, exc=None):
+            actor._loop.create_task(self.create_echo_server())
+
+        async def create_echo_server(address, actor, _):
+            """Starts an echo server on a newly spawn actor
+            """
+            server = TcpServer(EchoServerProtocol)
+            await server.start_serving(address=self.address)
+            actor.servers['echo'] = server
+            actor.extra['echo-address'] = server.address
+
+
+    proxy = await spawn(start=Echo(('localhost', 9898)))
 
 The :class:`.EchoServerProtocol` is introduced in the
 :ref:`echo server and client tutorial <tutorials-writing-clients>`.
@@ -284,7 +300,9 @@ Fired when the :class:`.Actor` starts stopping.
 
 **periodic_task**
 
-Fired at every actor periodic task (More docs here)
+Fired at every actor :ref:`periodic task <actor-periodic-task>`. This
+hook is best used for internal sanity/health checks of the actor or services the actor
+is performing.
 
 **on_info**
 
