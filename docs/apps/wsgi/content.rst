@@ -18,7 +18,7 @@ Design
 ===============
 
 The :meth:`~String.stream` method is responsible for the streaming
-of ``strings`` or :ref:`asynchronous components  <tutorials-coroutine>`.
+of ``strings``.
 It can be overwritten by subclasses to customise the way an
 :class:`String` streams its :attr:`~String.children`.
 

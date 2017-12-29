@@ -1,6 +1,6 @@
-from asyncio import ensure_future
+import asyncio
 
-from pulsar.api import arbiter, command, spawn, send
+from pulsar.api import arbiter, command, Config
 
 
 names = ['john', 'luca', 'carl', 'jo', 'alex']
@@ -9,31 +9,25 @@ names = ['john', 'luca', 'carl', 'jo', 'alex']
 @command()
 def greetme(request, message):
     echo = 'Hello {}!'.format(message['name'])
-    request.actor.logger.info(echo)
+    request.actor.logger.warning(echo)
     return echo
 
 
 class Greeter:
 
-    def __init__(self):
-        a = arbiter()
-        self._loop = a._loop
-        self._loop.call_later(1, self)
-        a.start()
+    def __call__(self, arb):
+        self._greater_task = arb._loop.create_task(self._work(arb))
 
-    def __call__(self, a=None):
-        ensure_future(self._work(a))
-
-    async def _work(self, a=None):
-        if a is None:
-            a = await spawn(name='greeter')
-        if names:
+    async def _work(self, arb):
+        a = await arb.spawn(name='greeter')
+        while names:
             name = names.pop()
-            await send(a, 'greetme', {'name': name})
-            self._loop.call_later(1, self, a)
-        else:
-            arbiter().stop()
+            await arb.send(a, 'greetme', {'name': name})
+            await asyncio.sleep(1)
+        arb.stop()
 
 
 if __name__ == '__main__':
-    Greeter()
+    cfg = Config()
+    cfg.parse_command_line()
+    arbiter(cfg=cfg, start=Greeter()).start()

@@ -79,14 +79,15 @@ Posting data is as simple as passing the ``data`` parameter::
 JSON data
 ~~~~~~~~~~~~~~~~~
 
-Posting data is as simple as passing the ``data`` parameter::
+Posting data encoded as JSON is as simple as passing the ``json`` parameter::
 
     sessions.post(..., json={'entry1': 'bla', 'entry2': 'doo'})
 
 File data
 ~~~~~~~~~~~~~~~~~
 
-Posting data is as simple as passing the ``data`` parameter::
+Posting data as ``multipart-encoded`` is as simple as passing
+the ``files`` parameter::
 
     files = {'file': open('report.xls', 'rb')}
     sessions.post(..., files=files)
@@ -98,11 +99,18 @@ Streaming data
 It is possible to post streaming data too. Streaming data can be a simple
 generator::
 
-   sessions.post(..., data=(b'blabla' for _ in range(10)))
+    sessions.post(..., data=(b'blabla' for _ in range(10)))
 
-or a coroutine::
+or a generator of a mixture of synchronous and asynchronous data::
 
-   sessions.post(..., data=(b'blabla' for _ in range(10)))
+    def stream():
+        fut = asyncio.Future()
+        asyncio.get_event_loop().call_later(1, fut.set_result, b'two')
+        yield b'one'
+        yield fut
+        yield b'three'
+
+    sessions.post(..., data=stream())
 
 
 .. _http-cookie:

@@ -378,9 +378,7 @@ Ver. 0.5.0 - 2013-May-22
     event loop to cancel itself in *timeout* seconds.
   * :class:`.DeferredTask` stops after the first error by default.
     This class replace the old DeferredGenerator and provides a cleaner
-    API with inline syntax. Check the
-    :ref:`asynchronous components <tutorials-coroutine>` tutorial for
-    further information.
+    API with inline syntax.
   * Added :func:`.async_sleep` function.
 
 * **Actors**

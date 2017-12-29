@@ -1,2 +1,4 @@
+-r hard.txt
 recommonmark
-sphinxcontrib-spelling
+flask
+greenlet

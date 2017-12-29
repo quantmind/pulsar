@@ -106,7 +106,6 @@ class RequestBase:
     release_connection = True
     history = None
     url = None
-    scheme = None
 
     @property
     def unverifiable(self):
@@ -127,7 +126,7 @@ class RequestBase:
 
     @property
     def type(self):
-        return self.scheme
+        return self.key.scheme
 
     @property
     def full_url(self):
@@ -352,6 +351,7 @@ class HttpRequest(RequestBase):
     # INTERNAL ENCODING METHODS
     def _encode_body(self, data, files, json):
         body = None
+        ct = None
         if isinstance(data, (str, bytes)):
             if files:
                 raise ValueError('data cannot be a string or bytes when '
@@ -366,13 +366,15 @@ class HttpRequest(RequestBase):
             return data
         elif data or files:
             if files:
-                body, content_type = self._encode_files(data, files)
+                body, ct = self._encode_files(data, files)
             else:
-                body, content_type = self._encode_params(data)
-            self.headers['Content-Type'] = content_type
+                body, ct = self._encode_params(data)
         elif json:
             body = _json.dumps(json).encode(self.charset)
-            self.headers['Content-Type'] = 'application/json'
+            ct = 'application/json'
+
+        if not self.headers.get('content-type') and ct:
+            self.headers['Content-Type'] = ct
 
         if body:
             self.headers['content-length'] = str(len(body))
@@ -646,12 +648,6 @@ class HttpResponse(ProtocolConsumer):
         else:
             self.content += body
 
-    def recv_body(self):
-        content = self.content
-        if content:
-            self.content = b''
-        return content or b''
-
     def on_message_complete(self):
         self.producer.maybe_decompress(self)
         self.fire_event('post_request')
@@ -815,7 +811,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('GET', url, **kwargs)
 
     def options(self, url, **kwargs):
@@ -824,7 +819,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('OPTIONS', url, **kwargs)
 
     def head(self, url, **kwargs):
@@ -841,7 +835,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
@@ -850,7 +843,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('PUT', url, **kwargs)
 
     def patch(self, url, **kwargs):
@@ -859,7 +851,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('PATCH', url, **kwargs)
 
     def delete(self, url, **kwargs):
@@ -868,7 +859,6 @@ class HttpClient(AbstractClient):
         :params url: url for the new :class:`HttpRequest` object.
         :param \*\*kwargs: Optional arguments for the :meth:`request` method.
         """
-        kwargs.setdefault('allow_redirects', True)
         return self.request('DELETE', url, **kwargs)
 
     def request(self, method, url, **params):
@@ -918,6 +908,9 @@ class HttpClient(AbstractClient):
     async def _request(self, method, url, timeout=None, **params):
         if timeout is None:
             timeout = self.timeout
+
+        if method != 'HEAD':
+            params.setdefault('allow_redirects', True)
 
         with async_timeout(self._loop, timeout):
             nparams = params.copy()
