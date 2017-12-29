@@ -62,6 +62,7 @@ wheels-test:	## run tests using wheels distribution
 	mkdir tmp
 	cp -r tests tmp/tests
 	cp -r examples tmp/examples
+	cp -r docs tmp/docs
 	cp runtests.py tmp/runtests.py
 	cd tmp && $(PYTHON) runtests.py
 	rm -rf tmp
