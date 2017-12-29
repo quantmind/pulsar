@@ -15,15 +15,9 @@ clean:		## clean build directory and cache files
 	find . -name '*.pyc' | xargs rm -rf
 	find . -name '.DS_Store' | xargs rm -rf
 
-
-compile:	## clean and build extension
-	make clean
-	$(PYTHON) setup.py build_ext
-
-compile-inplace:## clean and build extension in place (for development)
+compile:	## clean and build extension in place (for development)
 	make clean
 	$(PYTHON) setup.py build_ext -i
-
 
 docs:		## build html documentation
 	mkdir -p build/docs/html
@@ -36,17 +30,12 @@ test:		## flake8 and unit-tests with uvloop
 	flake8
 	$(PYTHON) -W ignore setup.py test -q --io uv
 
-testinstalled:
-	$(PYTHON) -W ignore runtests.py
-
 testpy:		## pure python library unit tests (PULSARPY=yes)
 	export PULSARPY=yes
 	$(PYTHON) -W ignore setup.py test -q
 
-
-coverage:
+coverage:	## run tunit tests with coverage
 	export PULSARPY=yes; $(PYTHON) -W ignore setup.py test --coverage -q
-
 
 testall:
 	flake8
@@ -57,12 +46,25 @@ testall:
 pypi-check:	## check if current version is valid for a new pypi release
 	$(PYTHON) setup.py pypi --final
 
-wheels-mac:	## create wheels for Mac OSX
+wheels:		## build platform wheels
+	make clean
+	$(PYTHON) setup.py bdist_wheel
+
+wheels-mac:	## create wheels for Mac OSX **must be run from a mac**
 	export PYMODULE=pulsar; export WHEEL=macosx; export CI=true; ./pulsar/cmds/build-wheels.sh
 
 wheels-linux:	## create linux wheels for python 3.5 & 3.6
 	rm -rf wheelhouse
 	$(PYTHON) setup.py linux_wheels --py 3.5,3.6
+
+wheels-test:	## run tests using wheels distribution
+	rm -rf tmp
+	mkdir tmp
+	cp -r tests tmp/tests
+	cp -r examples tmp/examples
+	cp runtests.py tmp/runtests.py
+	cd tmp && $(PYTHON) runtests.py
+	rm -rf tmp
 
 wheels-upload:	## upload wheels to s3
 	$(PYTHON) setup.py s3data --bucket fluidily --key wheelhouse --files "wheelhouse/*.whl"
