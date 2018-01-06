@@ -161,7 +161,7 @@ class RedisCommands(StoreMixin):
         eq(await c.move(key, db), False)
         eq(await c.set(key, 'ciao'), True)
         eq(await c.move(key, db), True)
-        s2 = self.create_store(self.store.dns, database=db)
+        s2 = self.create_store(self.store.dsn, database=db)
         c2 = s2.client()
         eq(await c2.get(key), b'ciao')
         eq(await c.exists(key), False)
@@ -1267,6 +1267,6 @@ class TestPulsarStore(RedisCommands, unittest.TestCase):
         self.assertEqual(store.database, 8)
         store.database = 10
         self.assertEqual(store.database, 10)
-        self.assertTrue(store.dns.startswith('%s/10?' % self.pulsards_uri))
+        self.assertTrue(store.dsn.startswith('%s/10?' % self.pulsards_uri))
         self.assertEqual(store.encoding, 'utf-8')
         self.assertTrue(repr(store))

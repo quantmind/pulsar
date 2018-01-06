@@ -21,7 +21,7 @@ class ChannelsTests:
             kw['protocol'] = Json()
         return self.store.channels(**kw)
 
-    def test_channels_dns(self):
+    def test_channels_dsn(self):
         channels = self.channels()
         self.assertEqual(channels.namespace, '%s_' % self.namespace())
         channels = self.channels(namespace='foo')

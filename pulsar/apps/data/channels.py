@@ -71,10 +71,10 @@ class Connector:
             self.namespace = '%s%s' % (
                 self.namespace, self.namespace_delimiter
             )
-        self.dns = store.buildurl(namespace=self.namespace)
+        self.dsn = store.buildurl(namespace=self.namespace)
 
     def __repr__(self):
-        return self.dns
+        return self.dsn
 
     def __str__(self):
         return self.__repr__()
@@ -114,7 +114,7 @@ class Channels(Connector, PubSubClient):
         return self.store._loop
 
     def __repr__(self):
-        return self.dns
+        return self.dsn
 
     def __len__(self):
         return len(self.channels)
