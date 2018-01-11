@@ -37,7 +37,7 @@ class RedisStore(RemoteStore):
         return '%s:' % n if n else ''
 
     def key(self):
-        return (self._dns, self._encoding)
+        return (self._dsn, self._encoding)
 
     def client(self):
         '''Get a :class:`.RedisClient` for the Store'''

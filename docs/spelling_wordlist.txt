@@ -45,6 +45,7 @@ dev
 django
 Django
 dns
+dsn
 ds
 eg
 epilog
