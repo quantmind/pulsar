@@ -79,7 +79,7 @@ class Store(metaclass=ABCMeta):
         self._password = password
         self._urlparams = {}
         self._init(**kw)
-        self._dns = self.buildurl()
+        self._dsn = self.buildurl()
 
     @property
     def database(self):
@@ -89,7 +89,7 @@ class Store(metaclass=ABCMeta):
     @database.setter
     def database(self, value):
         self._database = value
-        self._dns = self.buildurl()
+        self._dsn = self.buildurl()
 
     @property
     def encoding(self):
@@ -98,13 +98,13 @@ class Store(metaclass=ABCMeta):
         return self._encoding
 
     @property
-    def dns(self):
-        '''Domain name server'''
-        return self._dns
+    def dsn(self):
+        '''Data source name'''
+        return self._dsn
 
     @property
     def urlparams(self):
-        """url parameters in dns query"""
+        """url parameters in dsn query"""
         return self._urlparams
 
     @classmethod
@@ -112,10 +112,10 @@ class Store(metaclass=ABCMeta):
         pass
 
     def __str__(self):
-        return self._dns
+        return self._dsn
 
     def __repr__(self):
-        return 'Store(dns="%s")' % self
+        return 'Store(dsn="%s")' % self
 
     def database_create(self, dbname=None, **kw):
         '''Create a new database in this store.

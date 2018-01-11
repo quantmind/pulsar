@@ -40,9 +40,9 @@ async def start_store(app, url, workers=0, **kw):
             cfg = await send('arbiter', 'run', start_pulsar_ds,
                              host, workers)
             store._host = cfg.addresses[0]
-            dns = store.buildurl()
-            store = create_store(dns, **kw)
-    app.cfg.set('data_store', store.dns)
+            dsn = store.buildurl()
+            store = create_store(dsn, **kw)
+    app.cfg.set('data_store', store.dsn)
 
 
 def localhost(host):

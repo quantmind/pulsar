@@ -18,7 +18,7 @@ function with a valid :ref:`connection string <connection-string>`::
     'redis'
     >>> store.database
     '11'
-    >>> store.dns
+    >>> store.dsn
     'redis://user:password@127.0.0.1:6500/11'
 
 Additional parameters can be passed via the connection string or as key-valued
@@ -26,7 +26,7 @@ parameters. For example::
 
     >>> store = create_store('redis://user:password@127.0.0.1:6500/11',
                              namespace='test_')
-    >>> store.dns
+    >>> store.dsn
     'redis://user:password@127.0.0.1:6500/11?namespace=test_'
 
 
