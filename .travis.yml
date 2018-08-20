@@ -21,6 +21,9 @@ matrix:
         - os: osx
           env: PYTHON_VERSION=3.6.3
 
+        - os: osx
+          env: PYTHON_VERSION=3.7.0
+
 install:
     - ci/mac-pre-install.sh
     - source venv/bin/activate && ci/install.sh
