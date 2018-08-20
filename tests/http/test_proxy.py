@@ -4,7 +4,8 @@ import unittest
 from tests.http import base, req
 
 
-@unittest.skipIf(os.environ.get('CI'), 'Skip on CI see #288')
+#@unittest.skipIf(os.environ.get('CI'), 'Skip on CI see #288')
+@unittest.skip()
 class TestHttpClientWithProxy(req.TestRequest, base.TestHttpClient):
     with_proxy = True
 

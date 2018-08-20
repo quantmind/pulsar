@@ -7,8 +7,8 @@ from pulsar.apps import http
 from pulsar.utils.http import HttpRequestParser
 from pulsar.api import Protocol, Producer
 from pulsar.apps.wsgi import HttpServerResponse
-from pulsar.async.access import cfg
-from pulsar.async.mixins import Pipeline
+from pulsar.asynclib.access import cfg
+from pulsar.asynclib.mixins import Pipeline
 
 
 class DummyTransport(Transport):

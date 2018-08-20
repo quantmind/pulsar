@@ -1,7 +1,7 @@
 from itertools import chain
 import datetime
 
-from ....async.protocols import Connection
+from ....asynclib.protocols import Connection
 from ....utils.string import to_string
 from ....utils.structures import mapping_iterator, Zset
 from ....utils.lib import ProtocolConsumer

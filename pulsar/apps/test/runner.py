@@ -2,7 +2,7 @@ import asyncio
 from inspect import isgenerator, isawaitable
 from unittest import SkipTest, TestCase
 
-from pulsar.async.timeout import timeout
+from pulsar.asynclib.timeout import timeout
 
 from .utils import (
     TestFailure, skip_test, skip_reason, allow_failure,

@@ -49,7 +49,7 @@ class HttpStream:
         else:
             return self._queue.get()
 
-    async def __aiter__(self):
+    def __aiter__(self):
         return _start_iter(self)
 
     async def __anext__(self):

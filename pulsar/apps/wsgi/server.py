@@ -13,7 +13,7 @@ import sys
 from pulsar.api import BadRequest, ProtocolConsumer, isawaitable
 from pulsar.utils.lib import WsgiProtocol
 from pulsar.utils import http
-from pulsar.async.timeout import timeout
+from pulsar.asynclib.timeout import timeout
 
 from .utils import handle_wsgi_error, log_wsgi_info, LOGGER
 from .formdata import HttpBodyReader

@@ -35,7 +35,7 @@ from pulsar.utils.system import json as _json
 from pulsar.utils.string import to_bytes
 from pulsar.utils import http
 from pulsar.utils.structures import mapping_iterator
-from pulsar.async.timeout import timeout as async_timeout
+from pulsar.asynclib.timeout import timeout as async_timeout
 from pulsar.utils.httpurl import (
     encode_multipart_formdata, CHARSET, get_environ_proxies, is_succesful,
     get_hostport, cookiejar_from_dict, http_chunks, JSON_CONTENT_TYPES,
