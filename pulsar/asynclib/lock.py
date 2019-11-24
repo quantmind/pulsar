@@ -80,7 +80,7 @@ class Lock(LockBase):
             if timeout is True:
                 timeout = None
             elif timeout is False:
-                timeout = 0
+                timeout = 0.000001  # py37 fix timeout behavior
             await asyncio.wait_for(self._lock.acquire(), timeout=timeout)
             self._schedule_timeout()
             self._locked = True

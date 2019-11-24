@@ -1,6 +1,6 @@
 from functools import partial
 
-from ....async.clients import Pool
+from ....asynclib.clients import Pool
 from ....utils.string import to_string
 from ..store import RemoteStore
 

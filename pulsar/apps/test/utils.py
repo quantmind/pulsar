@@ -25,7 +25,7 @@ import asyncio
 
 from pulsar.api import get_actor, send, spawn, ImproperlyConfigured
 from pulsar.utils.exceptions import format_traceback
-from pulsar.async.futures import as_gather
+from pulsar.asynclib.futures import as_gather
 from pulsar.apps.data import create_store
 
 

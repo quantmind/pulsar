@@ -1,6 +1,6 @@
 import asyncio
 
-from ....async.actor import send
+from ....asynclib.actor import send
 from ... import when_monitor_start, get_application
 from ...ds import PulsarDS
 from ..store import create_store

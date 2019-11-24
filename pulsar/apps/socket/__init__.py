@@ -127,7 +127,7 @@ from ...utils.internet import parse_address
 from ...utils.system import platform
 from ...utils.exceptions import ImproperlyConfigured
 from ...utils.config import pass_through, validate_pos_int, Config, Setting
-from ...async.protocols import (
+from ...asynclib.protocols import (
     TcpServer, DatagramServer, Connection, DatagramProtocol
 )
 from .. import Application

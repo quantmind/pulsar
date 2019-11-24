@@ -1,4 +1,5 @@
 '''tests the httpurl stand-alone script.'''
+import sys
 import time
 import unittest
 
@@ -12,6 +13,8 @@ from pulsar.utils.httpurl import (CacheControl,
 from pulsar.apps.http import Auth, HTTPBasicAuth, HTTPDigestAuth
 
 from multidict import CIMultiDict
+
+PY_VERSION = sys.version_info
 
 
 class TestAuth(unittest.TestCase):
@@ -65,11 +68,22 @@ class TestAuth(unittest.TestCase):
 
 class TestTools(unittest.TestCase):
 
-    def test_quote_unreserved(self):
-        '''Test a string of unreserved characters'''
+    @unittest.skipIf(PY_VERSION >= (3, 7, 0), 'Moved from RFC 2396 to RFC 3986 in py37')
+    def test_quote_unreserved_old(self):
         s = 'a~b_(c-d).'
         qs = urlquote(s)
         self.assertTrue('%' in qs)
+        self._quote_unreserved(s, qs)
+
+    @unittest.skipIf(PY_VERSION < (3, 7, 0), 'Moved from RFC 2396 to RFC 3986 in py37')
+    def test_quote_unreserved_new(self):
+        s = 'a~b_(c-d).'
+        qs = urlquote(s)
+        self.assertTrue('%' not in qs)
+        self._quote_unreserved(s, qs)
+
+    def _quote_unreserved(self, s, qs):
+        '''Test a string of unreserved characters'''
         uqs = unquote_unreserved(qs)
         self.assertEqual(uqs, s)
         self.assertEqual(requote_uri(s), s)

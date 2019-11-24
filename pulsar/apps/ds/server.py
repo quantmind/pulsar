@@ -54,8 +54,8 @@ from itertools import zip_longest
 from pulsar import SERVER_SOFTWARE
 
 from ..socket import SocketServer
-from ...async.access import get_actor
-from ...async.protocols import TcpServer, Connection
+from ...asynclib.access import get_actor
+from ...asynclib.protocols import TcpServer, Connection
 from ...utils.config import Setting, Config
 from ...utils.structures import Dict, Zset, Deque
 
@@ -2391,7 +2391,7 @@ class Storage:
         yield 'psub=%s' % len(client.patterns)
         yield 'cmd=%s' % client.last_command
 
-    def _save(self, async=True):
+    def _save(self, is_async=True):
         writer = self._writer
         if writer and writer.is_alive():
             self.logger.warning('Cannot save, background saving in progress')
@@ -2400,7 +2400,7 @@ class Storage:
             data = self._dbs()
             self._dirty = 0
             self._last_save = int(time.time())
-            if async:
+            if is_async:
                 self.logger.debug('Saving database in background process')
                 self._writer = Process(target=save_data,
                                        args=(self.cfg, self._filename, data))

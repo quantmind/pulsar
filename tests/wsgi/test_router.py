@@ -141,24 +141,24 @@ class TestRouter(unittest.TestCase):
 
     def test_router_count(self):
         self.assertTrue(HttpBin2.rule_methods)
-        async = HttpBin2.rule_methods.get('async')
-        self.assertTrue(async)
-        self.assertEqual(async.method, 'get')
-        self.assertEqual(str(async.rule), '/async')
-        async = HttpBin2.rule_methods.get('post_async')
-        self.assertTrue(async)
-        self.assertEqual(async.method, 'post')
-        self.assertEqual(str(async.rule), '/async')
+        _async = HttpBin2.rule_methods.get('async')
+        self.assertTrue(_async)
+        self.assertEqual(_async.method, 'get')
+        self.assertEqual(str(_async.rule), '/async')
+        _async = HttpBin2.rule_methods.get('post_async')
+        self.assertTrue(_async)
+        self.assertEqual(_async.method, 'post')
+        self.assertEqual(str(_async.rule), '/async')
         #
         router = HttpBin2('/')
         self.assertEqual(router.name, '')
         router = HttpBin2('/', name='root')
         self.assertEqual(router.name, 'root')
-        async = router.get_route('async')
-        self.assertTrue(async)
+        _async = router.get_route('async')
+        self.assertTrue(_async)
         # It has both get and post methods
-        self.assertTrue(async.get)
-        self.assertTrue(async.post)
+        self.assertTrue(_async.get)
+        self.assertTrue(_async.post)
 
     def test_router_child(self):
         router = TRouter('/', HttpBin2('bin'), random=9)
@@ -183,16 +183,16 @@ class TestRouter(unittest.TestCase):
         child = router.get_route('bin')
         self.assertTrue(child)
         #
-        async = router.get_route('async')
-        self.assertFalse('random' in async.defaults)
-        self.assertTrue(async)
-        self.assertEqual(async.root, router)
-        self.assertEqual(async.parent, child)
-        self.assertEqual(async.random, 6)
+        _async = router.get_route('async')
+        self.assertFalse('random' in _async.defaults)
+        self.assertTrue(_async)
+        self.assertEqual(_async.root, router)
+        self.assertEqual(_async.parent, child)
+        self.assertEqual(_async.random, 6)
         #
         # It has both get and post methods
-        self.assertTrue(async.get)
-        self.assertTrue(async.post)
+        self.assertTrue(_async.get)
+        self.assertTrue(_async.post)
 
     def test_rule(self):
         router = TRouter('/', HttpBin2('bin'))

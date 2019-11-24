@@ -2,6 +2,7 @@ import os
 import threading
 import logging
 import asyncio
+import selectors
 from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
 from threading import current_thread
@@ -69,7 +70,7 @@ if platform.type == 'win':  # pragma    nocover
 else:
     for selector in ('Epoll', 'Kqueue', 'Poll', 'Select'):
         name = '%sSelector' % selector
-        selector_class = getattr(asyncio.selectors, name, None)
+        selector_class = getattr(selectors, name, None)
         if selector_class:
             EVENT_LOOPS[selector.lower()] = make_loop_factory(selector_class)
 
