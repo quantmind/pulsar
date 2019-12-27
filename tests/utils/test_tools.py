@@ -148,7 +148,7 @@ class TestFunctions(unittest.TestCase):
 
     def __test_import_modules(self):
         self.assertEqual(import_modules(['gggggggggggg']), [])
-        mods = import_modules(['pulsar.async.*'])
+        mods = import_modules(['pulsar.asynclib.*'])
         self.assertTrue(mods)
 
     def test_date2timestamp(self):

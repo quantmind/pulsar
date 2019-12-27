@@ -37,7 +37,7 @@ class Pool(AsyncObject):
         self._creator = creator
         self._closed = False
         self._timeout = timeout
-        self._queue = asyncio.Queue(maxsize=pool_size, loop=loop)
+        self._queue = asyncio.Queue(maxsize=pool_size)
         self._connecting = 0
         self._loop = self._queue._loop
         self._logger = logger

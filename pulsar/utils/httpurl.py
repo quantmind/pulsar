@@ -7,7 +7,7 @@ from uuid import uuid4
 from io import BytesIO
 from urllib import request as urllibr
 from http import client as httpclient
-from urllib.parse import quote, splitport
+from urllib.parse import quote
 from http.cookiejar import CookieJar, Cookie
 from http.cookies import SimpleCookie
 
@@ -20,6 +20,8 @@ ascii_letters = string.ascii_letters
 HTTPError = urllibr.HTTPError
 URLError = urllibr.URLError
 parse_http_list = urllibr.parse_http_list
+re_port = re.compile('(.*):([0-9]*)$', re.DOTALL)
+
 
 tls_schemes = ('https', 'wss')
 
@@ -121,6 +123,15 @@ def iri_to_uri(iri, kwargs=None):
         iri = '%s?%s' % (to_string(iri, 'latin1'),
                          '&'.join(('%s=%s' % kv for kv in kwargs.items())))
     return urlquote(unquote_unreserved(iri))
+
+
+def splitport(host):
+    match = re_port.match(host)
+    if match:
+        host, port = match.groups()
+        if port:
+            return host, port
+    return host, None
 
 
 def host_and_port(host):

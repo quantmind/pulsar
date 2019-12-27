@@ -73,7 +73,7 @@ jobs:
     binaries:
         machine: true
         environment:
-          - PYTHON_VERSIONS: 3.5 3.6 3.7
+          - PYTHON_VERSIONS: 3.5 3.6 3.7 3.8
           - PYMODULE: pulsar
         steps:
           - checkout

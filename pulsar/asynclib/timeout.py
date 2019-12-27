@@ -1,4 +1,4 @@
-from asyncio import Task, CancelledError, TimeoutError
+from asyncio import CancelledError, TimeoutError, current_task
 
 
 class timeout:
@@ -16,7 +16,7 @@ class timeout:
     def __enter__(self):
         if self._timeout is None:
             return self
-        self._task = Task.current_task(self._loop)
+        self._task = current_task()
         tm = self._loop.time() + self._timeout
         self._cancel_handler = self._loop.call_at(tm, self._cancel_task)
         return self

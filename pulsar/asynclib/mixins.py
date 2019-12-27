@@ -178,7 +178,7 @@ class ResponsePipeline:
 
     def __init__(self, connection):
         self.connection = connection
-        self.queue = Queue(loop=connection._loop)
+        self.queue = Queue()
         self.debug = connection._loop.get_debug()
         self.worker = self.queue._loop.create_task(self._process())
         self.put = self.queue.put_nowait

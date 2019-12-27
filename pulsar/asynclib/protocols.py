@@ -228,10 +228,14 @@ class TcpServer(Producer):
                                           sock=sock,
                                           backlog=backlog,
                                           ssl=sslcontext)
-                if server:
-                    server.sockets.extend(srv.sockets)
-                else:
-                    server = srv
+                # scailer: I'm don't know why this code was written
+                # if server:
+                #     server.sockets.extend(srv.sockets)
+                # else:
+                #     server = srv
+
+                server = srv
+
         elif isinstance(address, tuple):
             server = await create_server(self.create_protocol,
                                          host=address[0],
